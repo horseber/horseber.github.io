@@ -2,6 +2,111 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://example.com/2020/09/18/newpapername5/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername55/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername56/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername4/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername41/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername43/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername15/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername16/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername3/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername13/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername14/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername2/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername11/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://example.com/2020/09/18/newpapername12/</loc>
+    
+    <lastmod>2020-09-18</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://example.com/tags/index.html</loc>
     
     <lastmod>2020-09-18</lastmod>
@@ -16,21 +121,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/2020/09/18/newpapername/</loc>
-    
-    <lastmod>2020-09-18</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://example.com/about/index.html</loc>
-    
-    <lastmod>2020-09-18</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://example.com/2020/09/18/hello-world/</loc>
     
     <lastmod>2020-09-18</lastmod>
     
