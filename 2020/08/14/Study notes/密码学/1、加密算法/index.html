@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1、可逆加密算法【加密后,密文可以反向解密得到密码原文.】">
+<meta property="og:type" content="article">
+<meta property="og:title" content="加密算法">
+<meta property="og:url" content="http://example.com/2020/08/14/Study%20notes/%E5%AF%86%E7%A0%81%E5%AD%A6/1%E3%80%81%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="1、可逆加密算法【加密后,密文可以反向解密得到密码原文.】">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-08-14T08:30:12.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:04:01.789Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="加密算法">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/08/14/Study%20notes/%E5%AF%86%E7%A0%81%E5%AD%A6/1%E3%80%81%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>加密算法 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/08/14/Study%20notes/%E5%AF%86%E7%A0%81%E5%AD%A6/1%E3%80%81%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          加密算法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-14 16:30:12" itemprop="dateCreated datePublished" datetime="2020-08-14T16:30:12+08:00">2020-08-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:04:01" itemprop="dateModified" datetime="2020-09-19T18:04:01+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/" itemprop="url" rel="index"><span itemprop="name">密码学</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">1、可逆加密算法【加密后,密文可以反向解密得到密码原文.】</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="1、可逆加密算法"><a href="#1、可逆加密算法" class="headerlink" title="1、可逆加密算法"></a>1、可逆加密算法</h4><p>【加密后, 密文可以反向解密得到密码原文.】</p>
+<h6 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h6><p>文件加密和解密使用相同的密钥，即加密密钥也可以用作解密密钥</p>
+<p>优点: 对称加密算法的优点是算法公开、计算量小、加密速度快、加密效率高。</p>
+<p>缺点: 没有非对称加密安全.</p>
+<p>用途： 一般用于保存用户手机号、身份证等二要素数据、敏感但能解密的信息</p>
+<p>常见的对称加密算法有: AES、DES、3DES、Blowfish、IDEA、RC4、RC5、RC6、HS256</p>
+<ul>
+<li>DES 密码易于破解，在业务代码中要避免使用 DES 加密【不推荐】</li>
+<li>3DES 算法较慢，是使用不同的密钥进行三次 DES 串联调用，虽然解决了 DES 不够安全的问题，但是比 AES 慢【不推荐】</li>
+<li>AES 是当前公认的比较安全，兼顾性能的对称加密算法【推荐】</li>
+</ul>
+<p>AES严格来说，AES 并不是实际的算法名称，而是算法标准。</p>
+<p>AES 有一个重要的特点就是分组加密体制，一次只能处理 128 位的明文，然后生成 128 位的密文。如果要加密很长的明文，那么就需要迭代处理。如何迭代就分ECB、CBC、CFB、OFB、CTR、GCM等模式</p>
+<p>GCM 模式的 AES-256 对称加密算法AES-256-GCM，除了能实现普通加密算法提供的保密性之外，还能实现可认证性和密文完整性，是目前最推荐的 AES 模式。</p>
+<p>基于 AES-256-GCM 的加密服务，包含下面的主要逻辑：</p>
+<ul>
+<li>加密时允许外部传入一个 AAD（附加认证数据） 用于认证，加密服务每次都会使用新生成的随机值作为密钥和初始化向量。</li>
+<li>在加密后，加密服务密钥和初始化向量保存到数据库中，返回加密 ID 作为本次加密的标识。</li>
+<li>应用解密时，需要提供加密 ID、密文和加密时的 AAD 来解密。加密服务使用加密 ID，从数据库查询出密钥和初始化向量。</li>
+</ul>
+<p>黑客要查询用户二要素的话，需要同时拿到密文、IV+ 密钥、AAD。而这三者可能由三方掌管，要全部拿到比较困难。</p>
+<h6 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h6><p>两个密钥：公开密钥（publickey）和私有密钥，公有密钥加密，私有密钥解密</p>
+<p>同时生成两把密钥：私钥和公钥，私钥隐秘保存，公钥可以下发给信任客户端.<br> 私钥加密，持有私钥或公钥才可以解密<br> 公钥加密，持有私钥才可解密</p>
+<p> 缺点: 非对称加密的缺点是加密和解密花费时间长、速度慢，只适合对少量数据进行加密。</p>
+<p> 用途： 一般用于签名和认证。私钥服务器保存, 用来加密, 公钥客户拿着用于对于令牌或者签名的解密或者校验使用.</p>
+<p>常见的非对称加密算法有： RSA、DSA（数字签名用）、ECC（移动设备用）、RS256 (采用SHA-256 的 RSA 签名)</p>
+<h5 id="2、不可逆加密算法"><a href="#2、不可逆加密算法" class="headerlink" title="2、不可逆加密算法"></a>2、不可逆加密算法</h5><p>【一旦加密就不能反向解密得到密码原文.】</p>
+<p>常见的不可逆加密算法有： MD5、SHA、HMAC、BCrypt</p>
+<p>用途：用户密码的保护，通常都会进行加密。我们通常对密码进行加密，然后存放在数据库中，在用户进行登录的时候，将其输入的密码进行加密然后与数据库中存放的密文进行比较，以验证用户密码是否正确。 目前，MD5和BCrypt比较流行。相对来说，BCrypt比MD5更安全。</p>
+<h5 id="使用不可逆加密算法如何正确保存用户密码："><a href="#使用不可逆加密算法如何正确保存用户密码：" class="headerlink" title="使用不可逆加密算法如何正确保存用户密码："></a>使用不可逆加密算法如何正确保存用户密码：</h5><p>千万不要保存原始密码，这样即使拖库也不会泄露用户密码。</p>
+<h5 id="1、MD5并不安全"><a href="#1、MD5并不安全" class="headerlink" title="1、MD5并不安全"></a>1、MD5并不安全</h5><p>1、MD5虽然不可逆，但黑客可以构建一个超大数据库，将20位以内的数字和字母组合的密码全部计算一遍 MD5 存进去，需要解密的时候搜索一下 MD5 就可以得到原始值了。这就是字典表【彩虹表】<br>2、多次 MD5 也不安全</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">userData.setPassword(DigestUtils.md5Hex(DigestUtils.md5Hex( password)));</span><br></pre></td></tr></table></figure>
+<h5 id="2、加盐的MD5"><a href="#2、加盐的MD5" class="headerlink" title="2、加盐的MD5"></a>2、加盐的MD5</h5><p>最好是每一个密码都有独立的盐，并且盐要长一点，比如超过 20 位。不建议使用用户名作为盐，例如root、admin这样的用户使用再复杂的密码也总有一天会被破解。</p>
+<p>建议使用 UUID 作为盐，把盐一起保存到数据库中：【盐没有必要加密保存。盐的作用是，防止通过彩虹表快速实现密码“解密”，如果用户的盐都是唯一的，那么生成一次彩虹表只可能拿到一个用户的密码，这样黑客的动力会小很多。】</p>
+<p>4、MD5 这样的摘要算法比较快，可以使用比MD5更慢一点的算法如BCrypt，增加构建彩虹表的时间成本</p>
+<p>==Hutool对大部分加解密算法的集成==：<br><a target="_blank" rel="noopener" href="https://www.hutool.cn/docs/#/crypto/%E6%A6%82%E8%BF%B0">https://www.hutool.cn/docs/#/crypto/%E6%A6%82%E8%BF%B0</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95/" rel="tag"># 加密算法</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/14/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/8%E3%80%81%E6%8C%81%E4%B9%85%E5%8C%96/" rel="prev" title="持久化">
+      <i class="fa fa-chevron-left"></i> 持久化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/15/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/HTTP/1%E3%80%81HTTP/" rel="next" title="HTTP">
+      HTTP <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%E3%80%81%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="nav-number">1.</span> <span class="nav-text">1、可逆加密算法</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86"><span class="nav-number">1.0.1.</span> <span class="nav-text">对称加密</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86"><span class="nav-number">1.0.2.</span> <span class="nav-text">非对称加密</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2%E3%80%81%E4%B8%8D%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="nav-number">1.1.</span> <span class="nav-text">2、不可逆加密算法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%A6%82%E4%BD%95%E6%AD%A3%E7%A1%AE%E4%BF%9D%E5%AD%98%E7%94%A8%E6%88%B7%E5%AF%86%E7%A0%81%EF%BC%9A"><span class="nav-number">1.2.</span> <span class="nav-text">使用不可逆加密算法如何正确保存用户密码：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1%E3%80%81MD5%E5%B9%B6%E4%B8%8D%E5%AE%89%E5%85%A8"><span class="nav-number">1.3.</span> <span class="nav-text">1、MD5并不安全</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2%E3%80%81%E5%8A%A0%E7%9B%90%E7%9A%84MD5"><span class="nav-number">1.4.</span> <span class="nav-text">2、加盐的MD5</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

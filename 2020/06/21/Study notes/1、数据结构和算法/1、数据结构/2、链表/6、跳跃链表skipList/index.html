@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="用跳表可以高效维护一组有序的数据的列表，尽可能在插入、删除、查找等操作上能够尽可能的快速。数组使用数组存储的话，采用二分法可以在O(logn)的时间里找到指定的元素，在进行插入和删除则时间复杂度为O(n)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="跳跃链表skipList">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/2%E3%80%81%E9%93%BE%E8%A1%A8/6%E3%80%81%E8%B7%B3%E8%B7%83%E9%93%BE%E8%A1%A8skipList/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="用跳表可以高效维护一组有序的数据的列表，尽可能在插入、删除、查找等操作上能够尽可能的快速。数组使用数组存储的话，采用二分法可以在O(logn)的时间里找到指定的元素，在进行插入和删除则时间复杂度为O(n)">
+<meta property="og:locale">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20190823065749202.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2020-06-21T01:22:58.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:54.763Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="跳跃链表skipList">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20190823065749202.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/2%E3%80%81%E9%93%BE%E8%A1%A8/6%E3%80%81%E8%B7%B3%E8%B7%83%E9%93%BE%E8%A1%A8skipList/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>跳跃链表skipList | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/2%E3%80%81%E9%93%BE%E8%A1%A8/6%E3%80%81%E8%B7%B3%E8%B7%83%E9%93%BE%E8%A1%A8skipList/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          跳跃链表skipList
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:22:58" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:58+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:54" itemprop="dateModified" datetime="2020-09-19T18:03:54+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%93%BE%E8%A1%A8/" itemprop="url" rel="index"><span itemprop="name">链表</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">用跳表可以高效维护一组有序的数据的列表，尽可能在插入、删除、查找等操作上能够尽可能的快速。数组使用数组存储的话，采用二分法可以在O(logn)的时间里找到指定的元素，在进行插入和删除则时间复杂度为O(n) </div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>用跳表可以高效==维护一组有序==的数据的列表，尽可能在插入、删除、查找等操作上能够尽可能的快速。</p>
+<p>数组：使用数组存储的话，采用二分法可以在 O(logn) 的时间里找到指定的元素，在进行插入和删除则时间复杂度为 O(n) </p>
+<p>链表：使用链表存储的话，就插入、删除动作而言，所需的时间复杂度为 O(1) ，加上查找所需的时间复杂度为O（n），故插入、删除所需的总的时间复杂度为O(n)。</p>
+<p>跳跃链表在有序链表的基础上进行了扩展（它具有二分查找的功能）。</p>
+<p>查找特定值的时间复杂度为O(logn)，单插入和删除时间复杂度为O(1)，根据时间复杂度加法原则，增删时需要先定位到某位置，所以要加上查询所需O(lngn)，所以跳跃链表在查询、插入、删除的时间复杂度为O(lng)。</p>
+<p>他是一种可以代替平衡树的数据结构。B+树结构的思想和跳跃链表同理。最底层存储数据，将特定数据提取到上一层作为索引。</p>
+<p><img src="https://img-blog.csdnimg.cn/20190823065749202.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<p>小结：跳表的特点：</p>
+<p>(1) 由很多层结构组成</p>
+<p>(2) 每一层都是一个有序的链表</p>
+<p>(3) 最底层的链表包含所有元素</p>
+<p>(4) 如果一个元素出现x层，则x下的一层也会出现。</p>
+<p>(5) 每个节点包含两个指针，一个指向同一层的下一个元素，一个指向下面一层的元素。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> *跳跃链表</span><br><span class="line"> *&#x2F;</span><br><span class="line">public class SkipListNode &#123;</span><br><span class="line"> </span><br><span class="line">    &#x2F;&#x2F;元素</span><br><span class="line">    private int data;</span><br><span class="line">    &#x2F;&#x2F;同一链表中的下一个元素指针</span><br><span class="line">    private SkipListNode next;</span><br><span class="line">    &#x2F;&#x2F;指向下面一层的元素指针</span><br><span class="line">    private SkipListNode downNext;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>包括前面的数据结构，很多时候看一个类的成员变量，便能从宏观上把握这个类的作用。因为无论方法再多，都是再维护这些变量。</p>
+<h3 id="跳表的增删改查操作"><a href="#跳表的增删改查操作" class="headerlink" title="跳表的增删改查操作"></a>跳表的增删改查操作</h3><p>（1）插入节点</p>
+<p>插入结点的操作，最底层数据节点会增加，底层往上的各层索引节点会逐渐减少。这时候需要决定插入的节点是否需要添加到各层中作为索引。解决方式：抛硬币法</p>
+<p>【抛硬币法】 也就是随机决定新节点是否提拔，每次向上提拔一层的几率是50%</p>
+<ul>
+<li><p>因为跳跃表删除和添加的节点是不可预测的，很难用一种有效的算法来保证跳表的索引部分始终均匀。</p>
+</li>
+<li><p>随机抛硬币的方法可以让索引部分大体趋于均匀</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;抛硬币：</span><br><span class="line">int random_level()  </span><br><span class="line">&#123;  </span><br><span class="line">    K &#x3D; 1;  </span><br><span class="line">    while (random(0,1))  </span><br><span class="line">        K++;  </span><br><span class="line">    return K;  </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+<p>(2)删除节点：</p>
+</li>
+<li><p>只要在【索引层】找到要删除的节点，然后一次查找每一层删除相同节点。</p>
+</li>
+<li><p>如果某一层索引在删除后只剩下一个节点，那么整个一层就可以干掉了。</p>
+</li>
+</ul>
+<p>（3）查询节点：介绍跳表的图中已说明</p>
+<h3 id="跳表的应用"><a href="#跳表的应用" class="headerlink" title="跳表的应用"></a>跳表的应用</h3><p>ConcurrentSkipListMap </p>
+<p>ConcurrentSkipListSet </p>
+<p>Redis sorted set的内部使用HashMap和跳跃表(SkipList)</p>
+<h3 id="4、跳表与其他数据结构的比较"><a href="#4、跳表与其他数据结构的比较" class="headerlink" title="4、跳表与其他数据结构的比较"></a>4、跳表与其他数据结构的比较</h3><ul>
+<li>跳跃表 vs 二叉查找树</li>
+</ul>
+<p>二叉查找树的插入、删除、查找也是近似 O(logn) 的时间复杂度。 不过，二叉查找树是有可能偏向一方，将退化成O(n)的链表</p>
+<ul>
+<li>跳跃表 vs 红黑树</li>
+</ul>
+<p>红黑在查找，插入，删除也是近似O(logn)的时间复杂度，通过旋转（改变了原本数据结构）达到近似平衡，比起跳跃表直接通过一个随机数来决定跨越几层要复杂得多</p>
+<p>java提供了工业级的红黑树TreeMap,但是链表并没有，需要自己手动实现。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%B7%B3%E8%B7%83%E9%93%BE%E8%A1%A8skipList/" rel="tag"># 跳跃链表skipList</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/1%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E5%8E%9F%E5%88%99/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E5%8E%9F%E5%88%99/" rel="prev" title="设计模式原则">
+      <i class="fa fa-chevron-left"></i> 设计模式原则
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/1%E3%80%81%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/MyCat/3%E3%80%81mycat%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E3%80%81%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E9%85%8D%E7%BD%AE/" rel="next" title="mycat分库分表、读写分离配置">
+      mycat分库分表、读写分离配置 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%B3%E8%A1%A8%E7%9A%84%E5%A2%9E%E5%88%A0%E6%94%B9%E6%9F%A5%E6%93%8D%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">跳表的增删改查操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%B3%E8%A1%A8%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">跳表的应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81%E8%B7%B3%E8%A1%A8%E4%B8%8E%E5%85%B6%E4%BB%96%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E6%AF%94%E8%BE%83"><span class="nav-number">3.</span> <span class="nav-text">4、跳表与其他数据结构的比较</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

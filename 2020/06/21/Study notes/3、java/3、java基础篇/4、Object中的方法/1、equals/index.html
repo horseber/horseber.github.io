@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="hashCode相等，equals可以不相等，equals相等，hashCode也不一定相等">
+<meta property="og:type" content="article">
+<meta property="og:title" content="equals">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/3%E3%80%81java%E5%9F%BA%E7%A1%80%E7%AF%87/4%E3%80%81Object%E4%B8%AD%E7%9A%84%E6%96%B9%E6%B3%95/1%E3%80%81equals/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="hashCode相等，equals可以不相等，equals相等，hashCode也不一定相等">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:07.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:55.416Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="equals">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/3%E3%80%81java%E5%9F%BA%E7%A1%80%E7%AF%87/4%E3%80%81Object%E4%B8%AD%E7%9A%84%E6%96%B9%E6%B3%95/1%E3%80%81equals/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>equals | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/3%E3%80%81java%E5%9F%BA%E7%A1%80%E7%AF%87/4%E3%80%81Object%E4%B8%AD%E7%9A%84%E6%96%B9%E6%B3%95/1%E3%80%81equals/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          equals
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:07" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:07+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:55" itemprop="dateModified" datetime="2020-09-19T18:03:55+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Object%E4%B8%AD%E7%9A%84%E6%96%B9%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">Object中的方法</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">hashCode相等，equals可以不相等，equals相等，hashCode也不一定相等</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>hashCode相等，equals可以不相等，<br>equals相等，hashCode也不一定相等</p>
+<p>不覆盖equals的情况下,类的每个实例都与它自身相等</p>
+<h2 id="1、不需要覆盖equals方法的情况"><a href="#1、不需要覆盖equals方法的情况" class="headerlink" title="1、不需要覆盖equals方法的情况"></a>1、不需要覆盖equals方法的情况</h2><ul>
+<li>类的每个实例本质上都是唯一的，无论是使用 == 或者equals 实际上都是 进行物理相等的判断。</li>
+<li>超类已经覆盖了equals,从超类继承过来的行为对于子类也是合适的</li>
+<li>类是私有的或是包级私有的,可以确定它的equals方法永远不会被调用 </li>
+</ul>
+<h2 id="2、覆盖equals方法的情况"><a href="#2、覆盖equals方法的情况" class="headerlink" title="2、覆盖equals方法的情况"></a>2、覆盖equals方法的情况</h2><p>1.自反性： x.equals(x) 必须返回true  。实例自身必然逻辑相等。</p>
+<p>2.对称性： x.equals(y) 与 y.equals(x) 返回结果应该相同，同为true或者同为false。</p>
+<p>3.传递性： x.equals(y)返回true，y.equals(z)返回true,则x.equals(z)应该返回true。</p>
+<p>4.一致性： 只要比较的实例对象的关键属性值没有改变 ，那么无论调用多少次equals方法返回的结果都应该相同，一致。</p>
+<p>5.对于非null的x实例，x.equals(null) 永远返回false。</p>
+<h2 id="3、覆盖equals方法需要注意几点："><a href="#3、覆盖equals方法需要注意几点：" class="headerlink" title="3、覆盖equals方法需要注意几点："></a>3、覆盖equals方法需要注意几点：</h2><p>1.覆盖equals方法时总要覆盖hashCode方法。如果不这样做的话，就会违反 hashCode的通用约定  ==相等的对象必须具有相等的散列码hash code==），从而导致该类无法结合所有基于散列的集合一起正常运作，这类集合包括 HashMap HashSet</p>
+<p>2.不要企图让equals方法太过智能。</p>
+<p>3.不要把equals方法参数Object类型换成任何其他类型。因为Object类提供的equals方法的参数类型就是Object，如果把参数Object类型换成其他类型，就变成了equals方法的重载，而不是equals方法的重写。  所以可以添加@Override注解 来避免这种错误。</p>
+<h2 id="4、为什么覆盖equals方法时总要覆盖hashCode方法案例："><a href="#4、为什么覆盖equals方法时总要覆盖hashCode方法案例：" class="headerlink" title="4、为什么覆盖equals方法时总要覆盖hashCode方法案例："></a>4、为什么覆盖equals方法时总要覆盖hashCode方法案例：</h2><p>有一个矩形类Rectangle </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public class Rectangle &#123;</span><br><span class="line">    private int length;</span><br><span class="line">    private int width;</span><br><span class="line"> </span><br><span class="line">    public Rectangle(int length, int width) &#123;</span><br><span class="line">        this.length &#x3D; length;</span><br><span class="line">        this.width &#x3D; width;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>我想知道两个矩形是否是相等的，如果使用==运算符的话，比较的是rectangle1的引用和rectangle2的引用分别指向的对象在堆中存储的位置。两个对象是先后new出来的，所以肯定是在堆中有两个不同的对象，得到的结果就必然是false。</p>
+<p>我们的目的并不是想知道这两个引用是否是指向同一个对象，而是想知道这两个矩形的长宽是否相同，所以我们通过覆盖equals方法来实现。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public boolean equals(Object obj) &#123;</span><br><span class="line">    Rectangle o &#x3D; (Rectangle) obj;</span><br><span class="line">    if (length &#x3D;&#x3D; o.length)&#123;</span><br><span class="line">        if (width &#x3D;&#x3D; o.width)&#123;</span><br><span class="line">            return true;</span><br><span class="line">        &#125;else return false;</span><br><span class="line">    &#125; else if (width &#x3D;&#x3D; o.length) &#123;</span><br><span class="line">        if (length &#x3D;&#x3D; o.width) &#123;</span><br><span class="line">            return true;</span><br><span class="line">        &#125;else return false;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>rectangle1.equals(rectangle2)结果为true.<br>那我们为什么还要覆盖hashCode方法呢？</p>
+<p>如果这个矩形类是需要放进类似HashMap之类的基于哈希表来实现的容器中并作为key时，就有必要覆盖hashCode方法，按照我们自定的规则来得到一个矩形对象的hash值。（如果不指定，默认一般是通过将该对象的内部地址转换成一个整数来实现的）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HashMap&lt;Rectangle, String&gt; map &#x3D; new HashMap&lt;&gt;(16);</span><br><span class="line">map.put(rectangle1, &quot;nice&quot;);</span><br><span class="line">map.put(rectangle2, &quot;bad&quot;);</span><br><span class="line">&#x2F;&#x2F;map.size()为2.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>问题出现了：</p>
+<p>我们已经认为rectangle1和rectangle2在逻辑上是相同的了，也就是rectangle1和rectangle2是同一个key了，在put方法添加rectangle2的时候，“bad”理应覆盖掉“nice”，size应该为1，但事实却并发我们想的这样，==哈希表在计算数组下标的时候，是会调用此对象的hashCode方法，如果我们没有覆盖hashCode方法，计算hash值时则会将该对象的堆地址转换成一个整数hash值，这在很大概率上是会将rectangle1和rectangle2分配在两个不同的散列桶中。==</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public int hashCode() &#123;</span><br><span class="line">    &#x2F;&#x2F;以下的17、31都是任意指定大小的数字。</span><br><span class="line">    int result &#x3D; 17;</span><br><span class="line">    &#x2F;&#x2F;这里我简单指定面积相同的矩形，hashCode值就相同</span><br><span class="line">    result &#x3D; 31 * result + length*width;</span><br><span class="line">    return result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;覆盖了hashCode方法后，重新添加元素 这时map.size()为1.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>总结：需要做逻辑相等判断的类，覆盖equals方法，如果还需要在散列表（HashMap、HashSet）中作为key，需要覆盖hashcode方法。</p>
+<h3 id="hashCode与equals"><a href="#hashCode与equals" class="headerlink" title="hashCode与equals"></a>hashCode与equals</h3><p>hashCode()返回该对象的哈希码值；equals()返回两个对象是否相等。</p>
+<ul>
+<li>hashCode()相同，equals() 不一定为 true</li>
+</ul>
+<p>hash表的链表结构就是hashcode相同，但equals不同</p>
+<ul>
+<li>equals()相同，hashCode() 也不一定相同</li>
+</ul>
+<p>如果重写equals方法，没有重写hashCode的方法，就会出现不相等的情况。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/equals/" rel="tag"># equals</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/4%E3%80%81TypeHandler/" rel="prev" title="TypeHandler">
+      <i class="fa fa-chevron-left"></i> TypeHandler
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/JUC%E9%94%81/ReentrantLock/" rel="next" title="ReentrantLock">
+      ReentrantLock <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E4%B8%8D%E9%9C%80%E8%A6%81%E8%A6%86%E7%9B%96equals%E6%96%B9%E6%B3%95%E7%9A%84%E6%83%85%E5%86%B5"><span class="nav-number">1.</span> <span class="nav-text">1、不需要覆盖equals方法的情况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81%E8%A6%86%E7%9B%96equals%E6%96%B9%E6%B3%95%E7%9A%84%E6%83%85%E5%86%B5"><span class="nav-number">2.</span> <span class="nav-text">2、覆盖equals方法的情况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81%E8%A6%86%E7%9B%96equals%E6%96%B9%E6%B3%95%E9%9C%80%E8%A6%81%E6%B3%A8%E6%84%8F%E5%87%A0%E7%82%B9%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">3、覆盖equals方法需要注意几点：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%86%E7%9B%96equals%E6%96%B9%E6%B3%95%E6%97%B6%E6%80%BB%E8%A6%81%E8%A6%86%E7%9B%96hashCode%E6%96%B9%E6%B3%95%E6%A1%88%E4%BE%8B%EF%BC%9A"><span class="nav-number">4.</span> <span class="nav-text">4、为什么覆盖equals方法时总要覆盖hashCode方法案例：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#hashCode%E4%B8%8Eequals"><span class="nav-number">4.1.</span> <span class="nav-text">hashCode与equals</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

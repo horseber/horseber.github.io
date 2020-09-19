@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="案例支付宝在查询卡包中身份证证件时，用户需要每次输入查询密码。出于安全数据库是不会保存原始数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="可逆加密算法应用">
+<meta property="og:url" content="http://example.com/2020/08/23/Study%20notes/%E5%AF%86%E7%A0%81%E5%AD%A6/3%E3%80%81%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%BA%94%E7%94%A8/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="案例支付宝在查询卡包中身份证证件时，用户需要每次输入查询密码。出于安全数据库是不会保存原始数据">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-08-23T01:57:10.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:04:01.794Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="可逆加密算法应用">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/08/23/Study%20notes/%E5%AF%86%E7%A0%81%E5%AD%A6/3%E3%80%81%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%BA%94%E7%94%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>可逆加密算法应用 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/08/23/Study%20notes/%E5%AF%86%E7%A0%81%E5%AD%A6/3%E3%80%81%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%BA%94%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          可逆加密算法应用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-23 09:57:10" itemprop="dateCreated datePublished" datetime="2020-08-23T09:57:10+08:00">2020-08-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:04:01" itemprop="dateModified" datetime="2020-09-19T18:04:01+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/" itemprop="url" rel="index"><span itemprop="name">密码学</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">案例支付宝在查询卡包中身份证证件时，用户需要每次输入查询密码。出于安全数据库是不会保存原始数据</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>案例：支付宝在查询卡包中身份证证件时，用户需要每次输入查询密码。</p>
+<p>出于安全数据库是不会保存原始数据</p>
+<p>【用户服务】用户表保存三个字段：脱敏后的明文、密文和加密 ID</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;用户表</span><br><span class="line">@Data</span><br><span class="line">public class UserData &#123;</span><br><span class="line">    private Long id;&#x2F;&#x2F;数据库id</span><br><span class="line">    private String idcard;&#x2F;&#x2F;脱敏后的身份证5****************3</span><br><span class="line">    private Long idcardCipherId;&#x2F;&#x2F;身份证加密ID</span><br><span class="line">    private String idcardCipherText;&#x2F;&#x2F;身份证密文</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;用户DAO</span><br><span class="line">public interface UserRepository &#123;</span><br><span class="line">	UserData findByUserId(Long l);</span><br><span class="line"></span><br><span class="line">	UserData save(UserData userData);</span><br><span class="line">&#125;   </span><br></pre></td></tr></table></figure>
+<p>【加密服务】加密表保存：加密 ID、初始化向量和密钥（实现了密文和密钥分离保存）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;加密表</span><br><span class="line">@Data</span><br><span class="line">public class CipherData &#123;</span><br><span class="line">    @Id</span><br><span class="line">    @GeneratedValue(strategy &#x3D; AUTO)</span><br><span class="line">    private Long id;&#x2F;&#x2F;加密 ID</span><br><span class="line">    private String iv;&#x2F;&#x2F;初始化向量</span><br><span class="line">    private String secureKey;&#x2F;&#x2F;密钥</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;加密表DAO</span><br><span class="line">public interface CipherRepository &#123;</span><br><span class="line">	CipherData findById(long cipherId);</span><br><span class="line">	void save(CipherData cipherData);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意：==虽然【用户表】保存的脱敏后的数据，和密文，但加密时是拿原始idcard进行加密，【加密表】保存的是秘钥。所以数据库永远不会保存身份证的原始数据，但用户授权可以通过add等数据进行解密，得到原始身份证==。</p>
+<p>使用AES-256-GCM 的加密服务，包含下面的主要逻辑：</p>
+<ul>
+<li><p>加密时允许客户端传入一个 AAD（附加认证数据，可以理解为支付宝的登录密码） 用于认证，加密服务每次都会使用新生成的随机值作为密钥和初始化向量IV。</p>
+</li>
+<li><p>在加密后，加密服务密钥和初始化向量保存到数据库中，返回加密 ID 作为本次加密的标识。</p>
+</li>
+<li><p>应用解密时，需要提供加密 ID、密文和加密时的 AAD 来解密。加密服务使用加密 ID，从数据库查询出密钥和初始化向量。</p>
+</li>
+</ul>
+<p>经过这样的设计，二要素就比较安全了。黑客要查询用户二要素的话，需要同时拿到密文（保存在用户服务）、IV+ 密钥（保存在加密服务）、AAD（客户端）。而这三者可能由三方掌管，要全部拿到比较困难。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">@Slf4j</span><br><span class="line">@Controller</span><br><span class="line">public class UserController &#123;</span><br><span class="line"></span><br><span class="line">	@Autowired</span><br><span class="line">	private UserRepository userRepository;</span><br><span class="line"></span><br><span class="line">	@Autowired</span><br><span class="line">	private CipherService cipherService;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;加密</span><br><span class="line">	@GetMapping(&quot;encrypt&quot;)</span><br><span class="line">	public UserData encrypt(String idCard, String aad) throws Exception &#123;</span><br><span class="line">		UserData userData &#x3D; new UserData();</span><br><span class="line">		&#x2F;&#x2F;用户表只保存脱敏后的身份证号</span><br><span class="line">		userData.setIdcard(DataDesensitizationUtil.desensitizedIdNumber(idCard));</span><br><span class="line">		&#x2F;&#x2F;【加密服务】对原始身份证进行加密</span><br><span class="line">		CipherResult cipherResultIdCard &#x3D; cipherService.encrypt(idCard, aad);</span><br><span class="line">		userData.setIdcardCipherId(cipherResultIdCard.getId());&#x2F;&#x2F;加密id</span><br><span class="line">		userData.setIdcardCipherText(cipherResultIdCard.getCipherText());&#x2F;&#x2F;加密密文</span><br><span class="line">		&#x2F;&#x2F;脱敏后数据，密文、和加密id保存至用户表</span><br><span class="line">		return userRepository.save(userData);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;解密</span><br><span class="line">	@GetMapping(&quot;decrypt&quot;)</span><br><span class="line">	public String decrypt(String aad) throws Exception &#123;</span><br><span class="line">		&#x2F;&#x2F;查询用户信息</span><br><span class="line">		UserData userData &#x3D; userRepository.findByUserId(null);</span><br><span class="line">		Long idcardCipherId &#x3D; userData.getIdcardCipherId();&#x2F;&#x2F;身份证加密ID</span><br><span class="line">		String idcardCipherText &#x3D; userData.getIdcardCipherText();&#x2F;&#x2F;身份证密文</span><br><span class="line">		&#x2F;&#x2F;加密 ID、密文和加密时的 AAD三个数据方可解密</span><br><span class="line">		String decrypt &#x3D; cipherService.decrypt(idcardCipherId, idcardCipherText, aad);</span><br><span class="line">		return decrypt;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">import org.apache.commons.lang3.StringUtils;</span><br><span class="line">import org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line">import org.springframework.stereotype.Service;</span><br><span class="line"></span><br><span class="line">import javax.crypto.Cipher;</span><br><span class="line">import javax.crypto.KeyGenerator;</span><br><span class="line">import javax.crypto.SecretKey;</span><br><span class="line">import javax.crypto.spec.GCMParameterSpec;</span><br><span class="line">import javax.crypto.spec.SecretKeySpec;</span><br><span class="line">import java.security.SecureRandom;</span><br><span class="line">import java.util.Base64;</span><br><span class="line">import java.util.UUID;</span><br><span class="line"></span><br><span class="line">@Service</span><br><span class="line">public class CipherService &#123;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 AES_KEY_SIZE秘钥长度&gt;128位时</span><br><span class="line">	 cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmParameterSpec);</span><br><span class="line">	 会抛出java.security.InvalidKeyException: Illegal key size 异常. 因为密钥长度是受限制的, java运行时环境读到的是受限的policy文件. 文件位于$&#123;java_home&#125;&#x2F;jre&#x2F;lib&#x2F;security, 这种限制是因为美国对软件出口的控制.</span><br><span class="line"></span><br><span class="line">	 处理办法: 在官方网站下载JCE无限制权限策略文件</span><br><span class="line"></span><br><span class="line">	 JDK7的下载地址: http:&#x2F;&#x2F;www.oracle.com&#x2F;technetwork&#x2F;java&#x2F;javase&#x2F;downloads&#x2F;jce-7-download-432124.html</span><br><span class="line">	 JDK8的下载地址: http:&#x2F;&#x2F;www.oracle.com&#x2F;technetwork&#x2F;java&#x2F;javase&#x2F;downloads&#x2F;jce8-download-2133166.html</span><br><span class="line">	 下载后解压，可以看到local_policy.jar和US_export_policy.jar以及readme.txt</span><br><span class="line">	 如果安装了JRE，将两个jar文件放到%JRE_HOME%\lib\security目录下覆盖原来的文件</span><br><span class="line">	 如果安装了JDK，还要将两个jar文件也放到%JDK_HOME%\jre\lib\security目录下覆盖原来文件</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	&#x2F;&#x2F;密钥长度</span><br><span class="line">	public static final int AES_KEY_SIZE &#x3D; 128;</span><br><span class="line">	&#x2F;&#x2F;初始化向量长度</span><br><span class="line">	public static final int GCM_IV_LENGTH &#x3D; 12;</span><br><span class="line">	&#x2F;&#x2F;GCM身份认证Tag长度</span><br><span class="line">	public static final int GCM_TAG_LENGTH &#x3D; 16;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	@Autowired</span><br><span class="line">	private CipherRepository cipherRepository;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;内部加密方法</span><br><span class="line">	public static byte[] doEncrypt(byte[] plaintext, SecretKey key, byte[] iv, byte[] aad) throws Exception &#123;</span><br><span class="line">		&#x2F;&#x2F;加密算法</span><br><span class="line">		Cipher cipher &#x3D; Cipher.getInstance(&quot;AES&#x2F;GCM&#x2F;NoPadding&quot;);</span><br><span class="line">		&#x2F;&#x2F;Key规范</span><br><span class="line">		SecretKeySpec keySpec &#x3D; new SecretKeySpec(key.getEncoded(), &quot;AES&quot;);</span><br><span class="line">		&#x2F;&#x2F;GCM参数规范</span><br><span class="line">		GCMParameterSpec gcmParameterSpec &#x3D; new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);</span><br><span class="line">		&#x2F;&#x2F;加密模式</span><br><span class="line">		cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmParameterSpec);</span><br><span class="line">		&#x2F;&#x2F;设置aad</span><br><span class="line">		if (aad !&#x3D; null)</span><br><span class="line">			cipher.updateAAD(aad);</span><br><span class="line">		&#x2F;&#x2F;加密</span><br><span class="line">		byte[] cipherText &#x3D; cipher.doFinal(plaintext);</span><br><span class="line">		return cipherText;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;内部解密方法</span><br><span class="line">	public static String doDecrypt(byte[] cipherText, SecretKey key, byte[] iv, byte[] aad) throws Exception &#123;</span><br><span class="line">		&#x2F;&#x2F;加密算法</span><br><span class="line">		Cipher cipher &#x3D; Cipher.getInstance(&quot;AES&#x2F;GCM&#x2F;NoPadding&quot;);</span><br><span class="line">		&#x2F;&#x2F;Key规范</span><br><span class="line">		SecretKeySpec keySpec &#x3D; new SecretKeySpec(key.getEncoded(), &quot;AES&quot;);</span><br><span class="line">		&#x2F;&#x2F;GCM参数规范</span><br><span class="line">		GCMParameterSpec gcmParameterSpec &#x3D; new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);</span><br><span class="line">		&#x2F;&#x2F;解密模式</span><br><span class="line">		cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);</span><br><span class="line">		&#x2F;&#x2F;设置aad</span><br><span class="line">		if (aad !&#x3D; null)</span><br><span class="line">			cipher.updateAAD(aad);</span><br><span class="line">		&#x2F;&#x2F;解密</span><br><span class="line">		byte[] decryptedText &#x3D; cipher.doFinal(cipherText);</span><br><span class="line">		return new String(decryptedText);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;加密入口</span><br><span class="line">	public CipherResult encrypt(String data, String aad) throws Exception &#123;</span><br><span class="line">		&#x2F;&#x2F;加密结果</span><br><span class="line">		CipherResult encryptResult &#x3D; new CipherResult();</span><br><span class="line">		&#x2F;&#x2F;密钥生成器</span><br><span class="line">		KeyGenerator keyGenerator &#x3D; KeyGenerator.getInstance(&quot;AES&quot;);</span><br><span class="line">		&#x2F;&#x2F;生成密钥</span><br><span class="line">		keyGenerator.init(AES_KEY_SIZE);</span><br><span class="line">		SecretKey key &#x3D; keyGenerator.generateKey();</span><br><span class="line">		&#x2F;&#x2F;IV数据</span><br><span class="line">		byte[] iv &#x3D; new byte[GCM_IV_LENGTH];</span><br><span class="line">		&#x2F;&#x2F;随机生成IV</span><br><span class="line">		SecureRandom random &#x3D; new SecureRandom();</span><br><span class="line">		random.nextBytes(iv);</span><br><span class="line">		&#x2F;&#x2F;处理aad</span><br><span class="line">		byte[] aaddata &#x3D; null;</span><br><span class="line">		if (!StringUtils.isEmpty(aad))</span><br><span class="line">			aaddata &#x3D; aad.getBytes();</span><br><span class="line">		&#x2F;&#x2F;获得密文</span><br><span class="line">		encryptResult.setCipherText(Base64.getEncoder().encodeToString(doEncrypt(data.getBytes(), key, iv, aaddata)));</span><br><span class="line">		&#x2F;&#x2F;加密上下文数据</span><br><span class="line">		CipherData cipherData &#x3D; new CipherData();</span><br><span class="line">		&#x2F;&#x2F;保存IV</span><br><span class="line">		cipherData.setIv(Base64.getEncoder().encodeToString(iv));</span><br><span class="line">		&#x2F;&#x2F;保存密钥</span><br><span class="line">		cipherData.setSecureKey(Base64.getEncoder().encodeToString(key.getEncoded()));</span><br><span class="line">		System.err.println(cipherData);</span><br><span class="line">		cipherRepository.save(cipherData);</span><br><span class="line">		&#x2F;&#x2F;返回本地加密ID</span><br><span class="line">		encryptResult.setId(cipherData.getId());</span><br><span class="line">		return encryptResult;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;解密入口</span><br><span class="line">	public String decrypt(long cipherId, String cipherText, String aad) throws Exception &#123;</span><br><span class="line">		&#x2F;&#x2F;使用加密ID找到加密上下文数据</span><br><span class="line">		CipherData cipherData &#x3D; cipherRepository.findById(cipherId);</span><br><span class="line">		if (cipherData &#x3D;&#x3D; null) &#123;</span><br><span class="line">			throw new IllegalArgumentException(&quot;invlaid cipherId&quot;);</span><br><span class="line">		&#125;</span><br><span class="line">		&#x2F;&#x2F;加载密钥</span><br><span class="line">		byte[] decodedKey &#x3D; Base64.getDecoder().decode(cipherData.getSecureKey());</span><br><span class="line">		&#x2F;&#x2F;初始化密钥</span><br><span class="line">		SecretKey originalKey &#x3D; new SecretKeySpec(decodedKey, 0, decodedKey.length, &quot;AES&quot;);</span><br><span class="line">		&#x2F;&#x2F;加载IV</span><br><span class="line">		byte[] decodedIv &#x3D; Base64.getDecoder().decode(cipherData.getIv());</span><br><span class="line">		&#x2F;&#x2F;处理aad</span><br><span class="line">		byte[] aaddata &#x3D; null;</span><br><span class="line">		if (!StringUtils.isEmpty(aad))</span><br><span class="line">			aaddata &#x3D; aad.getBytes();</span><br><span class="line">		&#x2F;&#x2F;解密</span><br><span class="line">		return doDecrypt(Base64.getDecoder().decode(cipherText.getBytes()), originalKey, decodedIv, aaddata);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	public static void main(String[] args) throws Exception &#123;</span><br><span class="line">		String idCard &#x3D; &quot;511000199801019911&quot;;</span><br><span class="line">		String add &#x3D; UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;);</span><br><span class="line">		CipherService cipherService &#x3D; new CipherService();</span><br><span class="line">		CipherResult cipherResult &#x3D; cipherService.encrypt(idCard, add);</span><br><span class="line">		System.err.println(&quot;idCard:&quot; + idCard);</span><br><span class="line">		System.err.println(&quot;add:&quot; + add);</span><br><span class="line">		System.err.println(&quot;AES-256-GCM加密后密文id:&quot; + cipherResult.getId() + &quot; 密文:&quot; + cipherResult.getCipherText());</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line">*加密结果</span><br><span class="line">*&#x2F;</span><br><span class="line">public class CipherResult &#123;</span><br><span class="line">	private Long id;&#x2F;&#x2F;加密id</span><br><span class="line">	private String cipherText;&#x2F;&#x2F;密文</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%BA%94%E7%94%A8/" rel="tag"># 可逆加密算法应用</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/16/Study%20notes/3%E3%80%81java/3%E3%80%81java%E5%9F%BA%E7%A1%80%E7%AF%87/1%E3%80%81%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/9%E3%80%81java%E5%85%B3%E9%94%AE%E5%AD%97/" rel="prev" title="java关键字">
+      <i class="fa fa-chevron-left"></i> java关键字
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/23/Study%20notes/%E5%AF%86%E7%A0%81%E5%AD%A6/2%E3%80%81%E4%B8%8D%E5%8F%AF%E9%80%86%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%BA%94%E7%94%A8/" rel="next" title="不可逆加密算法应用">
+      不可逆加密算法应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

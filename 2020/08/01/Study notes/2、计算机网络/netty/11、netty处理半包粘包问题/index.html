@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="无论是服务端还是客户端，当我们读取或者发送消息的时候，都需要考虑TCP底层的粘包&#x2F;拆包机制。TCP是个“流”协议，所谓流，就是没有界限的一串数据。大家可以想想河里的流水，是连成一片的，其间并没有分界线。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="netty处理半包粘包问题">
+<meta property="og:url" content="http://example.com/2020/08/01/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/11%E3%80%81netty%E5%A4%84%E7%90%86%E5%8D%8A%E5%8C%85%E7%B2%98%E5%8C%85%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="无论是服务端还是客户端，当我们读取或者发送消息的时候，都需要考虑TCP底层的粘包&#x2F;拆包机制。TCP是个“流”协议，所谓流，就是没有界限的一串数据。大家可以想想河里的流水，是连成一片的，其间并没有分界线。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-08-01T02:45:48.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:54.992Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="netty处理半包粘包问题">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/08/01/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/11%E3%80%81netty%E5%A4%84%E7%90%86%E5%8D%8A%E5%8C%85%E7%B2%98%E5%8C%85%E9%97%AE%E9%A2%98/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>netty处理半包粘包问题 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/08/01/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/11%E3%80%81netty%E5%A4%84%E7%90%86%E5%8D%8A%E5%8C%85%E7%B2%98%E5%8C%85%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          netty处理半包粘包问题
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-01 10:45:48" itemprop="dateCreated datePublished" datetime="2020-08-01T10:45:48+08:00">2020-08-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:54" itemprop="dateModified" datetime="2020-09-19T18:03:54+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/netty/" itemprop="url" rel="index"><span itemprop="name">netty</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">无论是服务端还是客户端，当我们读取或者发送消息的时候，都需要考虑TCP底层的粘包/拆包机制。TCP是个“流”协议，所谓流，就是没有界限的一串数据。大家可以想想河里的流水，是连成一片的，其间并没有分界线。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>无论是服务端还是客户端，当我们读取或者发送消息的时候，都需要考虑TCP底层的粘包/拆包机制。</p>
+<p>TCP是个“流”协议，所谓流，就是没有界限的一串数据。大家可以想想河里的流水，是连成一片的，其间并没有分界线。</p>
+<p>==注意：==<br>对于TCP数据，应用层就不需要考虑这个问题了，因为传输层已经帮我们做了。在建立连接的三次握手的过程中，连接双方会相互通告MSS（Maximum Segment Size，最大报文段长度），MSS一般是MTU—IP首部（20）—TCP首部（20），每次发送的TCP数据都不会超过双方MSS的最小值，所以就保证了IP数据报不会超过MTU，避免了IP分片。</p>
+<h5 id="拆包、粘包场景"><a href="#拆包、粘包场景" class="headerlink" title="拆包、粘包场景"></a>拆包、粘包场景</h5><p>假设客户端分别发送了两个数据包D1和D2给服务端，由于服务端一次读取到的字节数是不确定的，故可能存在以下5种情况。</p>
+<ul>
+<li><p>（1）服务端分两次读取到了两个独立的数据包，分别是D1和D2，没有粘包和拆包；</p>
+</li>
+<li><p>（2）服务端一次接收到了两个数据包，D1和D2粘合在一起，被称为TCP粘包；</p>
+</li>
+<li><p>（3）服务端分两次读取到了两个数据包，第一次读取到了完整的D1包和D2包的部分内容，第二次读取到了D2包的剩余内容，这被称为TCP拆包；</p>
+</li>
+<li><p>（4）服务端分两次读取到了两个数据包，第一次读取到了D1包的部分内容D1_1，第二次读取到了D1包的剩余内容D1_2和D2包的整包。</p>
+</li>
+<li><p>(5)如果此时服务端TCP接收滑窗非常小，而数据包D1和D2比较大，很有可能会发生第五种可能，即服务端分多次才能将D1和D2包接收完全，期间发生多次拆包。</p>
+</li>
+</ul>
+<h5 id="TCP粘包-拆包发生的根本原因【流式协议，消息无边界】"><a href="#TCP粘包-拆包发生的根本原因【流式协议，消息无边界】" class="headerlink" title="TCP粘包/拆包发生的根本原因【流式协议，消息无边界】"></a>TCP粘包/拆包发生的根本原因【流式协议，消息无边界】</h5><p>粘包主要原因</p>
+<ul>
+<li>发送方每次写入数据 &lt; 套接字缓冲区大小</li>
+<li>接收方读取套接字缓冲区数据不够及时</li>
+</ul>
+<p>半包的主要原因：</p>
+<ul>
+<li>发送方写入数据 &gt; 套接字缓冲区大小</li>
+<li>发送的数据大于协议的 MTU（Maximum Transmission Unit，最大传输单元），必须拆包</li>
+</ul>
+<h5 id="解决问题的根本手段：找出消息的边界进行封帧："><a href="#解决问题的根本手段：找出消息的边界进行封帧：" class="headerlink" title="解决问题的根本手段：找出消息的边界进行封帧："></a>解决问题的根本手段：找出消息的边界进行封帧：</h5><p>（1）方式一：消息定长，例如每个报文的大小为固定长度200字节，如果不够，空位补空格；【空间浪费，不推荐】</p>
+<p>（2）方式二：在包尾增加回车换行符进行分割，例如FTP协议；【推荐】</p>
+<p>（3）方式三：将消息分为消息头和消息体，消息头中包含表示消息总长度（或者消息体长度）的字段，通常设计思路为消息头的第一个字段使用int32来表示消息的总长度；【推荐+】</p>
+<h5 id="Netty处理粘包、半包"><a href="#Netty处理粘包、半包" class="headerlink" title="Netty处理粘包、半包"></a>Netty处理粘包、半包</h5><p>Netty针对三种封帧方式提供了对应的处理器：</p>
+<ul>
+<li>LineBasedFrameDecoder：通过换行符来区分每个包</li>
+<li>DelimiterBasedFrameDecoder：通过特殊分隔符来区分每个包</li>
+<li>FixedLengthFrameDecoder：通过定长的报文来分包</li>
+<li>LengthFieldBasedFrameDecoder：跟据包头部定义的长度来区分包</li>
+</ul>
+<p>服务端添加解码器：DelimiterBasedFrameDecoder</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ByteBuf delimiter &#x3D; Unpooled.copiedBuffer(&quot;&amp;&quot;.getBytes());</span><br><span class="line">ch.pipeline().addLast(new DelimiterBasedFrameDecoder(1024,delimiter));</span><br><span class="line">&#x2F;&#x2F;1024表示单条消息的最大长度，解码器在查找分隔符的时候，达到该长度还没找到的话会抛异常</span><br><span class="line">ch.pipeline().addLast(new StringDecoder());</span><br><span class="line">ch.pipeline().addLast(new StringEncoder());</span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="Netty处理粘包、半包的源码解析"><a href="#Netty处理粘包、半包的源码解析" class="headerlink" title="Netty处理粘包、半包的源码解析"></a>Netty处理粘包、半包的源码解析</h5><p>Netty处理粘包、半包的源码——-解码核心工作流程</p>
+<p>处理器都拥有一个共同的父类：ByteToMessageDecoder</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter &#123;</span><br><span class="line">    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception &#123;</span><br><span class="line">		&#x2F;&#x2F;msg相当于我们的消息数据</span><br><span class="line">        if (msg instanceof ByteBuf) &#123;</span><br><span class="line">            CodecOutputList out &#x3D; CodecOutputList.newInstance();</span><br><span class="line">            boolean var10 &#x3D; false;</span><br><span class="line"></span><br><span class="line">            try &#123;</span><br><span class="line">                var10 &#x3D; true;</span><br><span class="line">				</span><br><span class="line">				&#x2F;&#x2F;1、把数据转换成data,,</span><br><span class="line">                ByteBuf data &#x3D; (ByteBuf)msg;</span><br><span class="line">				&#x2F;&#x2F;2、cumulation是数据积累器，用来积累数据。判断是否为空。</span><br><span class="line">				&#x2F;&#x2F;第一次的时候肯定为null  所以first是true，直接把data数据给了cumulation。再接下来就是解码：</span><br><span class="line">                this.first &#x3D; this.cumulation &#x3D;&#x3D; null;</span><br><span class="line">                if (this.first) &#123;</span><br><span class="line">                    this.cumulation &#x3D; data;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">					&#x2F;&#x2F;3、具体数据解码。底层调用对应的解码器的decode方法</span><br><span class="line">                    this.cumulation &#x3D; this.cumulator.cumulate(ctx.alloc(), this.cumulation, data);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                this.callDecode(ctx, this.cumulation, out);</span><br><span class="line">                var10 &#x3D; false;</span><br><span class="line">            &#125; catch (DecoderException var11) &#123;</span><br><span class="line">                throw var11;</span><br><span class="line">            &#125; catch (Exception var12) &#123;</span><br><span class="line">                throw new DecoderException(var12);</span><br><span class="line">            &#125; finally &#123;</span><br><span class="line">                if (var10) &#123;</span><br><span class="line">                    if (this.cumulation !&#x3D; null &amp;&amp; !this.cumulation.isReadable()) &#123;</span><br><span class="line">                        this.numReads &#x3D; 0;</span><br><span class="line">                        this.cumulation.release();</span><br><span class="line">                        this.cumulation &#x3D; null;</span><br><span class="line">                    &#125; else if (++this.numReads &gt;&#x3D; this.discardAfterReads) &#123;</span><br><span class="line">                        this.numReads &#x3D; 0;</span><br><span class="line">                        this.discardSomeReadBytes();</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    int size &#x3D; out.size();</span><br><span class="line">                    this.decodeWasNull &#x3D; !out.insertSinceRecycled();</span><br><span class="line">                    fireChannelRead(ctx, out, size);</span><br><span class="line">                    out.recycle();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if (this.cumulation !&#x3D; null &amp;&amp; !this.cumulation.isReadable()) &#123;</span><br><span class="line">                this.numReads &#x3D; 0;</span><br><span class="line">                this.cumulation.release();</span><br><span class="line">                this.cumulation &#x3D; null;</span><br><span class="line">            &#125; else if (++this.numReads &gt;&#x3D; this.discardAfterReads) &#123;</span><br><span class="line">                this.numReads &#x3D; 0;</span><br><span class="line">                this.discardSomeReadBytes();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            int size &#x3D; out.size();</span><br><span class="line">            this.decodeWasNull &#x3D; !out.insertSinceRecycled();</span><br><span class="line">            fireChannelRead(ctx, out, size);</span><br><span class="line">            out.recycle();</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            ctx.fireChannelRead(msg);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>FixedLengthFrameDecoder的decode为例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">protected Object decode(</span><br><span class="line">        @SuppressWarnings(&quot;UnusedParameters&quot;) ChannelHandlerContext ctx, ByteBuf in) throws Exception &#123;</span><br><span class="line">    if (in.readableBytes() &lt; frameLength) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return in.readRetainedSlice(frameLength);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/netty%E5%A4%84%E7%90%86%E5%8D%8A%E5%8C%85%E7%B2%98%E5%8C%85%E9%97%AE%E9%A2%98/" rel="tag"># netty处理半包粘包问题</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/01/Study%20notes/8%E3%80%81%E5%B7%A5%E5%85%B7%E7%AF%87/3%E3%80%81%E9%A1%B9%E7%9B%AE%E6%9E%84%E5%BB%BA%E5%B7%A5%E5%85%B7/maven/2%E3%80%81maven/" rel="prev" title="maven">
+      <i class="fa fa-chevron-left"></i> maven
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/01/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/TCP/2%E3%80%81TCP%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/" rel="next" title="TCP三次握手四次挥手">
+      TCP三次握手四次挥手 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%8B%86%E5%8C%85%E3%80%81%E7%B2%98%E5%8C%85%E5%9C%BA%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">拆包、粘包场景</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TCP%E7%B2%98%E5%8C%85-%E6%8B%86%E5%8C%85%E5%8F%91%E7%94%9F%E7%9A%84%E6%A0%B9%E6%9C%AC%E5%8E%9F%E5%9B%A0%E3%80%90%E6%B5%81%E5%BC%8F%E5%8D%8F%E8%AE%AE%EF%BC%8C%E6%B6%88%E6%81%AF%E6%97%A0%E8%BE%B9%E7%95%8C%E3%80%91"><span class="nav-number">2.</span> <span class="nav-text">TCP粘包&#x2F;拆包发生的根本原因【流式协议，消息无边界】</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E9%97%AE%E9%A2%98%E7%9A%84%E6%A0%B9%E6%9C%AC%E6%89%8B%E6%AE%B5%EF%BC%9A%E6%89%BE%E5%87%BA%E6%B6%88%E6%81%AF%E7%9A%84%E8%BE%B9%E7%95%8C%E8%BF%9B%E8%A1%8C%E5%B0%81%E5%B8%A7%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">解决问题的根本手段：找出消息的边界进行封帧：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Netty%E5%A4%84%E7%90%86%E7%B2%98%E5%8C%85%E3%80%81%E5%8D%8A%E5%8C%85"><span class="nav-number">4.</span> <span class="nav-text">Netty处理粘包、半包</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Netty%E5%A4%84%E7%90%86%E7%B2%98%E5%8C%85%E3%80%81%E5%8D%8A%E5%8C%85%E7%9A%84%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90"><span class="nav-number">5.</span> <span class="nav-text">Netty处理粘包、半包的源码解析</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

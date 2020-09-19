@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="protectedvoidpopulateBean(StringbeanName,RootBeanDefinitionmbd,BeanWrapperbw){">
+<meta property="og:type" content="article">
+<meta property="og:title" content="bean属性填充">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/IOC/4%E3%80%81bean%E5%B1%9E%E6%80%A7%E5%A1%AB%E5%85%85/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="protectedvoidpopulateBean(StringbeanName,RootBeanDefinitionmbd,BeanWrapperbw){">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:30.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:57.895Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="bean属性填充">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/IOC/4%E3%80%81bean%E5%B1%9E%E6%80%A7%E5%A1%AB%E5%85%85/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>bean属性填充 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/IOC/4%E3%80%81bean%E5%B1%9E%E6%80%A7%E5%A1%AB%E5%85%85/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          bean属性填充
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:30" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:30+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:57" itemprop="dateModified" datetime="2020-09-19T18:03:57+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/IOC/" itemprop="url" rel="index"><span itemprop="name">IOC</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">protectedvoidpopulateBean(StringbeanName,RootBeanDefinitionmbd,BeanWrapperbw){</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line">protected void populateBean(String beanName, RootBeanDefinition mbd, BeanWrapper bw) &#123;</span><br><span class="line">    &#x2F;&#x2F; 获取属性列表</span><br><span class="line">    PropertyValues pvs &#x3D; mbd.getPropertyValues();</span><br><span class="line"></span><br><span class="line">    if (bw &#x3D;&#x3D; null) &#123;</span><br><span class="line">        if (!pvs.isEmpty()) &#123;</span><br><span class="line">            throw new BeanCreationException(</span><br><span class="line">                    mbd.getResourceDescription(), beanName, &quot;Cannot apply property values to null instance&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        else &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    boolean continueWithPropertyPopulation &#x3D; true;</span><br><span class="line">    &#x2F;*</span><br><span class="line">     * 在属性被填充前，给 InstantiationAwareBeanPostProcessor 类型的后置处理器一个修改 </span><br><span class="line">     * bean 状态的机会。关于这段后置引用，官方的解释是：让用户可以自定义属性注入。比如用户实现一</span><br><span class="line">     * 个 InstantiationAwareBeanPostProcessor 类型的后置处理器，并通过 </span><br><span class="line">     * postProcessAfterInstantiation 方法向 bean 的成员变量注入自定义的信息。当然，如果无</span><br><span class="line">     * 特殊需求，直接使用配置中的信息注入即可。另外，Spring 并不建议大家直接实现 </span><br><span class="line">     * InstantiationAwareBeanPostProcessor 接口，如果想实现这种类型的后置处理器，更建议</span><br><span class="line">     * 通过继承 InstantiationAwareBeanPostProcessorAdapter 抽象类实现自定义后置处理器。</span><br><span class="line">     *&#x2F;</span><br><span class="line">    if (!mbd.isSynthetic() &amp;&amp; hasInstantiationAwareBeanPostProcessors()) &#123;</span><br><span class="line">        for (BeanPostProcessor bp : getBeanPostProcessors()) &#123;</span><br><span class="line">            if (bp instanceof InstantiationAwareBeanPostProcessor) &#123;</span><br><span class="line">                InstantiationAwareBeanPostProcessor ibp &#x3D; (InstantiationAwareBeanPostProcessor) bp;</span><br><span class="line">                if (!ibp.postProcessAfterInstantiation(bw.getWrappedInstance(), beanName)) &#123;</span><br><span class="line">                    continueWithPropertyPopulation &#x3D; false;</span><br><span class="line">                    break;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;* </span><br><span class="line">     * 如果上面设置 continueWithPropertyPopulation &#x3D; false，表明用户可能已经自己填充了</span><br><span class="line">     * bean 的属性，不需要 Spring 帮忙填充了。此时直接返回即可</span><br><span class="line">     *&#x2F;</span><br><span class="line">    if (!continueWithPropertyPopulation) &#123;</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 根据名称或类型注入依赖</span><br><span class="line">    if (mbd.getResolvedAutowireMode() &#x3D;&#x3D; RootBeanDefinition.AUTOWIRE_BY_NAME ||</span><br><span class="line">            mbd.getResolvedAutowireMode() &#x3D;&#x3D; RootBeanDefinition.AUTOWIRE_BY_TYPE) &#123;</span><br><span class="line">        MutablePropertyValues newPvs &#x3D; new MutablePropertyValues(pvs);</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 通过属性名称注入依赖</span><br><span class="line">        if (mbd.getResolvedAutowireMode() &#x3D;&#x3D; RootBeanDefinition.AUTOWIRE_BY_NAME) &#123;</span><br><span class="line">            autowireByName(beanName, mbd, bw, newPvs);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 通过属性类型注入依赖</span><br><span class="line">        if (mbd.getResolvedAutowireMode() &#x3D;&#x3D; RootBeanDefinition.AUTOWIRE_BY_TYPE) &#123;</span><br><span class="line">            autowireByType(beanName, mbd, bw, newPvs);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        pvs &#x3D; newPvs;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    boolean hasInstAwareBpps &#x3D; hasInstantiationAwareBeanPostProcessors();</span><br><span class="line">    boolean needsDepCheck &#x3D; (mbd.getDependencyCheck() !&#x3D; RootBeanDefinition.DEPENDENCY_CHECK_NONE);</span><br><span class="line"></span><br><span class="line">    &#x2F;*</span><br><span class="line">     * 这里又是一种后置处理，用于在 Spring 填充属性到 bean 对象前，对属性的值进行相应的处理，</span><br><span class="line">     * 比如可以修改某些属性的值。这时注入到 bean 中的值就不是配置文件中的内容了，</span><br><span class="line">     * 而是经过后置处理器修改后的内容</span><br><span class="line">     *&#x2F; </span><br><span class="line">    if (hasInstAwareBpps || needsDepCheck) &#123;</span><br><span class="line">        PropertyDescriptor[] filteredPds &#x3D; filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);</span><br><span class="line">        if (hasInstAwareBpps) &#123;</span><br><span class="line">            for (BeanPostProcessor bp : getBeanPostProcessors()) &#123;</span><br><span class="line">                if (bp instanceof InstantiationAwareBeanPostProcessor) &#123;</span><br><span class="line">                    InstantiationAwareBeanPostProcessor ibp &#x3D; (InstantiationAwareBeanPostProcessor) bp;</span><br><span class="line">                    &#x2F;&#x2F; 对属性进行后置处理</span><br><span class="line">                    pvs &#x3D; ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);</span><br><span class="line">                    if (pvs &#x3D;&#x3D; null) &#123;</span><br><span class="line">                        return;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if (needsDepCheck) &#123;</span><br><span class="line">            checkDependencies(beanName, mbd, filteredPds, pvs);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 应用属性值到 bean 对象中</span><br><span class="line">    applyPropertyValues(beanName, mbd, bw, pvs);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>获取属性列表 pvs</li>
+<li>在属性被填充到 bean 前，应用后置处理自定义属性填充</li>
+<li>根据名称或类型解析相关依赖</li>
+<li>再次应用后置处理，用于动态修改属性列表 pvs 的内容</li>
+<li>将属性应用到 bean 对象中</li>
+</ol>
+<h3 id="autowireByName"><a href="#autowireByName" class="headerlink" title="autowireByName"></a>autowireByName</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">protected void autowireByName(</span><br><span class="line">        String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;*</span><br><span class="line">     * 获取非简单类型属性的名称，且该属性未被配置在配置文件中。这里从反面解释一下什么是&quot;非简单类型&quot;</span><br><span class="line">     * 属性，我们先来看看 Spring 认为的&quot;简单类型&quot;属性有哪些，如下：</span><br><span class="line">     *   1. CharSequence 接口的实现类，比如 String</span><br><span class="line">     *   2. Enum</span><br><span class="line">     *   3. Date</span><br><span class="line">     *   4. URI&#x2F;URL</span><br><span class="line">     *   5. Number 的继承类，比如 Integer&#x2F;Long</span><br><span class="line">     *   6. byte&#x2F;short&#x2F;int... 等基本类型</span><br><span class="line">     *   7. Locale</span><br><span class="line">     *   8. 以上所有类型的数组形式，比如 String[]、Date[]、int[] 等等</span><br><span class="line">     * </span><br><span class="line">     * 除了要求非简单类型的属性外，还要求属性未在配置文件中配置过，也就是 pvs.contains(pd.getName()) &#x3D; false。</span><br><span class="line">     *&#x2F;</span><br><span class="line">    String[] propertyNames &#x3D; unsatisfiedNonSimpleProperties(mbd, bw);</span><br><span class="line">    for (String propertyName : propertyNames) &#123;</span><br><span class="line">        &#x2F;&#x2F; 检测是否存在与 propertyName 相关的 bean 或 BeanDefinition。若存在，则调用 BeanFactory.getBean 方法获取 bean 实例</span><br><span class="line">        if (containsBean(propertyName)) &#123;</span><br><span class="line">            &#x2F;&#x2F; 从容器中获取相应的 bean 实例</span><br><span class="line">            Object bean &#x3D; getBean(propertyName);</span><br><span class="line">            &#x2F;&#x2F; 将解析出的 bean 存入到属性值列表（pvs）中</span><br><span class="line">            pvs.add(propertyName, bean);</span><br><span class="line">            registerDependentBean(propertyName, beanName);</span><br><span class="line">            if (logger.isDebugEnabled()) &#123;</span><br><span class="line">                logger.debug(&quot;Added autowiring by name from bean name &#39;&quot; + beanName +</span><br><span class="line">                        &quot;&#39; via property &#39;&quot; + propertyName + &quot;&#39; to bean named &#39;&quot; + propertyName + &quot;&#39;&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        else &#123;</span><br><span class="line">            if (logger.isTraceEnabled()) &#123;</span><br><span class="line">                logger.trace(&quot;Not autowiring property &#39;&quot; + propertyName + &quot;&#39; of bean &#39;&quot; + beanName +</span><br><span class="line">                        &quot;&#39; by name: no matching bean found&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="autowireByType"><a href="#autowireByType" class="headerlink" title="autowireByType"></a>autowireByType</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">protected void autowireByType(</span><br><span class="line">        String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) &#123;</span><br><span class="line"></span><br><span class="line">    TypeConverter converter &#x3D; getCustomTypeConverter();</span><br><span class="line">    if (converter &#x3D;&#x3D; null) &#123;</span><br><span class="line">        converter &#x3D; bw;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Set&lt;String&gt; autowiredBeanNames &#x3D; new LinkedHashSet&lt;String&gt;(4);</span><br><span class="line">    &#x2F;&#x2F; 获取非简单类型的属性</span><br><span class="line">    String[] propertyNames &#x3D; unsatisfiedNonSimpleProperties(mbd, bw);</span><br><span class="line">    for (String propertyName : propertyNames) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            PropertyDescriptor pd &#x3D; bw.getPropertyDescriptor(propertyName);</span><br><span class="line">            &#x2F;&#x2F; 如果属性类型为 Object，则忽略，不做解析</span><br><span class="line">            if (Object.class !&#x3D; pd.getPropertyType()) &#123;</span><br><span class="line">                &#x2F;*</span><br><span class="line">                 * 获取 setter 方法（write method）的参数信息，比如参数在参数列表中的</span><br><span class="line">                 * 位置，参数类型，以及该参数所归属的方法等信息</span><br><span class="line">                 *&#x2F;</span><br><span class="line">                MethodParameter methodParam &#x3D; BeanUtils.getWriteMethodParameter(pd);</span><br><span class="line"></span><br><span class="line">                &#x2F;&#x2F; Do not allow eager init for type matching in case of a prioritized post-processor.</span><br><span class="line">                boolean eager &#x3D; !PriorityOrdered.class.isAssignableFrom(bw.getWrappedClass());</span><br><span class="line">                &#x2F;&#x2F; 创建依赖描述对象</span><br><span class="line">                DependencyDescriptor desc &#x3D; new AutowireByTypeDependencyDescriptor(methodParam, eager);</span><br><span class="line">                &#x2F;*</span><br><span class="line">                 * 下面的方法用于解析依赖。过程比较复杂，先把这里看成一个黑盒，我们只要知道这</span><br><span class="line">                 * 个方法可以帮我们解析出合适的依赖即可。</span><br><span class="line">                 *&#x2F;</span><br><span class="line">                Object autowiredArgument &#x3D; resolveDependency(desc, beanName, autowiredBeanNames, converter);</span><br><span class="line">                if (autowiredArgument !&#x3D; null) &#123;</span><br><span class="line">                    &#x2F;&#x2F; 将解析出的 bean 存入到属性值列表（pvs）中</span><br><span class="line">                    pvs.add(propertyName, autowiredArgument);</span><br><span class="line">                &#125;</span><br><span class="line">                for (String autowiredBeanName : autowiredBeanNames) &#123;</span><br><span class="line">                    registerDependentBean(autowiredBeanName, beanName);</span><br><span class="line">                    if (logger.isDebugEnabled()) &#123;</span><br><span class="line">                        logger.debug(&quot;Autowiring by type from bean name &#39;&quot; + beanName + &quot;&#39; via property &#39;&quot; +</span><br><span class="line">                                propertyName + &quot;&#39; to bean named &#39;&quot; + autowiredBeanName + &quot;&#39;&quot;);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                autowiredBeanNames.clear();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        catch (BeansException ex) &#123;</span><br><span class="line">            throw new UnsatisfiedDependencyException(mbd.getResourceDescription(), beanName, propertyName, ex);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="resolveDependency"><a href="#resolveDependency" class="headerlink" title="resolveDependency"></a>resolveDependency</h3>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/bean%E5%B1%9E%E6%80%A7%E5%A1%AB%E5%85%85/" rel="tag"># bean属性填充</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/3%E3%80%81LinkedList%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/" rel="prev" title="LinkedList实现原理">
+      <i class="fa fa-chevron-left"></i> LinkedList实现原理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/1%E3%80%81Lucene/3%E3%80%81lucene%E7%9A%84%E7%9B%B8%E5%85%B3api%E4%BD%BF%E7%94%A8/" rel="next" title="lucene的相关api使用">
+      lucene的相关api使用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#autowireByName"><span class="nav-number">1.</span> <span class="nav-text">autowireByName</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#autowireByType"><span class="nav-number">2.</span> <span class="nav-text">autowireByType</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#resolveDependency"><span class="nav-number">3.</span> <span class="nav-text">resolveDependency</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

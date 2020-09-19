@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1、ArrayList特点ArrayList是一个有序的动态数组，它允许任何符合规则的元素插入甚至包括null。每一个ArrayList都有一个初始容量（10），该容量代表了数组的大小。随着容器中的元素不断增加，容器的大小也会随着增加。在每次向容器中增加元素的同时都会进行容量检查，当快溢出时，就会进行扩容操作底层调用grow方法，创建一个与原数组1.5倍大的新数组，将原数组数据复制过去。所以如果我">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ArrayList的原理">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/2%E3%80%81ArrayList%E7%9A%84%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="1、ArrayList特点ArrayList是一个有序的动态数组，它允许任何符合规则的元素插入甚至包括null。每一个ArrayList都有一个初始容量（10），该容量代表了数组的大小。随着容器中的元素不断增加，容器的大小也会随着增加。在每次向容器中增加元素的同时都会进行容量检查，当快溢出时，就会进行扩容操作底层调用grow方法，创建一个与原数组1.5倍大的新数组，将原数组数据复制过去。所以如果我">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:32.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:55.500Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="ArrayList的原理">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/2%E3%80%81ArrayList%E7%9A%84%E5%8E%9F%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>ArrayList的原理 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/2%E3%80%81ArrayList%E7%9A%84%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ArrayList的原理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:32" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:32+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:55" itemprop="dateModified" datetime="2020-09-19T18:03:55+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/java%E5%AE%B9%E5%99%A8/" itemprop="url" rel="index"><span itemprop="name">java容器</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">1、ArrayList特点ArrayList是一个有序的动态数组，它允许任何符合规则的元素插入甚至包括null。每一个ArrayList都有一个初始容量（10），该容量代表了数组的大小。随着容器中的元素不断增加，容器的大小也会随着增加。在每次向容器中增加元素的同时都会进行容量检查，当快溢出时，就会进行扩容操作底层调用grow方法，创建一个与原数组1.5倍大的新数组，将原数组数据复制过去。所以如果我们明确所插入元素的多少，最好指定一个初始容量值，避免过多的进行扩容操作而浪费时间、效率。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="1、ArrayList特点"><a href="#1、ArrayList特点" class="headerlink" title="1、ArrayList特点"></a>1、ArrayList特点</h3><p>ArrayList是一个有序的动态数组，它允许任何符合规则的元素插入甚至包括null。每一个ArrayList都有一个初始容量（10），该容量代表了数组的大小。随着容器中的元素不断增加，容器的大小也会随着增加。在每次向容器中增加元素的同时都会进行容量检查，当快溢出时，就会进行==扩容操作：底层调用grow方法，创建一个与原数组1.5倍大的新数组，将原数组数据复制过去==。所以如果我们明确所插入元素的多少，最好指定一个初始容量值，避免过多的进行扩容操作而浪费时间、效率。</p>
+<h3 id="2-ArrayList的实现（JDK1-8）："><a href="#2-ArrayList的实现（JDK1-8）：" class="headerlink" title="2. ArrayList的实现（JDK1.8）："></a>2. ArrayList的实现（JDK1.8）：</h3><p>   对于ArrayList而言，它实现List接口、==底层使用数组保存所有元素。其操作基本上是对数组的操作==。<br>   分析ArrayList的源代码：</p>
+<h3 id="（1）ArrayList提供了三种方式的构造器："><a href="#（1）ArrayList提供了三种方式的构造器：" class="headerlink" title="（1）ArrayList提供了三种方式的构造器："></a>（1）ArrayList提供了三种方式的构造器：</h3><ul>
+<li>1、可以构造一个默认初始容量为0的空列表（JDK7默认大小直接就是10）</li>
+</ul>
+<p>ArrayList的无参构造方法中初始容量为0（初次调用add()会更新为10）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">   private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA &#x3D; &#123;&#125;;</span><br><span class="line">   </span><br><span class="line">public ArrayList() &#123;</span><br><span class="line">       this.elementData &#x3D; DEFAULTCAPACITY_EMPTY_ELEMENTDATA;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>2、构造一个指定初始容量的空列表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public ArrayList(int initialCapacity) &#123;</span><br><span class="line">        if (initialCapacity &gt; 0) &#123;</span><br><span class="line">            this.elementData &#x3D; new Object[initialCapacity];</span><br><span class="line">        &#125; else if (initialCapacity &#x3D;&#x3D; 0) &#123;</span><br><span class="line">            this.elementData &#x3D; EMPTY_ELEMENTDATA;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            throw new IllegalArgumentException(&quot;Illegal Capacity: &quot;+</span><br><span class="line">                                               initialCapacity);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>3、构造一个包含指定collection的元素的列表，这些元素按照该collection的迭代器返回它们的顺序排列的。</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public ArrayList(Collection&lt;? extends E&gt; c) &#123;</span><br><span class="line">   elementData &#x3D; c.toArray();</span><br><span class="line">   size &#x3D; elementData.length;</span><br><span class="line">  </span><br><span class="line">   if (elementData.getClass() !&#x3D; Object[].class)</span><br><span class="line">   &#x2F;&#x2F;将传入的集合 c.toArray();转数组 在复制到自己的数组中</span><br><span class="line">       elementData &#x3D; Arrays.copyOf(elementData, size, Object[].class);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="（2）-存储-修改："><a href="#（2）-存储-修改：" class="headerlink" title="（2） 存储/修改："></a>（2） 存储/修改：</h3><p>   ArrayList提供了set(int index, E element)、add(E e)、add(int index, E element)、addAll(Collection&lt;? extends E&gt; c)、addAll(int index, Collection&lt;? extends E&gt; c)这些添加元素的方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 用指定的元素替代此列表中指定位置上的元素，并返回以前位于该位置上的元素。</span><br><span class="line">public E set(int index, E element) &#123;</span><br><span class="line">   RangeCheck(index);</span><br><span class="line"></span><br><span class="line">   E oldValue &#x3D; (E) elementData[index];</span><br><span class="line">   elementData[index] &#x3D; element;</span><br><span class="line">   return oldValue;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 将指定的元素添加到此列表的尾部。</span><br><span class="line">public boolean add(E e) &#123;</span><br><span class="line">   ensureCapacity(size + 1);  &#x2F;&#x2F;  Increments modCount!!记录修改次数；快速失败机制 </span><br><span class="line">   elementData[size++] &#x3D; e;</span><br><span class="line">   return true;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 将指定的元素插入此列表中的指定位置。</span><br><span class="line">&#x2F;&#x2F; 如果当前位置有元素，则向右移动当前位于该位置的元素以及所有后续元素（将其索引加1）。</span><br><span class="line">public void add(int index, E element) &#123;</span><br><span class="line">   if (index &gt; size || index &lt; 0)</span><br><span class="line">       throw new IndexOutOfBoundsException(&quot;Index: &quot;+index+&quot;, Size: &quot;+size);</span><br><span class="line">   &#x2F;&#x2F; 如果数组长度不足，将进行扩容。</span><br><span class="line">   ensureCapacity(size+1);  &#x2F;&#x2F; Increments modCount!!记录修改次数；快速失败机制 </span><br><span class="line">   &#x2F;&#x2F; 将 elementData中从Index位置开始、长度为size-index的元素，</span><br><span class="line">   &#x2F;&#x2F; 拷贝到从下标为index+1位置开始的新的elementData数组中。</span><br><span class="line">   &#x2F;&#x2F; 即将当前位于该位置的元素以及所有后续元素右移一个位置。</span><br><span class="line">   System.arraycopy(elementData, index, elementData, index + 1, size - index);</span><br><span class="line">   elementData[index] &#x3D; element;</span><br><span class="line">   size++;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 按照指定collection的迭代器所返回的元素顺序，将该collection中的所有元素添加到此列表的尾部。</span><br><span class="line">public boolean addAll(Collection&lt;? extends E&gt; c) &#123;</span><br><span class="line">   Object[] a &#x3D; c.toArray();</span><br><span class="line">   int numNew &#x3D; a.length;</span><br><span class="line">   ensureCapacity(size + numNew);  &#x2F;&#x2F;  Increments modCount!!记录修改次数；快速失败机制 </span><br><span class="line">   System.arraycopy(a, 0, elementData, size, numNew);</span><br><span class="line">   size +&#x3D; numNew;</span><br><span class="line">   return numNew !&#x3D; 0;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 从指定的位置开始，将指定collection中的所有元素插入到此列表中。</span><br><span class="line">public boolean addAll(int index, Collection&lt;? extends E&gt; c) &#123;</span><br><span class="line">   if (index &gt; size || index &lt; 0)</span><br><span class="line">       throw new IndexOutOfBoundsException(</span><br><span class="line">           &quot;Index: &quot; + index + &quot;, Size: &quot; + size);</span><br><span class="line"></span><br><span class="line">   Object[] a &#x3D; c.toArray();</span><br><span class="line">   int numNew &#x3D; a.length;</span><br><span class="line">   ensureCapacity(size + numNew);  &#x2F;&#x2F; Increments modCount</span><br><span class="line"></span><br><span class="line">   int numMoved &#x3D; size - index;</span><br><span class="line">   if (numMoved &gt; 0)</span><br><span class="line">       System.arraycopy(elementData, index, elementData, index + numNew, numMoved);</span><br><span class="line"></span><br><span class="line">   System.arraycopy(a, 0, elementData, index, numNew);</span><br><span class="line">   size +&#x3D; numNew;</span><br><span class="line">   return numNew !&#x3D; 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="（3）-读取："><a href="#（3）-读取：" class="headerlink" title="（3） 读取："></a>（3） 读取：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public E get(int index) &#123;</span><br><span class="line">    &#x2F;&#x2F;检查角标是否越界</span><br><span class="line">   rangeCheck(index);</span><br><span class="line"></span><br><span class="line">   return (E) elementData[index];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="（4）-删除："><a href="#（4）-删除：" class="headerlink" title="（4） 删除："></a>（4） 删除：</h3><p>ArrayList提供了根据下标或者指定对象两种方式的删除功能。如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 移除此列表中指定位置上的元素。</span><br><span class="line">public E remove(int index) &#123;</span><br><span class="line">   RangeCheck(index);</span><br><span class="line"></span><br><span class="line">   modCount++;&#x2F;&#x2F; Increments modCount!!记录修改次数；快速失败机制 </span><br><span class="line">   E oldValue &#x3D; (E) elementData[index];</span><br><span class="line"></span><br><span class="line">   int numMoved &#x3D; size - index - 1;</span><br><span class="line">   if (numMoved &gt; 0)</span><br><span class="line">       System.arraycopy(elementData, index+1, elementData, index, numMoved);</span><br><span class="line">   elementData[--size] &#x3D; null; &#x2F;&#x2F; Let gc do its work</span><br><span class="line"></span><br><span class="line">   return oldValue;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 移除此列表中首次出现的指定元素（如果存在）。这是应为ArrayList中允许存放重复的元素。</span><br><span class="line">public boolean remove(Object o) &#123;</span><br><span class="line">   &#x2F;&#x2F; 由于ArrayList中允许存放null，因此下面通过两种情况来分别处理。</span><br><span class="line">   if (o &#x3D;&#x3D; null) &#123;</span><br><span class="line">       for (int index &#x3D; 0; index &lt; size; index++)</span><br><span class="line">           if (elementData[index] &#x3D;&#x3D; null) &#123;</span><br><span class="line">               &#x2F;&#x2F; 类似remove(int index)，移除列表中指定位置上的元素。</span><br><span class="line">               fastRemove(index);</span><br><span class="line">               return true;</span><br><span class="line">           &#125;</span><br><span class="line">&#125; else &#123;</span><br><span class="line">   for (int index &#x3D; 0; index &lt; size; index++)</span><br><span class="line">       if (o.equals(elementData[index])) &#123;</span><br><span class="line">           fastRemove(index);</span><br><span class="line">           return true;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   return false;</span><br><span class="line">&#125;</span><br><span class="line">    注意：从数组中移除元素的操作，也会导致被移除的元素以后的所有元素的向左移动一个位置。</span><br><span class="line">  </span><br></pre></td></tr></table></figure>
+<h3 id="（5）-调整数组容量："><a href="#（5）-调整数组容量：" class="headerlink" title="（5） 调整数组容量："></a>（5） 调整数组容量：</h3><p>   从上面介绍的向ArrayList中存储元素的代码中，我们看到，每当向数组中添加元素时，都要去检查添加后元素的个数是否会超出当前数组的长度，如果超出，数组将会进行扩容，以满足添加数据的需求。数组扩容通过一个公开的方法ensureCapacity(int minCapacity)来实现</p>
+<p>   ==在实际添加大量元素前，我也可以使用ensureCapacity来手动增加ArrayList实例的容量，以减少递增式再分配的数量。提高容器性能==</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">private void ensureExplicitCapacity(int minCapacity) &#123;</span><br><span class="line">       modCount++; &#x2F;&#x2F;Increments modCount!!记录修改次数；快速失败机制 </span><br><span class="line">       &#x2F;&#x2F; overflow-conscious code</span><br><span class="line">       if (minCapacity - elementData.length &gt; 0)</span><br><span class="line">           grow(minCapacity);</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   &#x2F;&#x2F;扩容操作</span><br><span class="line">    private void grow(int minCapacity) &#123;</span><br><span class="line">       &#x2F;&#x2F; overflow-conscious code</span><br><span class="line">       int oldCapacity &#x3D; elementData.length;</span><br><span class="line">       int newCapacity &#x3D; oldCapacity + (oldCapacity &gt;&gt; 1);</span><br><span class="line">       if (newCapacity - minCapacity &lt; 0)</span><br><span class="line">           newCapacity &#x3D; minCapacity;</span><br><span class="line">       if (newCapacity - MAX_ARRAY_SIZE &gt; 0)</span><br><span class="line">           newCapacity &#x3D; hugeCapacity(minCapacity);</span><br><span class="line">       &#x2F;&#x2F; minCapacity is usually close to size, so this is a win:</span><br><span class="line">       elementData &#x3D; Arrays.copyOf(elementData, newCapacity);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>   从上述代码中可以看出，数组进行扩容时，==会将老数组中的元素重新拷贝一份到新的数组中，每次数组容量的增长大约是其原容量的1.5倍。这种操作的代价是很高的==，因此在实际使用时。当我们可预知要保存的元素的多少时，要在构造ArrayList实例时，就指定其容量。或者根据实际需求，通过调用ensureCapacity方法来手动增加ArrayList实例的容量。</p>
+<p>   ==ArrayList还给我们提供了将底层数组的容量调整为当前列表保存的实际元素的大小的功能。它可以通过trimToSize方法来实现==<br>   代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public void trimToSize() &#123;</span><br><span class="line">   modCount++;</span><br><span class="line">   int oldCapacity &#x3D; elementData.length;</span><br><span class="line">   if (size &lt; oldCapacity) &#123;</span><br><span class="line">       elementData &#x3D; Arrays.copyOf(elementData, size);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="（6）-Fail-Fast机制："><a href="#（6）-Fail-Fast机制：" class="headerlink" title="（6） Fail-Fast机制："></a>（6） Fail-Fast机制：</h3><p>ArrayList也采用了快速失败的机制，是通过记录modCount参数来实现。<br>add()、remove()，还是clear()，只要涉及到==修改集合中的元素个数==时，都会改变modCount的值。(这里不包含set 因为不涉及集合元素个数修改)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public abstract class AbstractList&lt;E&gt; extends AbstractCollection&lt;E&gt; implements List&lt;E&gt; &#123;</span><br><span class="line">     &#x2F;&#x2F;修改次数</span><br><span class="line">     protected transient int modCount    </span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<p>当多个线程对同一个集合进行操作的时候，某线程访问集合的过程中，该集合的内容被其他线程所改变(即其它线程通过add、remove、clear等方法，改变了modCount的值)；这时，就会抛出ConcurrentModificationException异常，产生fail-fast事件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;迭代器源码</span><br><span class="line">  private class Itr implements Iterator&lt;E&gt; &#123;</span><br><span class="line">        </span><br><span class="line">        int cursor &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        int lastRet &#x3D; -1;</span><br><span class="line">		&#x2F;&#x2F;创建迭代器的时候，将AbstractList的修改次数modCount 赋值给迭代器的预期修改值expectedModCount</span><br><span class="line">        int expectedModCount &#x3D; modCount;</span><br><span class="line"></span><br><span class="line">        public boolean hasNext() &#123;</span><br><span class="line">            return cursor !&#x3D; size();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        public E next() &#123;</span><br><span class="line">			&#x2F;&#x2F;每次遍历的时候，都会检查 若modCount !&#x3D; expectedModCount则抛出ConcurrentModificationException</span><br><span class="line">            checkForComodification();</span><br><span class="line">            try &#123;</span><br><span class="line">                int i &#x3D; cursor;</span><br><span class="line">                E next &#x3D; get(i);</span><br><span class="line">                lastRet &#x3D; i;</span><br><span class="line">                cursor &#x3D; i + 1;</span><br><span class="line">                return next;</span><br><span class="line">            &#125; catch (IndexOutOfBoundsException e) &#123;</span><br><span class="line">                checkForComodification();</span><br><span class="line">                throw new NoSuchElementException();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F;迭代器的删除集合元素时，会将expectedModCount 重新赋值</span><br><span class="line">        public void remove() &#123;</span><br><span class="line">            if (lastRet &lt; 0)</span><br><span class="line">                throw new IllegalStateException();</span><br><span class="line">            checkForComodification();</span><br><span class="line"></span><br><span class="line">            try &#123;</span><br><span class="line">                AbstractList.this.remove(lastRet);</span><br><span class="line">                if (lastRet &lt; cursor)</span><br><span class="line">                    cursor--;</span><br><span class="line">                lastRet &#x3D; -1;</span><br><span class="line">				&#x2F;&#x2F;重新赋值</span><br><span class="line">                expectedModCount &#x3D; modCount;</span><br><span class="line">            &#125; catch (IndexOutOfBoundsException e) &#123;</span><br><span class="line">                throw new ConcurrentModificationException();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F;检查expectedModCount 和 modCount是否相等</span><br><span class="line">        final void checkForComodification() &#123;</span><br><span class="line">            if (modCount !&#x3D; expectedModCount)</span><br><span class="line">                throw new ConcurrentModificationException();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="结论："><a href="#结论：" class="headerlink" title="结论："></a>结论：</h3><p>当多个线程对同一个集合进行操作的时候，线程A访问集合的过程中，该集合的内容被其他线程所改变(即其它线程通过add、remove、clear等方法，改变了modCount的值)；线程A使用迭代器取值时，next()会检查  if (modCount != expectedModCount)<br>这时，就会抛出ConcurrentModificationException异常，产生fail-fast事件。</p>
+<p>在面对并发的修改时，迭代器很快就会完全失败，而不是冒着在将来某个不确定时间发生任意不确定行为的风险。</p>
+<h3 id="（7）如何解决fail-fast的原理："><a href="#（7）如何解决fail-fast的原理：" class="headerlink" title="（7）如何解决fail-fast的原理："></a>（7）如何解决fail-fast的原理：</h3><p>java.util.concurrent包中是如何解决fail-fast事件的。<br>还是以和ArrayList对应的CopyOnWriteArrayList对比</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class CopyOnWriteArrayList&lt;E&gt;</span><br><span class="line">    implements List&lt;E&gt;, RandomAccess, Cloneable, java.io.Serializable &#123;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 返回集合对应的迭代器</span><br><span class="line">    public Iterator&lt;E&gt; iterator() &#123;</span><br><span class="line">        return new COWIterator&lt;E&gt;(getArray(), 0);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">   </span><br><span class="line">    private static class COWIterator&lt;E&gt; implements ListIterator&lt;E&gt; &#123;</span><br><span class="line">        private final Object[] snapshot;</span><br><span class="line"></span><br><span class="line">        private int cursor;</span><br><span class="line"></span><br><span class="line">        private COWIterator(Object[] elements, int initialCursor) &#123;</span><br><span class="line">            cursor &#x3D; initialCursor;</span><br><span class="line">            &#x2F;&#x2F; 新建COWIterator时，将集合中的元素保存到一个新的拷贝数组中。</span><br><span class="line">            &#x2F;&#x2F; 这样，当原始集合的数据改变，拷贝数据中的值也不会变化。</span><br><span class="line">            snapshot &#x3D; elements;</span><br><span class="line">        &#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ArrayList和CopyOnWriteArrayList的区别"><a href="#ArrayList和CopyOnWriteArrayList的区别" class="headerlink" title="ArrayList和CopyOnWriteArrayList的区别"></a>ArrayList和CopyOnWriteArrayList的区别</h4><ul>
+<li>(01) 和ArrayList继承于AbstractList不同，CopyOnWriteArrayList没有继承于AbstractList，它仅仅只是实现了List接口。</li>
+<li>(02) ArrayList的iterator()函数返回的Iterator是在AbstractList中实现的；而CopyOnWriteArrayList是自己实现Iterator。</li>
+<li>(03) ArrayList的Iterator实现类中调用next()时，会“调用checkForComodification()比较‘expectedModCount’和‘modCount’的大小”；但是，CopyOnWriteArrayList的Iterator实现类中，没有所谓的checkForComodification()，更不会抛出ConcurrentModificationException异常！</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ArrayList%E7%9A%84%E5%8E%9F%E7%90%86/" rel="tag"># ArrayList的原理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/6%E3%80%81server/tomcat/1%E3%80%81server%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E8%A7%A3/" rel="prev" title="server配置文件详解">
+      <i class="fa fa-chevron-left"></i> server配置文件详解
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/IOC/3%E3%80%81%E5%88%9B%E5%BB%BA%E5%8D%95%E4%BE%8Bbean/" rel="next" title="创建单例bean">
+      创建单例bean <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81ArrayList%E7%89%B9%E7%82%B9"><span class="nav-number">1.</span> <span class="nav-text">1、ArrayList特点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-ArrayList%E7%9A%84%E5%AE%9E%E7%8E%B0%EF%BC%88JDK1-8%EF%BC%89%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">2. ArrayList的实现（JDK1.8）：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%881%EF%BC%89ArrayList%E6%8F%90%E4%BE%9B%E4%BA%86%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F%E7%9A%84%E6%9E%84%E9%80%A0%E5%99%A8%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">（1）ArrayList提供了三种方式的构造器：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%882%EF%BC%89-%E5%AD%98%E5%82%A8-%E4%BF%AE%E6%94%B9%EF%BC%9A"><span class="nav-number">4.</span> <span class="nav-text">（2） 存储&#x2F;修改：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%883%EF%BC%89-%E8%AF%BB%E5%8F%96%EF%BC%9A"><span class="nav-number">5.</span> <span class="nav-text">（3） 读取：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%884%EF%BC%89-%E5%88%A0%E9%99%A4%EF%BC%9A"><span class="nav-number">6.</span> <span class="nav-text">（4） 删除：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%885%EF%BC%89-%E8%B0%83%E6%95%B4%E6%95%B0%E7%BB%84%E5%AE%B9%E9%87%8F%EF%BC%9A"><span class="nav-number">7.</span> <span class="nav-text">（5） 调整数组容量：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%886%EF%BC%89-Fail-Fast%E6%9C%BA%E5%88%B6%EF%BC%9A"><span class="nav-number">8.</span> <span class="nav-text">（6） Fail-Fast机制：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA%EF%BC%9A"><span class="nav-number">9.</span> <span class="nav-text">结论：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%887%EF%BC%89%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3fail-fast%E7%9A%84%E5%8E%9F%E7%90%86%EF%BC%9A"><span class="nav-number">10.</span> <span class="nav-text">（7）如何解决fail-fast的原理：</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ArrayList%E5%92%8CCopyOnWriteArrayList%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">10.1.</span> <span class="nav-text">ArrayList和CopyOnWriteArrayList的区别</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

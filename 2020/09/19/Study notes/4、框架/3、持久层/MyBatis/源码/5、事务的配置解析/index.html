@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Stringresource&quot;mybatis&#x2F;config.xml&quot;;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="事务的配置解析">
+<meta property="og:url" content="http://example.com/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/%E6%BA%90%E7%A0%81/5%E3%80%81%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%85%8D%E7%BD%AE%E8%A7%A3%E6%9E%90/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="Stringresource&quot;mybatis&#x2F;config.xml&quot;;">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-09-19T09:05:00.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:58.410Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="事务的配置解析">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/%E6%BA%90%E7%A0%81/5%E3%80%81%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%85%8D%E7%BD%AE%E8%A7%A3%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>事务的配置解析 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/%E6%BA%90%E7%A0%81/5%E3%80%81%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%85%8D%E7%BD%AE%E8%A7%A3%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          事务的配置解析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-09-19 17:05:00 / 修改时间：18:03:58" itemprop="dateCreated datePublished" datetime="2020-09-19T17:05:00+08:00">2020-09-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BA%90%E7%A0%81/" itemprop="url" rel="index"><span itemprop="name">源码</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">Stringresource"mybatis/config.xml";</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">String resource &#x3D; &quot;mybatis&#x2F;config.xml&quot;;</span><br><span class="line">InputStream is &#x3D; Main.class.getClassLoader().getResourceAsStream(resource);</span><br><span class="line">SqlSessionFactory sessionFactory &#x3D; new SqlSessionFactoryBuilder().build(is);</span><br><span class="line">SqlSession session &#x3D; sessionFactory.openSession();</span><br><span class="line"></span><br><span class="line">User user &#x3D; new User();</span><br><span class="line">user.setName(&quot;liuliu&quot;);</span><br><span class="line">user.setPassword(&quot;123123&quot;);</span><br><span class="line">user.setScore(&quot;88&quot;);</span><br><span class="line">String statement &#x3D; &quot;mybatis.mapping.UserMapper.insertUser&quot;;</span><br><span class="line">session.insert(statement,user);</span><br><span class="line">session.commit();</span><br><span class="line">session.close();</span><br></pre></td></tr></table></figure>
+
+<h2 id="mybatis必须手动commit"><a href="#mybatis必须手动commit" class="headerlink" title="==mybatis必须手动commit=="></a>==mybatis必须手动commit==</h2><ul>
+<li>如果不执行sqlSession.commit()操作，直接执行sqlSession.close()，则会在close()中进行事务回滚；</li>
+<li>如果不执行sqlSession.commit()操作也不手动关闭sqlSession，在程序结束时关闭数据库连接时会进行事务回滚；</li>
+</ul>
+<h3 id="事务管理入口"><a href="#事务管理入口" class="headerlink" title="事务管理入口"></a>事务管理入口</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;environments default&#x3D;&quot;development&quot;&gt;</span><br><span class="line">    &lt;environment id&#x3D;&quot;development&quot;&gt;</span><br><span class="line">        &lt;transactionManager type&#x3D;&quot;JDBC&quot; &#x2F;&gt;    &#x2F;&#x2F;相当于&lt;transactionManager type&#x3D;&quot;JdbcTransactionFactory.class&quot; &#x2F;&gt;</span><br><span class="line">        &lt;dataSource type&#x3D;&quot;POOLED&quot;&gt;</span><br><span class="line">            &lt;property name&#x3D;&quot;driver&quot; value&#x3D;&quot;com.mysql.jdbc.Driver&quot; &#x2F;&gt;</span><br><span class="line">            &lt;property name&#x3D;&quot;url&quot; value&#x3D;&quot;jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;test&quot; &#x2F;&gt;</span><br><span class="line">            &lt;property name&#x3D;&quot;username&quot; value&#x3D;&quot;root&quot; &#x2F;&gt;</span><br><span class="line">            &lt;property name&#x3D;&quot;password&quot; value&#x3D;&quot;BIUBIU&quot; &#x2F;&gt;</span><br><span class="line">        &lt;&#x2F;dataSource&gt;</span><br><span class="line">    &lt;&#x2F;environment&gt;</span><br><span class="line">&lt;&#x2F;environments&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果type=”JDBC”则使用JdbcTransactionFactory事务工厂则==MyBatis独立管理事务，直接使用JDK提供的JDBC来管理事务的各个环节：提交、回滚、关闭等操作；==</li>
+<li>如果type=”MANAGED”则使用ManagedTransactionFactory事务工厂则MyBatis==不在ORM层管理事务而是将事务管理托付给其他框架，如Spring==<br>；因为ManagedTransactionFactory类中的commit()方法和rollback()方法都为空，事务相关操作不发挥作用；</li>
+</ul>
+<p>从SessionFactory中获取sqlSession时候，同时会获取事务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) &#123;</span><br><span class="line">    Transaction tx &#x3D; null;</span><br><span class="line">    try &#123;</span><br><span class="line">      final Environment environment &#x3D; configuration.getEnvironment();</span><br><span class="line">      final TransactionFactory transactionFactory &#x3D; getTransactionFactoryFromEnvironment(environment);</span><br><span class="line">      tx &#x3D; transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);</span><br><span class="line">      final Executor executor &#x3D; configuration.newExecutor(tx, execType);</span><br><span class="line">      return new DefaultSqlSession(configuration, executor, autoCommit);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">      closeTransaction(tx); &#x2F;&#x2F; may have fetched a connection so lets call close()</span><br><span class="line">      throw ExceptionFactory.wrapException(&quot;Error opening session.  Cause: &quot; + e, e);</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">      ErrorContext.instance().reset();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>在sqlSession中执行了UPDATE操作，需要执行sqlSession.commit()方法提交事务，不然在连接关闭时候会自动回滚；</p>
+<p>exector.commit()事务提交方法归根到底是调用了transaction.commit()事务的提交方法；这里的transaction就是根据配置对应的JdbcTransaction或者ManagedTransaction；</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public void commit() &#123;</span><br><span class="line">  commit(false);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Override</span><br><span class="line">public void commit(boolean force) &#123;</span><br><span class="line">  try &#123;</span><br><span class="line">    executor.commit(isCommitOrRollbackRequired(force));</span><br><span class="line">    &#x2F;&#x2F;在事务提交时会将dirty赋值为false;</span><br><span class="line">    dirty &#x3D; false;</span><br><span class="line">  &#125; catch (Exception e) &#123;</span><br><span class="line">    throw ExceptionFactory.wrapException(&quot;Error committing transaction.  Cause: &quot; + e, e);</span><br><span class="line">  &#125; finally &#123;</span><br><span class="line">    ErrorContext.instance().reset();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>如果是JdbcTransaction的commit()方法，通过调用connection.commit()方法通过数据库连接实现事务提交；</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public void commit() throws SQLException &#123;</span><br><span class="line">  if (connection !&#x3D; null &amp;&amp; !connection.getAutoCommit()) &#123;</span><br><span class="line">    if (log.isDebugEnabled()) &#123;</span><br><span class="line">      log.debug(&quot;Committing JDBC Connection [&quot; + connection + &quot;]&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    connection.commit();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果是ManagedTransaction的commit()方法，则为空方法不进行任何操作；</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public void commit() throws SQLException &#123;</span><br><span class="line">  &#x2F;&#x2F; Does nothing</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Override</span><br><span class="line">public void rollback() throws SQLException &#123;</span><br><span class="line">  &#x2F;&#x2F; Does nothing</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>在关闭会话时会判断dirty是否为true，如果为true则需要进行事务回滚操作，否则直接关闭会话</p>
+<p>结论：==如果close()操作之前未进行commit()事务提交则会进行事务回滚然后再关闭会话；如果update后执行了commit则直接关闭会话；==</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public void close() &#123;</span><br><span class="line">  try &#123;</span><br><span class="line">    executor.close(isCommitOrRollbackRequired(false));</span><br><span class="line">    closeCursors();</span><br><span class="line">    dirty &#x3D; false;</span><br><span class="line">  &#125; finally &#123;</span><br><span class="line">    ErrorContext.instance().reset();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;判断dirty标志是否为true</span><br><span class="line">private boolean isCommitOrRollbackRequired(boolean force) &#123;</span><br><span class="line">  return (!autoCommit &amp;&amp; dirty) || force;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;如果dirty为true则判定forceRollback为true，执行回滚操作；</span><br><span class="line">@Override</span><br><span class="line">public void close(boolean forceRollback) &#123;</span><br><span class="line">  try &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      rollback(forceRollback);</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">      if (transaction !&#x3D; null) &#123;</span><br><span class="line">        transaction.close();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; catch (SQLException e) &#123;</span><br><span class="line">    &#x2F;&#x2F; Ignore.  There&#39;s nothing that can be done at this point.</span><br><span class="line">    log.warn(&quot;Unexpected exception on closing transaction.  Cause: &quot; + e);</span><br><span class="line">  &#125; finally &#123;</span><br><span class="line">    transaction &#x3D; null;</span><br><span class="line">    deferredLoads &#x3D; null;</span><br><span class="line">    localCache &#x3D; null;</span><br><span class="line">    localOutputParameterCache &#x3D; null;</span><br><span class="line">    closed &#x3D; true;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%85%8D%E7%BD%AE%E8%A7%A3%E6%9E%90/" rel="tag"># 事务的配置解析</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/MyBatis-Spring/MyBatis-Spring/" rel="prev" title="MyBatisSpring">
+      <i class="fa fa-chevron-left"></i> MyBatisSpring
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/4%E3%80%81%E4%B8%AD%E9%97%B4%E4%BB%B6/1%E3%80%81ActiveMQ/4%E3%80%81ActiveMQ+zookeeper%E9%9B%86%E7%BE%A4%E9%85%8D%E7%BD%AE/" rel="next" title="ActiveMQ+zookeeper集群配置">
+      ActiveMQ+zookeeper集群配置 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#mybatis%E5%BF%85%E9%A1%BB%E6%89%8B%E5%8A%A8commit"><span class="nav-number">1.</span> <span class="nav-text">&#x3D;&#x3D;mybatis必须手动commit&#x3D;&#x3D;</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86%E5%85%A5%E5%8F%A3"><span class="nav-number">1.1.</span> <span class="nav-text">事务管理入口</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

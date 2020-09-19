@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1、哨兵原理哨兵机制的出现是为了解决主从复制的缺点的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redis哨兵">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/4%E3%80%81redis%E5%93%A8%E5%85%B5/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="1、哨兵原理哨兵机制的出现是为了解决主从复制的缺点的。">
+<meta property="og:locale">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20190903065309212.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2020-06-21T01:23:25.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:59.788Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="redis哨兵">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20190903065309212.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/4%E3%80%81redis%E5%93%A8%E5%85%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>redis哨兵 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/4%E3%80%81redis%E5%93%A8%E5%85%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          redis哨兵
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:25" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:25+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:59" itemprop="dateModified" datetime="2020-09-19T18:03:59+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">1、哨兵原理哨兵机制的出现是为了解决主从复制的缺点的。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h5 id="1、哨兵原理："><a href="#1、哨兵原理：" class="headerlink" title="1、哨兵原理："></a>1、哨兵原理：</h5><p>哨兵机制的出现是为了解决主从复制的缺点的。</p>
+<p>Redis-sentinel本身也是一个独立运行的进程</p>
+<p>该进程执行以下三个任务：</p>
+<ul>
+<li><p>监控 Sentinel:</p>
+<p>会不断地检查你的主服务器和从服务器是否运作正常  (每个sentine哨兵节点每隔1s会向主节点、从节点及其余哨兵节点发送一次ping命令做一次心跳检测，判断节点是否正常),每个sentine哨兵节点每10s会向主节点和从节点发送info，获取主从拓扑结构图，并感知新节点</p>
+</li>
+<li><p>提醒:</p>
+</li>
+</ul>
+<p>当被监控的某个 Redis 服务器出现问题时， Sentinel 可以通过 API 向管理员或者其他应用程序发送通知 (通过消息publish和subscribe来完成的)</p>
+<ul>
+<li>自动故障迁移（Automatic failover）：</li>
+</ul>
+<p>当一个主服务器不能正常工作时， Sentinel 会开始一次自动故障迁移操作， 它会将失效主服务器的其中一个从服务器升级为新的主服务器， 并让失效主服务器的其他从服务器改为复制新的主服务器； 当客户端试图连接失效的主服务器时， 集群也会向客户端返回新主服务器的地址， 使得集群可以使用新主服务器代替失效服务器。</p>
+<h5 id="1-1判断主节点宕机："><a href="#1-1判断主节点宕机：" class="headerlink" title="1.1判断主节点宕机："></a>1.1判断主节点宕机：</h5><p>当某sentine节点发现主节点宕机后（主观下线），该sentine节点会通过指令sentinel is-masterdown-by-addr 寻求哨兵集群中的其他节点对主节点的判断，<br>当超过quorum（选举）个数，此时哨兵节点则认为该主节点确实有问题（大部分哨兵节点都同意下线操作，也叫客观下线）</p>
+<p>故障转移的工作只需要一个Sentinel节点来完成即可，所以Sentinel节点之间会做一个领导者选举的工作</p>
+<h5 id="1-2-sentine领导者选举Raft算法"><a href="#1-2-sentine领导者选举Raft算法" class="headerlink" title="1.2 sentine领导者选举Raft算法"></a>1.2 sentine领导者选举Raft算法</h5><ul>
+<li>每个在线的哨兵节点都可以成为领导者，当它确认（比如哨兵3）主节点下线时，会向其它哨兵发is-master-down-by-addr命令，征求判断并要求将自己设置为领导者，由领导者处理故障转移；</li>
+<li>当其它哨兵收到此命令时，可以同意或者拒绝它成为领导者；</li>
+<li>如果哨兵3发现自己在选举的票数大于等于num(sentinels)/2+1时，将成为领导者，如果没有超过，继续选举</li>
+</ul>
+<p>领导者选举出的Sentinel节点负责故障转移</p>
+<h5 id="1-3主节点选举：选举出可以代替主节点的slave从节点"><a href="#1-3主节点选举：选举出可以代替主节点的slave从节点" class="headerlink" title="1.3主节点选举：选举出可以代替主节点的slave从节点"></a>1.3主节点选举：选举出可以代替主节点的slave从节点</h5><ul>
+<li>选择健康状态从节点（过滤掉主观下线、断线），排除5秒钟没有心跳的、排除主节点失联超过10*down-after-millisecends</li>
+<li>选择slave-priority高的从节点优先级列表</li>
+<li>选择偏移量大的</li>
+<li>选择runid小的</li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/20190903065309212.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h5 id="2、哨兵配置"><a href="#2、哨兵配置" class="headerlink" title="2、哨兵配置"></a>2、哨兵配置</h5><ul>
+<li>在个redis节点下创建sentinel.conf配置文件</li>
+<li>哨兵启动命令 redis-server.exe sentinel.conf –sentinel<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"> </span><br><span class="line"># 哨兵sentinel实例运行的端口 默认26379</span><br><span class="line">port 26379  </span><br><span class="line">  </span><br><span class="line"># 哨兵sentinel的工作目录  </span><br><span class="line">dir &#x2F;tmp  </span><br><span class="line">  </span><br><span class="line"># 哨兵sentinel监控的redis主节点的 ip port   </span><br><span class="line"># sentinel monitor &lt;master-name&gt; &lt;ip&gt; &lt;redis-port&gt; &lt;quorum&gt;  </span><br><span class="line">  sentinel monitor mymaster 127.0.0.1 6379 2  </span><br><span class="line">  </span><br><span class="line"># 当在Redis实例中开启了requirepass foobared 授权密码 这样所有连接Redis实例的客户端都要提供密码  </span><br><span class="line"># 设置哨兵sentinel 连接主从的密码 注意必须为主从设置一样的验证密码  </span><br><span class="line"># sentinel auth-pass &lt;master-name&gt; &lt;password&gt;  </span><br><span class="line">sentinel auth-pass mymaster MySUPER--secret-0123passw0rd  </span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line"># 指定多少毫秒之后 主节点没有应答哨兵sentinel 此时 哨兵主观上认为主节点下线 默认30秒  </span><br><span class="line"># sentinel down-after-milliseconds &lt;master-name&gt; &lt;milliseconds&gt;  </span><br><span class="line">sentinel down-after-milliseconds mymaster 30000  </span><br><span class="line">  </span><br><span class="line"> </span><br><span class="line"># 执行故障转移时， 最多有1个从服务器同时对新的主服务器进行同步，这个数字越小，完成failover所需的时间就越长，  </span><br><span class="line"># 但是如果这个数字越大，就意味着越 多的slave因为replication而不可用。  </span><br><span class="line"># sentinel parallel-syncs &lt;master-name&gt; &lt;numslaves&gt;  </span><br><span class="line">sentinel parallel-syncs mymaster 1  </span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line"># 故障转移的超时时间 failover-timeout 可以用在以下这些方面：   </span><br><span class="line">#1. 同一个sentinel对同一个master两次failover之间的间隔时间。  </span><br><span class="line">#2. 当一个slave从一个错误的master那里同步数据开始计算时间。直到slave被纠正为向正确的master那里同步数据时。  </span><br><span class="line">#3.当想要取消一个正在进行的failover所需要的时间。    </span><br><span class="line">#4.当进行failover时，配置所有slaves指向新的master所需的最大时间。不过，即使过了这个超时，slaves依然会被正确配置为指向master，但是就不按parallel-syncs所配置的规则来了  </span><br><span class="line"># 默认三分钟  </span><br><span class="line"># sentinel failover-timeout &lt;master-name&gt; &lt;milliseconds&gt;  </span><br><span class="line">sentinel failover-timeout mymaster 180000  </span><br><span class="line">  </span><br><span class="line"># SCRIPTS EXECUTION  </span><br><span class="line">  </span><br><span class="line">#配置当某一事件发生时所需要执行的脚本，可以通过脚本来通知管理员，例如当系统运行不正常时发邮件通知相关人员。  </span><br><span class="line">#对于脚本的运行结果有以下规则：  </span><br><span class="line">#若脚本执行后返回1，那么该脚本稍后将会被再次执行，重复次数目前默认为10  </span><br><span class="line">#若脚本执行后返回2，或者比2更高的一个返回值，脚本将不会重复执行。  </span><br><span class="line">#如果脚本在执行过程中由于收到系统中断信号被终止了，则同返回值为1时的行为相同。  </span><br><span class="line">#一个脚本的最大执行时间为60s，如果超过这个时间，脚本将会被一个SIGKILL信号终止，之后重新执行。  </span><br><span class="line">  </span><br><span class="line">#通知型脚本:当sentinel有任何警告级别的事件发生时（比如说redis实例的主观失效和客观失效等等），将会去调用这个脚本，  </span><br><span class="line">这时这个脚本应该通过邮件，SMS等方式去通知系统管理员关于系统不正常运行的信息。调用该脚本时，将传给脚本两个参数，  </span><br><span class="line">一个是事件的类型，  </span><br><span class="line">一个是事件的描述。  </span><br><span class="line">如果sentinel.conf配置文件中配置了这个脚本路径，那么必须保证这个脚本存在于这个路径，并且是可执行的，否则sentinel无法正常启动成功。  </span><br><span class="line">#通知脚本  </span><br><span class="line"># sentinel notification-script &lt;master-name&gt; &lt;script-path&gt;  </span><br><span class="line">  sentinel notification-script mymaster &#x2F;var&#x2F;redis&#x2F;notify.sh  </span><br><span class="line">  </span><br><span class="line"># 客户端重新配置主节点参数脚本  </span><br><span class="line"># 当一个master由于failover而发生改变时，这个脚本将会被调用，通知相关的客户端关于master地址已经发生改变的信息。  </span><br><span class="line"># 以下参数将会在调用脚本时传给脚本:  </span><br><span class="line"># &lt;master-name&gt; &lt;role&gt; &lt;state&gt; &lt;from-ip&gt; &lt;from-port&gt; &lt;to-ip&gt; &lt;to-port&gt;  </span><br><span class="line"># 目前&lt;state&gt;总是“failover”,  </span><br><span class="line"># &lt;role&gt;是“leader”或者“observer”中的一个。   </span><br><span class="line"># 参数 from-ip, from-port, to-ip, to-port是用来和旧的master和新的master(即旧的slave)通信的  </span><br><span class="line"># 这个脚本应该是通用的，能被多次调用，不是针对性的。  </span><br><span class="line"># sentinel client-reconfig-script &lt;master-name&gt; &lt;script-path&gt;  </span><br><span class="line"> sentinel client-reconfig-script mymaster &#x2F;var&#x2F;redis&#x2F;reconfig.sh </span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/redis%E5%93%A8%E5%85%B5/" rel="tag"># redis哨兵</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/1%E3%80%81%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/mysql%E6%9E%B6%E6%9E%84/4%E3%80%81%E9%94%81/" rel="prev" title="锁">
+      <i class="fa fa-chevron-left"></i> 锁
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/4%E3%80%81JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B(JDK7)/" rel="next" title="JVM内存模型(JDK7)">
+      JVM内存模型(JDK7) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#1%E3%80%81%E5%93%A8%E5%85%B5%E5%8E%9F%E7%90%86%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">1、哨兵原理：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-1%E5%88%A4%E6%96%AD%E4%B8%BB%E8%8A%82%E7%82%B9%E5%AE%95%E6%9C%BA%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">1.1判断主节点宕机：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-2-sentine%E9%A2%86%E5%AF%BC%E8%80%85%E9%80%89%E4%B8%BERaft%E7%AE%97%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">1.2 sentine领导者选举Raft算法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-3%E4%B8%BB%E8%8A%82%E7%82%B9%E9%80%89%E4%B8%BE%EF%BC%9A%E9%80%89%E4%B8%BE%E5%87%BA%E5%8F%AF%E4%BB%A5%E4%BB%A3%E6%9B%BF%E4%B8%BB%E8%8A%82%E7%82%B9%E7%9A%84slave%E4%BB%8E%E8%8A%82%E7%82%B9"><span class="nav-number">4.</span> <span class="nav-text">1.3主节点选举：选举出可以代替主节点的slave从节点</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2%E3%80%81%E5%93%A8%E5%85%B5%E9%85%8D%E7%BD%AE"><span class="nav-number">5.</span> <span class="nav-text">2、哨兵配置</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1、集群搭建必须要3个以后的主节点，否则在创建集群时会失败。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redis集群">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/5%E3%80%81redis%E9%9B%86%E7%BE%A4/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="1、集群搭建必须要3个以后的主节点，否则在创建集群时会失败。">
+<meta property="og:locale">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20190902223456114.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2020-06-21T01:23:26.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:59.800Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="redis集群">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20190902223456114.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/5%E3%80%81redis%E9%9B%86%E7%BE%A4/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>redis集群 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/5%E3%80%81redis%E9%9B%86%E7%BE%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          redis集群
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:26" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:26+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:59" itemprop="dateModified" datetime="2020-09-19T18:03:59+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">1、集群搭建必须要3个以后的主节点，否则在创建集群时会失败。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h5 id="1、集群搭建"><a href="#1、集群搭建" class="headerlink" title="1、集群搭建"></a>1、集群搭建</h5><p>必须要3个以后的主节点，否则在创建集群时会失败。</p>
+<p>1、将单机版的redis复制6份，放入新建文件夹redis-cluster中，分别为redis01<del>06。然后分别修改redis.conf配置文件。将端口号改为7001</del>7006，放开cluster-enabled yes的注释。并分别启动</p>
+<p>2、安装ruby环境：yum install ruby</p>
+<p>3、安装ruby的包管理器：yum install rubygems</p>
+<p>4、安装ruby脚本运行使用的第三方包：gem install redis-3.0.0.gem</p>
+<p>5、将redis源代码的src目录下的redis-trib.rb复制到redis-cluster文件夹下（redis01~06同级目录）</p>
+<p>6、用脚本文件搭建集群：./redis-trib.rb create –replicas 1 ip地址:7001ip地址:7002ip地址:7003ip地址:7004ip地址:7005ip地址:7006（其中，-replicas 1的意思是每台redis服务器有1个备份机，该脚本会自动为这6个redis实例分配主从和槽。）</p>
+<p>【查看集群信息】</p>
+<p>查看集群信息：cluster info<br>查看集群节点：cluster nodes</p>
+<p>【连接集群】</p>
+<p>./redis-cli -h ip地址 -p 7001 -c（连接redis集群，-c意思是连接的是集群，添加数据的时候会自动跳转到该数据对应槽的redis实例中）</p>
+<h5 id="2、分布式数据库数据分区规则"><a href="#2、分布式数据库数据分区规则" class="headerlink" title="2、分布式数据库数据分区规则"></a>2、分布式数据库数据分区规则</h5><p>在介绍redis集群原理前，先了解分布式数据库首先要解决把整个数据集按照分区规则映射到多个节点的问题</p>
+<p>分区规则：</p>
+<p>【节点取余分区】</p>
+<p>使用特定的数据，如Redis的键或用户ID，再根据节点数量N使用公式：hash（key）%N计算出哈希值，用来决定数据映射到哪一个节点上。这种方案存在一个问题：当节点数量变化时，如扩容或收缩节点，数据节点映射关系需要重新计算，会导致数据的重新迁移。不适合少量数据节点的分布式方案</p>
+<p>【一致性哈希分区】</p>
+<p>一致性哈希分区（Distributed Hash Table）实现思路是为系统中每个节点分配一个token，范围一般在0~232，这些token构成一个哈希环。数据读写执行节点查找操作时，先根据key计算hash值，然后顺时针找到第一个大于等于该哈希值的token节点</p>
+<p>【虚拟槽分区】（Redis Cluster数据分区策略）</p>
+<p>虚拟槽分区巧妙地使用了哈希空间，使用分散度良好的哈希函数把所有数据映射到一个固定范围的整数集合中，整数定义为槽（slot）。这个范围一般远远大于节点数，比如Redis Cluster槽范围是0~16383</p>
+<h5 id="3、集群原理"><a href="#3、集群原理" class="headerlink" title="3、集群原理"></a>3、集群原理</h5><p>Redis集群设计包括2部分：哈希Slot和节点主从</p>
+<p>1，所有key在保存redis之前先经过CRC16哈希到一个Slot槽上。实现算法：CRC16(key) % 16384</p>
+<p>2， 一个Slot段对应了一个Node，对应着0-16384，Slot不能重复也不能缺失，否则会导致对象重复存储或无法存储。</p>
+<p>3， redis节点之间也互相监听，一旦有Node退出或者加入，会按照Slot为单位做数据的迁移。例如master1宕机，0-5640这些Slot将会平均分摊到Node2和Node3上,由于Node2和Node3本身维护的Slot还会在自己身上不会被重新分配，所以迁移过程中不会影响到5641-16384Slot段的使用。加入节点需要将现有集群中的一部分槽和数据迁移给新节点。</p>
+<p>想扩展并发读就添加Slaver，想扩展并发写就添加Master。<br><img src="https://img-blog.csdnimg.cn/20190902223456114.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h5 id="4、节点之间通信"><a href="#4、节点之间通信" class="headerlink" title="4、节点之间通信"></a>4、节点之间通信</h5><p>Redis集群采用P2P的Gossip（流言）协议，Gossip协议工作原理就是节点彼此不断通信交换信息，一段时间后所有的节点都会知道集群完整的信息。所以连哪一个节点都是平等的</p>
+<p>集群中的每个节点都会单独开辟一个TCP通道，用于节点之间彼此通信，通信端口号在基础端口上加10000。<br>每个节点在固定周期内通过特定规则选择几个节点发送ping消息<br>接收到ping消息的节点用pong消息作为响应。</p>
+<h5 id="5、集群扩容和收缩"><a href="#5、集群扩容和收缩" class="headerlink" title="5、集群扩容和收缩"></a>5、集群扩容和收缩</h5><p>具体配置可以参考【Redis开发与运维】</p>
+<p>第一个参数是新节点的地址，第二个参数是任意一个已经存在的节点的IP和端口。</p>
+<p>【添加一个新的主节点】</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb add-node 127.0.0.1:7006 127.0.0.1:7000</span><br></pre></td></tr></table></figure>
+
+<p>【添加一个新的从节点】</p>
+<p>不指定主节点，redis会随机挑选一个主节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb add-node --slave 127.0.0.1:7006 127.0.0.1:7000</span><br></pre></td></tr></table></figure>
+
+<p>添加从节点指定主节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb add-node --slave --master-id 3c3a0c74aae0b56170ccb03a76b60cfe7dc1912e 127.0.0.1:7006 127.0.0.1:7000</span><br></pre></td></tr></table></figure>
+
+<p>初始状态新节点没有包含任何数据， 因为它没有包含任何哈希槽.<br>尽管新节点没有包含任何哈希槽， 但它仍然是一个主节点， 所以在集群需要将某个从节点升级为新的主节点时， 这个新节点不会被选中。<br>需要通过相关命令把一部分槽和数据迁移给新节点。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">redis-trib.rb reshard 127.0.0.1:7006   &#x2F;&#x2F;为新主节点重新分配solt</span><br><span class="line"> </span><br><span class="line">How many slots do you want to move (from 1 to 16384)? 1000 &#x2F;&#x2F;设置slot数1000</span><br><span class="line"> </span><br><span class="line">What is the receiving node ID? xxxxxxxx  &#x2F;&#x2F;新节点node id</span><br><span class="line"> </span><br><span class="line">Source node #1:all &#x2F;&#x2F;表示全部节点重新洗牌</span><br></pre></td></tr></table></figure>
+
+<p>【删除节点】</p>
+<p>#将节点的哈希槽转移到其他节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb reshard 127.0.0.1:7000</span><br></pre></td></tr></table></figure>
+
+
+<p>#移除节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib del-node 127.0.0.1:7000</span><br></pre></td></tr></table></figure>
+<p><code>&lt;node-id&gt;</code></p>
+<h5 id="6、集群功能限制"><a href="#6、集群功能限制" class="headerlink" title="6、集群功能限制"></a>6、集群功能限制</h5><p>key批量操作支持有限。如mset、mget，目前只支持具有相同slot值的key执行批量操作。对于映射为不同slot值的key由于执行mget、mget等操作可能存在于多个节点上因此不被支持。<br>key事务操作支持有限。同理只支持多key在同一节点上的事务操作，当多个key分布在不同的节点上时无法使用事务功能。<br>key作为数据分区的最小粒度，因此不能将一个大的键值对象如hash、list等映射到不同的节点<br>不支持多数据库空间。单机下的Redis可以支持16个数据库，集群模式下只能使用一个数据库空间，即db0</p>
+<p>复制结构只支持一层，从节点只能复制主节点，不支持嵌套树状复制结构。</p>
+<h5 id="7、集群故障转移"><a href="#7、集群故障转移" class="headerlink" title="7、集群故障转移"></a>7、集群故障转移</h5><p>1、当集群中某主节点宕机后，会从从节点中选举新出的主节点。</p>
+<p>2、当集群中某从节点宕机（无影响）</p>
+<p>3、当集群中某hash槽对应的主从节点均宕机后。集群是不可用的额。</p>
+<h5 id="8、节点选举："><a href="#8、节点选举：" class="headerlink" title="8、节点选举："></a>8、节点选举：</h5><p>前面提到各个节点通过留言协议在不停的交换数据。节点通过ping pong消息发现节点是否健康。和哨兵一样判断某节点宕机分为分为主观下线和客观下线。当节点A发现节点B不健康时，节点A主观认为节点B下线。这时候征求其他节点对节点B的判断。当认为节点B不健康的票数超过cluster_note-timeout。则节点B客观下线。若节点B是一个主节点。类似上图中的master2.则需要进行选举新的主节点。</p>
+<p>资格检查：检查该从节点是否有资格替换故障主节点，如果此从节点与主节点断开过通信，那么当前从节点不具体故障移；<br>准备选举时间：当从节点符合故障转移资格后，更新触发故障选举时间，只有到达该时间后才能执行后续流程；<br>发起选举：当到达故障选举时间时，进行选举；<br>选举投票：只有持有槽的主节点才有票，会处理故障选举消息，投票过程其实是一个领导者选举（选举从节点为领导者）的过程，每个主节点只能投一张票给从节点，当从节点收集到足够的选票（大于N/2+1）后，触发替换主节点操作，撤销原故障主节点的槽，委派给自己，并广播自己的委派消息，通知集群内所有节点。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/redis%E9%9B%86%E7%BE%A4/" rel="tag"># redis集群</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/%E6%BA%90%E7%A0%81/4%E3%80%81%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE%E8%A7%A3%E6%9E%90/" rel="prev" title="数据源配置解析">
+      <i class="fa fa-chevron-left"></i> 数据源配置解析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/1%E3%80%81%E6%95%B0%E7%BB%84/2%E3%80%81%E7%A8%80%E7%96%8F%E6%95%B0%E7%BB%84%20SparseArray/" rel="next" title="稀疏数组SparseArray">
+      稀疏数组SparseArray <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#1%E3%80%81%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA"><span class="nav-number">1.</span> <span class="nav-text">1、集群搭建</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E6%95%B0%E6%8D%AE%E5%88%86%E5%8C%BA%E8%A7%84%E5%88%99"><span class="nav-number">2.</span> <span class="nav-text">2、分布式数据库数据分区规则</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3%E3%80%81%E9%9B%86%E7%BE%A4%E5%8E%9F%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">3、集群原理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4%E3%80%81%E8%8A%82%E7%82%B9%E4%B9%8B%E9%97%B4%E9%80%9A%E4%BF%A1"><span class="nav-number">4.</span> <span class="nav-text">4、节点之间通信</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#5%E3%80%81%E9%9B%86%E7%BE%A4%E6%89%A9%E5%AE%B9%E5%92%8C%E6%94%B6%E7%BC%A9"><span class="nav-number">5.</span> <span class="nav-text">5、集群扩容和收缩</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#6%E3%80%81%E9%9B%86%E7%BE%A4%E5%8A%9F%E8%83%BD%E9%99%90%E5%88%B6"><span class="nav-number">6.</span> <span class="nav-text">6、集群功能限制</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#7%E3%80%81%E9%9B%86%E7%BE%A4%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB"><span class="nav-number">7.</span> <span class="nav-text">7、集群故障转移</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#8%E3%80%81%E8%8A%82%E7%82%B9%E9%80%89%E4%B8%BE%EF%BC%9A"><span class="nav-number">8.</span> <span class="nav-text">8、节点选举：</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

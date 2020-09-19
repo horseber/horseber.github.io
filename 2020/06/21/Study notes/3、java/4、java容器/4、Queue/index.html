@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="queue队列特点列队是一种先进先出（FIFO）的数据结构。删除操作只能在表的头部，插入操作只能在表的尾部。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Queue">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/4%E3%80%81Queue/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="queue队列特点列队是一种先进先出（FIFO）的数据结构。删除操作只能在表的头部，插入操作只能在表的尾部。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:31.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:55.506Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="Queue">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/4%E3%80%81Queue/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>Queue | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/4%E3%80%81Queue/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Queue
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:31" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:31+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:55" itemprop="dateModified" datetime="2020-09-19T18:03:55+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/java%E5%AE%B9%E5%99%A8/" itemprop="url" rel="index"><span itemprop="name">java容器</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">queue队列特点列队是一种先进先出（FIFO）的数据结构。删除操作只能在表的头部，插入操作只能在表的尾部。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="queue队列特点："><a href="#queue队列特点：" class="headerlink" title="queue队列特点："></a>queue队列特点：</h3><p>列队是一种==先进先出==（FIFO）的数据结构。删除操作只能在表的头部，插入操作只能在表的尾部。</p>
+<p>Queue一般是作为一个缓冲队列使用的，简单举例：生产端的生产速度偶尔会大于消费端的消费速度，但又不想等待对方，此时如果有个缓存队列这样的问题就解决啦。生产端生产的东西只管放入缓存队列，消费端从缓存队列里面拿东西，达到一个缓冲的目的。 </p>
+<p>queue</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">boolean add(E e);</span><br><span class="line"></span><br><span class="line">boolean offer(E e);</span><br><span class="line"></span><br><span class="line">E remove();</span><br><span class="line"></span><br><span class="line">E poll();</span><br><span class="line"></span><br><span class="line">E element();</span><br><span class="line"></span><br><span class="line">E peek();</span><br></pre></td></tr></table></figure>
+
+<p>LinkedList是基于链表来实现，ArrayQueue基于数组实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class ArrayDeque&lt;E&gt; extends AbstractCollection&lt;E&gt;</span><br><span class="line">                           implements Deque&lt;E&gt;, Cloneable, Serializable</span><br><span class="line">&#123;</span><br><span class="line"> &#x2F;&#x2F;实际存放元素的数组</span><br><span class="line"> transient Object[] elements; </span><br><span class="line"> &#x2F;&#x2F;头指针</span><br><span class="line"> transient int head;</span><br><span class="line"> &#x2F;&#x2F;尾指针</span><br><span class="line"> transient int tail;</span><br><span class="line"> &#x2F;&#x2F;默认最小容量</span><br><span class="line"> private static final int MIN_INITIAL_CAPACITY &#x3D; 8;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>构造器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;未制定容量时，默认为16</span><br><span class="line">public ArrayDeque() &#123;</span><br><span class="line">        elements &#x3D; new Object[16];</span><br><span class="line">    &#125;</span><br><span class="line">&#x2F;&#x2F;制定初始容量</span><br><span class="line">public ArrayDeque(int numElements) &#123;</span><br><span class="line">        allocateElements(numElements);</span><br><span class="line">    &#125;</span><br><span class="line">&#x2F;&#x2F;指定初始值</span><br><span class="line">public ArrayDeque(Collection&lt;? extends E&gt; c) &#123;</span><br><span class="line">        allocateElements(c.size());</span><br><span class="line">        addAll(c);</span><br><span class="line">    &#125;</span><br><span class="line">&#x2F;&#x2F;指定容量小于8时，返回8</span><br><span class="line">&#x2F;&#x2F;否则，返回initialCapacity&#x3D;2^n，2^n越界时，则取2^30</span><br><span class="line">private void allocateElements(int numElements) &#123;</span><br><span class="line">        int initialCapacity &#x3D; MIN_INITIAL_CAPACITY;</span><br><span class="line">        if (numElements &gt;&#x3D; initialCapacity) &#123;</span><br><span class="line">            initialCapacity &#x3D; numElements;</span><br><span class="line">            initialCapacity |&#x3D; (initialCapacity &gt;&gt;&gt;  1);</span><br><span class="line">            initialCapacity |&#x3D; (initialCapacity &gt;&gt;&gt;  2);</span><br><span class="line">            initialCapacity |&#x3D; (initialCapacity &gt;&gt;&gt;  4);</span><br><span class="line">            initialCapacity |&#x3D; (initialCapacity &gt;&gt;&gt;  8);</span><br><span class="line">            initialCapacity |&#x3D; (initialCapacity &gt;&gt;&gt; 16);</span><br><span class="line">            initialCapacity++;</span><br><span class="line"></span><br><span class="line">            if (initialCapacity &lt; 0)   &#x2F;&#x2F; Too many elements, must back off</span><br><span class="line">                initialCapacity &gt;&gt;&gt;&#x3D; 1;&#x2F;&#x2F; Good luck allocating 2 ^ 30 elements</span><br><span class="line">        &#125;</span><br><span class="line">        elements &#x3D; new Object[initialCapacity];</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="offer方法"><a href="#offer方法" class="headerlink" title="offer方法"></a>offer方法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"> &#x2F;&#x2F;添加一个元素并返回true，如果队列已满，则返回false</span><br><span class="line"> public boolean offer(E e) &#123;</span><br><span class="line">        return offerLast(e);</span><br><span class="line">    &#125;</span><br><span class="line"> public boolean offerLast(E e) &#123;</span><br><span class="line">        addLast(e);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"> &#x2F;&#x2F;添加一个元素置尾端</span><br><span class="line"> public void addLast(E e) &#123;</span><br><span class="line">     if (e &#x3D;&#x3D; null)</span><br><span class="line">         throw new NullPointerException();</span><br><span class="line">     &#x2F;&#x2F;添加元素置尾端</span><br><span class="line">     elements[tail] &#x3D; e;</span><br><span class="line">     &#x2F;&#x2F;尾指针tail+1,计算tail在elements中的位置</span><br><span class="line">     &#x2F;&#x2F;例如：数组长度8，tail+1&#x3D;8，则tail&#x3D;0</span><br><span class="line">     &#x2F;&#x2F;当tail&#x3D;&#x3D;head时，即数组容量不足，进行扩容操作</span><br><span class="line">     if ( (tail &#x3D; (tail + 1) &amp; (elements.length - 1)) &#x3D;&#x3D; head)</span><br><span class="line">         doubleCapacity();</span><br><span class="line">  &#125;</span><br><span class="line"> &#x2F;&#x2F;双倍扩容</span><br><span class="line"> private void doubleCapacity() &#123;</span><br><span class="line">    assert head &#x3D;&#x3D; tail;</span><br><span class="line">    int p &#x3D; head;</span><br><span class="line">    int n &#x3D; elements.length;</span><br><span class="line">    int r &#x3D; n - p; &#x2F;&#x2F; number of elements to the right of p</span><br><span class="line">    &#x2F;&#x2F;新容量&#x3D;当前容量*2</span><br><span class="line">    int newCapacity &#x3D; n &lt;&lt; 1;</span><br><span class="line">    &#x2F;&#x2F;新容量过大，抛错</span><br><span class="line">    if (newCapacity &lt; 0)</span><br><span class="line">        throw new IllegalStateException(&quot;Sorry, deque too big&quot;);</span><br><span class="line">    &#x2F;&#x2F;创建一个新容量大小的数组</span><br><span class="line">    Object[] a &#x3D; new Object[newCapacity];</span><br><span class="line">    &#x2F;&#x2F;将elements拷贝置a中</span><br><span class="line">    System.arraycopy(elements, p, a, 0, r);</span><br><span class="line">    System.arraycopy(elements, 0, a, r, p);</span><br><span class="line">    elements &#x3D; a;</span><br><span class="line">    head &#x3D; 0;</span><br><span class="line">    &#x2F;&#x2F;注意：因为满了才进行扩容，所以tail&#x3D;n</span><br><span class="line">    &#x2F;&#x2F;如果不是满了才扩容，这里会出现问题</span><br><span class="line">    tail &#x3D; n;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="poll方法"><a href="#poll方法" class="headerlink" title="poll方法"></a>poll方法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;移除并返回第一个元素，如果队列为空，返回null</span><br><span class="line">public E poll() &#123;</span><br><span class="line">       return pollFirst();</span><br><span class="line">   &#125;</span><br><span class="line">public E pollFirst() &#123;</span><br><span class="line">       int h &#x3D; head;</span><br><span class="line">       @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">       E result &#x3D; (E) elements[h];</span><br><span class="line">       &#x2F;&#x2F; Element is null if deque empty</span><br><span class="line">       if (result &#x3D;&#x3D; null)</span><br><span class="line">           return null;</span><br><span class="line">       &#x2F;&#x2F;取到后‘必须’把当前位置设为null</span><br><span class="line">       elements[h] &#x3D; null;     </span><br><span class="line">       head &#x3D; (h + 1) &amp; (elements.length - 1);</span><br><span class="line">       return result;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="peek方法"><a href="#peek方法" class="headerlink" title="peek方法"></a>peek方法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;返回头部元素，如果队列为空，返回null</span><br><span class="line">public E peek() &#123;</span><br><span class="line">       return peekFirst();</span><br><span class="line">   &#125;</span><br><span class="line">public E peekFirst() &#123;</span><br><span class="line">       &#x2F;&#x2F; 如果head位置没有值，则返回null</span><br><span class="line">       return (E) elements[head];</span><br><span class="line">   &#125;</span><br><span class="line">&#x2F;&#x2F;返回头部元素,如果为null，抛错</span><br><span class="line">public E element() &#123;</span><br><span class="line">       return getFirst();</span><br><span class="line">   &#125;</span><br><span class="line">public E getFirst() &#123;</span><br><span class="line"> &#x2F;&#x2F;获取头部元素</span><br><span class="line"> @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line"> E result &#x3D; (E) elements[head];</span><br><span class="line"> &#x2F;&#x2F;如果为null，抛错</span><br><span class="line"> if (result &#x3D;&#x3D; null)</span><br><span class="line">     throw new NoSuchElementException();</span><br><span class="line"> return result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="remove方法"><a href="#remove方法" class="headerlink" title="remove方法"></a>remove方法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"> &#x2F;&#x2F;移除头段元素并返回，如果为null，则抛错</span><br><span class="line"> &#x2F;&#x2F;对比poll()方法，多了一个判空抛错的动作</span><br><span class="line"> public E remove() &#123;</span><br><span class="line">      return removeFirst();</span><br><span class="line">  &#125;</span><br><span class="line">public E removeFirst() &#123;</span><br><span class="line">     E x &#x3D; pollFirst();</span><br><span class="line">     if (x &#x3D;&#x3D; null)</span><br><span class="line">         throw new NoSuchElementException();</span><br><span class="line">     return x;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="add方法"><a href="#add方法" class="headerlink" title="add方法"></a>add方法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"> &#x2F;&#x2F;增加一个元素至尾端（队列满，则扩容）</span><br><span class="line"> public boolean add(E e) &#123;</span><br><span class="line">       addLast(e);</span><br><span class="line">       return true;</span><br><span class="line">   &#125;</span><br><span class="line">public void addLast(E e) &#123;</span><br><span class="line">       if (e &#x3D;&#x3D; null)</span><br><span class="line">           throw new NullPointerException();</span><br><span class="line">       elements[tail] &#x3D; e;</span><br><span class="line">       &#x2F;&#x2F;tail后移一位</span><br><span class="line">       &#x2F;&#x2F;检测是否已满，扩容</span><br><span class="line">       if ( (tail &#x3D; (tail + 1) &amp; (elements.length - 1)) &#x3D;&#x3D; head)</span><br><span class="line">           doubleCapacity();</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="push方法"><a href="#push方法" class="headerlink" title="push方法"></a>push方法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;增加一个元素至首端（队列满，则扩容）</span><br><span class="line"> public void push(E e) &#123;</span><br><span class="line">        addFirst(e);</span><br><span class="line">    &#125;</span><br><span class="line"> public void addFirst(E e) &#123;</span><br><span class="line">    &#x2F;&#x2F;e不能为空</span><br><span class="line">    if (e &#x3D;&#x3D; null)</span><br><span class="line">         throw new NullPointerException();</span><br><span class="line">     &#x2F;&#x2F;heah前移一位，并设置当前位置的值</span><br><span class="line">     elements[head &#x3D; (head - 1) &amp; (elements.length - 1)] &#x3D; e;</span><br><span class="line">     &#x2F;&#x2F;如果队列满，则扩容</span><br><span class="line">     if (head &#x3D;&#x3D; tail)</span><br><span class="line">         doubleCapacity();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="并行遍历器spliterator"><a href="#并行遍历器spliterator" class="headerlink" title="并行遍历器spliterator"></a>并行遍历器spliterator</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"> public Spliterator&lt;E&gt; spliterator() &#123;</span><br><span class="line">        return new DeqSpliterator&lt;E&gt;(this, -1, -1);</span><br><span class="line">    &#125;</span><br><span class="line">static final class DeqSpliterator&lt;E&gt; implements Spliterator&lt;E&gt; &#123;</span><br><span class="line">        private final ArrayDeque&lt;E&gt; deq;</span><br><span class="line">        &#x2F;&#x2F;围栏值，index能到达的最大位置</span><br><span class="line">        private int fence;  &#x2F;&#x2F; -1 表示第一次使用</span><br><span class="line">        &#x2F;&#x2F;当前位置指针</span><br><span class="line">        private int index;  &#x2F;&#x2F; current index, modified on traverse&#x2F;split</span><br><span class="line"></span><br><span class="line">        DeqSpliterator(ArrayDeque&lt;E&gt; deq, int origin, int fence) &#123;</span><br><span class="line">            this.deq &#x3D; deq;</span><br><span class="line">            this.index &#x3D; origin;</span><br><span class="line">            this.fence &#x3D; fence;</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;获取围栏值值</span><br><span class="line">        private int getFence() &#123; &#x2F;&#x2F; force initialization</span><br><span class="line">            int t;</span><br><span class="line">            if ((t &#x3D; fence) &lt; 0) &#123;</span><br><span class="line">            &#x2F;&#x2F;第一次初始化时，获取index和fence的值</span><br><span class="line">                t &#x3D; fence &#x3D; deq.tail;</span><br><span class="line">                index &#x3D; deq.head;</span><br><span class="line">            &#125;</span><br><span class="line">            return t;</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;分割，因为head可能比tail大，因此中间位置需要计算一下</span><br><span class="line">        public DeqSpliterator&lt;E&gt; trySplit() &#123;</span><br><span class="line">            int t &#x3D; getFence(), h &#x3D; index, n &#x3D; deq.elements.length;</span><br><span class="line">            &#x2F;&#x2F;h &#x3D;&#x3D; t 表示没有数据</span><br><span class="line">            &#x2F;&#x2F;(h + 1) &amp; (n - 1)) &#x3D;&#x3D; t 表示只有一个数据</span><br><span class="line">            if (h !&#x3D; t &amp;&amp; ((h + 1) &amp; (n - 1)) !&#x3D; t) &#123;</span><br><span class="line">                &#x2F;&#x2F;h &gt; t 表示head&gt;tail时</span><br><span class="line">                if (h &gt; t)</span><br><span class="line">                    t +&#x3D; n;</span><br><span class="line">                &#x2F;&#x2F;计算m的位置</span><br><span class="line">                &#x2F;&#x2F;例如：n：8，head：6，tail:4</span><br><span class="line">                &#x2F;&#x2F; 则 t&#x3D;4+8&#x3D;12</span><br><span class="line">                &#x2F;&#x2F; m &#x3D;（（6+12）&gt;&gt;&gt;1)&amp;（8-1）&#x3D;1</span><br><span class="line">                int m &#x3D; ((h + t) &gt;&gt;&gt; 1) &amp; (n - 1);</span><br><span class="line">                return new DeqSpliterator&lt;&gt;(deq, h, index &#x3D; m);</span><br><span class="line">            &#125;</span><br><span class="line">            return null;</span><br><span class="line">        &#125;</span><br><span class="line">        public void forEachRemaining(Consumer&lt;? super E&gt; consumer) &#123;</span><br><span class="line">                    if (consumer &#x3D;&#x3D; null)</span><br><span class="line">                        throw new NullPointerException();</span><br><span class="line">                    Object[] a &#x3D; deq.elements;</span><br><span class="line">                    int m &#x3D; a.length - 1, f &#x3D; getFence(), i &#x3D; index;</span><br><span class="line">                    index &#x3D; f;</span><br><span class="line">                    while (i !&#x3D; f) &#123;</span><br><span class="line">                        @SuppressWarnings(&quot;unchecked&quot;) E e &#x3D; (E)a[i];</span><br><span class="line">                        i &#x3D; (i + 1) &amp; m;</span><br><span class="line">                        &#x2F;&#x2F;遍历时，发生‘结构变更’，e可能为null</span><br><span class="line">                        if (e &#x3D;&#x3D; null)</span><br><span class="line">                            throw new ConcurrentModificationException();</span><br><span class="line">                        consumer.accept(e);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">        ...</span><br><span class="line">       &#x2F;&#x2F;特征值</span><br><span class="line">        public int characteristics() &#123;</span><br><span class="line">            return Spliterator.ORDERED | Spliterator.SIZED |</span><br><span class="line">                Spliterator.NONNULL | Spliterator.SUBSIZED;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到ArrayQueue的并行迭代器没有什么特别的，只不过我们以前看的ArrayList，HashMap等数据结构都是通过一个modCount来保证快速失败的，而ArrayQueue则是在遍历时，但它结构发生变更，并不一定会抛错！</p>
+<p>下面是它的实现类.</p>
+<p>LinkedeBlockingQueue—基于链接节点的可选有界FIFO方式阻塞式队列<br>ArrayBlockingQueue—基于数组的有界FIFO方式的阻塞式队列<br>PriorityBlockingQueue—基于栈结构无界阻塞式队列<br>DelayQueue—基于栈结构的时间调度队列<br>SychronousQueue—通过使用BlockingQueue接口的简单对接机制的队列<br>　　在JDK7中 ,TransferQueue是一个特殊额BlockingQueue,它向队列添加一个元素后,可以选择处于等待(阻塞)状态,以让另一个线程检索元素,TransferQueue只有一个实现类</p>
+<p>LinkedTransferQueue—基于链接节点的无界TransferQueue</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Queue/" rel="tag"># Queue</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/9%E3%80%81%E6%B3%9B%E5%9E%8B/%E5%8F%82%E6%95%B0%E5%8C%96%E7%B1%BB%E5%9E%8B/" rel="prev" title="参数化类型">
+      <i class="fa fa-chevron-left"></i> 参数化类型
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/6%E3%80%81%E5%85%B6%E4%BB%96%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/shiro/SSM%E6%95%B4%E5%90%88Shiro/" rel="next" title="SSM整合Shiro">
+      SSM整合Shiro <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#queue%E9%98%9F%E5%88%97%E7%89%B9%E7%82%B9%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">queue队列特点：</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#offer%E6%96%B9%E6%B3%95"><span class="nav-number">1.1.</span> <span class="nav-text">offer方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#poll%E6%96%B9%E6%B3%95"><span class="nav-number">1.2.</span> <span class="nav-text">poll方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#peek%E6%96%B9%E6%B3%95"><span class="nav-number">1.3.</span> <span class="nav-text">peek方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#remove%E6%96%B9%E6%B3%95"><span class="nav-number">1.4.</span> <span class="nav-text">remove方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#add%E6%96%B9%E6%B3%95"><span class="nav-number">1.5.</span> <span class="nav-text">add方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#push%E6%96%B9%E6%B3%95"><span class="nav-number">1.6.</span> <span class="nav-text">push方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B9%B6%E8%A1%8C%E9%81%8D%E5%8E%86%E5%99%A8spliterator"><span class="nav-number">1.7.</span> <span class="nav-text">并行遍历器spliterator</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

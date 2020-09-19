@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1、分布式锁为什么需要使用分布式锁因为synchronize和lock是一个JVM中线程级别的锁。如何应用部署在多台服务器上（多个JVM），那synchronize和lock就不起作用了。所以需要分布式锁来保证符合操作的原子性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redis实现分布式锁">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/9%E3%80%81redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="1、分布式锁为什么需要使用分布式锁因为synchronize和lock是一个JVM中线程级别的锁。如何应用部署在多台服务器上（多个JVM），那synchronize和lock就不起作用了。所以需要分布式锁来保证符合操作的原子性。">
+<meta property="og:locale">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20190904064838338.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20190904070552614.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20190904212522311.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2020-06-21T01:23:20.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:59.815Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="redis实现分布式锁">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20190904064838338.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/9%E3%80%81redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>redis实现分布式锁 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/9%E3%80%81redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          redis实现分布式锁
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:20" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:20+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:59" itemprop="dateModified" datetime="2020-09-19T18:03:59+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">1、分布式锁为什么需要使用分布式锁因为synchronize和lock是一个JVM中线程级别的锁。如何应用部署在多台服务器上（多个JVM），那synchronize和lock就不起作用了。所以需要分布式锁来保证符合操作的原子性。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="1、分布式锁"><a href="#1、分布式锁" class="headerlink" title="1、分布式锁"></a>1、分布式锁</h4><p>为什么需要使用分布式锁：因为synchronize和lock是一个JVM中线程级别的锁。如何应用部署在多台服务器上（多个JVM），那synchronize和lock就不起作用了。所以需要分布式锁来保证符合操作的原子性。</p>
+<h4 id="2、分布式要保证的特点"><a href="#2、分布式要保证的特点" class="headerlink" title="2、分布式要保证的特点"></a>2、分布式要保证的特点</h4><ul>
+<li>多进程可见</li>
+<li>互斥</li>
+<li>可重入（可选）</li>
+<li>阻塞（可选）</li>
+<li>性能好（可选）</li>
+<li>高可用</li>
+</ul>
+<h4 id="3、分布式锁实现方案"><a href="#3、分布式锁实现方案" class="headerlink" title="3、分布式锁实现方案"></a>3、分布式锁实现方案</h4><p>1、基于数据库：</p>
+<p>2、zookeeper分布式锁（高一致性，性能较差）</p>
+<p>3、基于redis等缓存分布式锁（性能好，不保证一致性）</p>
+<h4 id="4、基于Redis分布式锁"><a href="#4、基于Redis分布式锁" class="headerlink" title="4、基于Redis分布式锁"></a>4、基于Redis分布式锁</h4><h6 id="版本一：使用SETNX和EXPIRE命令实现分布式锁"><a href="#版本一：使用SETNX和EXPIRE命令实现分布式锁" class="headerlink" title="版本一：使用SETNX和EXPIRE命令实现分布式锁"></a>版本一：使用SETNX和EXPIRE命令实现分布式锁</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#不存在再设值</span><br><span class="line">SETNX lock 1</span><br><span class="line"> </span><br><span class="line">#防止死锁，设置过期时间</span><br><span class="line">EXPIRE lock 10</span><br></pre></td></tr></table></figure>
+<p>存在的问题：SETNX和 EXPIRE不是原子性操作。若setnx后，还没来得及设置过期时间，服务就挂了。就会造成死锁</p>
+<h6 id="版本二：Redis的2-6-12版本后SET命令同时支持SETNX-和EXPIRE："><a href="#版本二：Redis的2-6-12版本后SET命令同时支持SETNX-和EXPIRE：" class="headerlink" title="版本二：Redis的2.6.12版本后SET命令同时支持SETNX 和EXPIRE："></a>版本二：Redis的2.6.12版本后SET命令同时支持SETNX 和EXPIRE：</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET lock 1 NX EX 10</span><br></pre></td></tr></table></figure>
+<p>实现了setnx 和expire的原子性操作。<img src="https://img-blog.csdnimg.cn/20190904064838338.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<p>版本二存在的问题：会误删除别人的锁</p>
+<ul>
+<li>1、进程A获取锁成功，设置超时时间10s</li>
+<li>2、A执行业务期间，由于业务阻塞时间超过10s, 锁超时自动释放</li>
+<li>3、此时进程B成功获取锁，执行业务</li>
+<li>4、进程A业务执行完成，释放锁，这时候由于A的锁其实已经超时自动释放了，所以这时手动释放的是B的锁</li>
+<li>5、B的锁已经释放了，此时C进程也成功获取到了锁。</li>
+</ul>
+<p>误删别人锁，B和C同时获取到锁了。导致锁的互斥性被破坏。</p>
+<p>解决办法：设置锁的时候，保存自己的信息（lock不能随便设置），最后只能删除自己的锁<br><img src="https://img-blog.csdnimg.cn/20190904070552614.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h6 id="版本三：可重入锁。借鉴synchronized的重入锁原理"><a href="#版本三：可重入锁。借鉴synchronized的重入锁原理" class="headerlink" title="版本三：可重入锁。借鉴synchronized的重入锁原理"></a>版本三：可重入锁。借鉴synchronized的重入锁原理</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line"> &#x2F;&#x2F;获取锁</span><br><span class="line"> &#x2F;&#x2F;执行业务...</span><br><span class="line">    &#123;</span><br><span class="line">      &#x2F;&#x2F;获取锁（再次获取锁的时候发现这个锁自己还未释放，所以这里会获取失败）</span><br><span class="line">      &#x2F;&#x2F;执行业务...</span><br><span class="line">      &#x2F;&#x2F;释放锁</span><br><span class="line">    &#125;</span><br><span class="line">  &#x2F;&#x2F;释放锁</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>重入锁得原理：为每个锁关联一个获取计数值和一个所有者的线程。当计数值为0时，该锁未被任何线程持有。当一个线程请求一个未被持有的锁时，JVM会记下锁的持有者和计数值+1 ，如果是同一个线程再次获取这个锁时，计数值递增。当线程退出同步代码块时，计数值递减。当计数值为0时，这个锁被释放。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line"> &#x2F;&#x2F;获取锁</span><br><span class="line"> &#x2F;&#x2F;执行业务...</span><br><span class="line">    &#123;</span><br><span class="line">      &#x2F;&#x2F;获取锁（判断如果是自己，计算器+1，放行）</span><br><span class="line">      &#x2F;&#x2F;执行业务...</span><br><span class="line">      &#x2F;&#x2F;释放锁（计算器&gt;0,释放锁的时候只做计算器-1）</span><br><span class="line">    &#125;</span><br><span class="line">  &#x2F;&#x2F;释放锁（计算器&#x3D;&#x3D;0,直接删除锁）</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于需要记录锁的名称、持有锁的线程、 持有锁的线程的计数器。所以需要hash数据结构才能完成。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HSET lock thread-01 1</span><br></pre></td></tr></table></figure>
+<p><img src="https://img-blog.csdnimg.cn/20190904212522311.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzMwMTMwNzgz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<p>以上代码实现的符合操作是非原子性。所以会出现线程安全问题。</p>
+<h6 id="版本四：使用lua脚本"><a href="#版本四：使用lua脚本" class="headerlink" title="版本四：使用lua脚本"></a>版本四：使用lua脚本</h6><p>使用lua脚本。将以上逻辑使用lua脚本实现。然后redis执行lua脚本是支持原子性的。</p>
+<h6 id="确保过期时间大于业务执行时间？"><a href="#确保过期时间大于业务执行时间？" class="headerlink" title="确保过期时间大于业务执行时间？"></a>确保过期时间大于业务执行时间？</h6><p>这也是面试遇到的问题之一。当正在执行业务的过程中，超过过期时间。锁自动释放。其他线程便能获取到锁。破坏了锁的互斥性。所以需要保证过期时间大于业务的执行时间。</p>
+<p>方案：开启线程，轮询刷新过期时间。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;获取锁</span><br><span class="line">String result &#x3D; jedis.set(lockKey, lockValue, NOT_EXIST, SECONDS, 30);</span><br><span class="line">&#x2F;&#x2F;获取锁成功</span><br><span class="line">if (OK.equals(result)) &#123;</span><br><span class="line">	&#x2F;&#x2F;开启线程轮询刷新过期时间</span><br><span class="line">	private class ThreadTest implements Runnable&#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            while (锁未释放)&#123;</span><br><span class="line">			</span><br><span class="line">                System.out.println(&quot;执行延迟失效时间中...&quot;);</span><br><span class="line"> </span><br><span class="line">                String checkAndExpireScript &#x3D; &quot;if redis.call(&#39;get&#39;, KEYS[1]) &#x3D;&#x3D; ARGV[1] then &quot; +</span><br><span class="line">                        &quot;return redis.call(&#39;expire&#39;,KEYS[1],ARGV[2]) &quot; +</span><br><span class="line">                        &quot;else &quot; +</span><br><span class="line">                        &quot;return 0 end&quot;;</span><br><span class="line">                jedis.eval(checkAndExpireScript, 1, lockKey, lockValue, &quot;30&quot;);</span><br><span class="line"> </span><br><span class="line">                &#x2F;&#x2F;休眠2秒</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	&#x2F;&#x2F;业务执行...</span><br><span class="line">	&#x2F;&#x2F;执行完毕，手动释放锁</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h6 id="Redisson"><a href="#Redisson" class="headerlink" title="Redisson"></a>Redisson</h6><p>以上都属于自己造轮子。Redis推荐使用Redisson实现分布式锁。已经帮我们实现了</p>
+<ul>
+<li>可重入锁（Reentrant Lock）</li>
+<li>公平锁（Fair Lock）</li>
+<li>联锁（MultiLock）</li>
+<li>红锁（RedLock）</li>
+<li>读写锁（ReadWriteLock）</li>
+<li>信号量（Semaphore）</li>
+<li>可过期性信号量（PermitExpirableSemaphore）</li>
+<li>闭锁（CountDownLatch）</li>
+<li>Redisson源码地址：<a target="_blank" rel="noopener" href="https://github.com/redisson/redisson/">https://github.com/redisson/redisson/</a></li>
+</ul>
+<p>Redisson使用示例：</p>
+<p>1、引入依赖</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">	&lt;groupId&gt;org.redisson&lt;&#x2F;groupId&gt;</span><br><span class="line">	&lt;artifactId&gt;redisson&lt;&#x2F;artifactId&gt;</span><br><span class="line">	&lt;version&gt;3.5.0&lt;&#x2F;version&gt;</span><br><span class="line">&lt;&#x2F;dependency&gt;</span><br></pre></td></tr></table></figure>
+<p>2、配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">public class RedissonAutoConfiguration &#123;</span><br><span class="line"> </span><br><span class="line">    @Bean</span><br><span class="line">    Redisson redissonSingle() &#123;</span><br><span class="line">        Config config &#x3D; new Config();</span><br><span class="line">        SingleServerConfig serverConfig &#x3D; config.useSingleServer()</span><br><span class="line">                .setAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6379&quot;)</span><br><span class="line">                .setTimeout(3000)</span><br><span class="line">                .setConnectionPoolSize(64)</span><br><span class="line">                .setConnectionMinimumIdleSize(10);</span><br><span class="line">        serverConfig.setPassword(&quot;123456&quot;);</span><br><span class="line">        serverConfig.setDatabase(7);</span><br><span class="line">        return (Redisson) Redisson.create(config);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>3、使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;通过key获取lock实例</span><br><span class="line">RLock lock &#x3D; redisson.getLock(&quot;lockName&quot;);</span><br><span class="line">&#x2F;&#x2F;加锁</span><br><span class="line">boolean result &#x3D; lock.tryLock(-1, 5, TimeUnit.MINUTES);</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" rel="tag"># redis实现分布式锁</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/SpringMVC/spring-mvc/2%E3%80%81springMvc%E6%9E%B6%E6%9E%84/" rel="prev" title="springMvc架构">
+      <i class="fa fa-chevron-left"></i> springMvc架构
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E6%AD%BB%E9%94%81/" rel="next" title="死锁">
+      死锁 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="nav-number">1.</span> <span class="nav-text">1、分布式锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E8%A6%81%E4%BF%9D%E8%AF%81%E7%9A%84%E7%89%B9%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">2、分布式要保证的特点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">3、分布式锁实现方案</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4%E3%80%81%E5%9F%BA%E4%BA%8ERedis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="nav-number">4.</span> <span class="nav-text">4、基于Redis分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%89%88%E6%9C%AC%E4%B8%80%EF%BC%9A%E4%BD%BF%E7%94%A8SETNX%E5%92%8CEXPIRE%E5%91%BD%E4%BB%A4%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="nav-number">4.0.1.</span> <span class="nav-text">版本一：使用SETNX和EXPIRE命令实现分布式锁</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%89%88%E6%9C%AC%E4%BA%8C%EF%BC%9ARedis%E7%9A%842-6-12%E7%89%88%E6%9C%AC%E5%90%8ESET%E5%91%BD%E4%BB%A4%E5%90%8C%E6%97%B6%E6%94%AF%E6%8C%81SETNX-%E5%92%8CEXPIRE%EF%BC%9A"><span class="nav-number">4.0.2.</span> <span class="nav-text">版本二：Redis的2.6.12版本后SET命令同时支持SETNX 和EXPIRE：</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%89%88%E6%9C%AC%E4%B8%89%EF%BC%9A%E5%8F%AF%E9%87%8D%E5%85%A5%E9%94%81%E3%80%82%E5%80%9F%E9%89%B4synchronized%E7%9A%84%E9%87%8D%E5%85%A5%E9%94%81%E5%8E%9F%E7%90%86"><span class="nav-number">4.0.3.</span> <span class="nav-text">版本三：可重入锁。借鉴synchronized的重入锁原理</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%89%88%E6%9C%AC%E5%9B%9B%EF%BC%9A%E4%BD%BF%E7%94%A8lua%E8%84%9A%E6%9C%AC"><span class="nav-number">4.0.4.</span> <span class="nav-text">版本四：使用lua脚本</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%A1%AE%E4%BF%9D%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4%E5%A4%A7%E4%BA%8E%E4%B8%9A%E5%8A%A1%E6%89%A7%E8%A1%8C%E6%97%B6%E9%97%B4%EF%BC%9F"><span class="nav-number">4.0.5.</span> <span class="nav-text">确保过期时间大于业务执行时间？</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Redisson"><span class="nav-number">4.0.6.</span> <span class="nav-text">Redisson</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -20,21 +20,21 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="1、通过引用计数和可达性算法可以分析出谁需要被收回 2、同过了解回收算法知道如何去回收">
+  <meta name="description" content="1、通过引用计数和可达性算法可以分析出谁需要被收回2、同过了解回收算法知道如何去回收">
 <meta property="og:type" content="article">
-<meta property="og:title" content="GC回收三：垃圾回收器">
+<meta property="og:title" content="GC回收三垃圾回收器">
 <meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/10%E3%80%81GC%E5%9B%9E%E6%94%B6%E4%B8%89%EF%BC%9A%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/index.html">
 <meta property="og:site_name" content="horseber">
-<meta property="og:description" content="1、通过引用计数和可达性算法可以分析出谁需要被收回 2、同过了解回收算法知道如何去回收">
+<meta property="og:description" content="1、通过引用计数和可达性算法可以分析出谁需要被收回2、同过了解回收算法知道如何去回收">
 <meta property="og:locale">
 <meta property="og:image" content="https://img-blog.csdn.net/20170906171932635?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvU2lsZW5jZU9P/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
 <meta property="og:image" content="https://img-blog.csdn.net/20170906172624319?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvU2lsZW5jZU9P/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
 <meta property="og:image" content="https://img-blog.csdn.net/20170906172857773?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvU2lsZW5jZU9P/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
 <meta property="og:image" content="https://img-blog.csdn.net/20170906173049744?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvU2lsZW5jZU9P/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
 <meta property="article:published_time" content="2020-06-21T01:23:15.000Z">
-<meta property="article:modified_time" content="2020-09-19T09:26:47.447Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:55.528Z">
 <meta property="article:author" content="horseber">
-<meta property="article:tag" content="GC回收三：垃圾回收器">
+<meta property="article:tag" content="GC回收三垃圾回收器">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://img-blog.csdn.net/20170906171932635?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvU2lsZW5jZU9P/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
 
@@ -51,7 +51,7 @@
   };
 </script>
 
-  <title>GC回收三：垃圾回收器 | horseber</title>
+  <title>GC回收三垃圾回收器 | horseber</title>
   
 
 
@@ -194,7 +194,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          GC回收三：垃圾回收器
+          GC回收三垃圾回收器
         </h1>
 
         <div class="post-meta">
@@ -211,7 +211,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 17:26:47" itemprop="dateModified" datetime="2020-09-19T17:26:47+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 18:03:55" itemprop="dateModified" datetime="2020-09-19T18:03:55+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -224,7 +224,7 @@
             </span>
 
           
-            <div class="post-description">1、通过引用计数和可达性算法可以分析出谁需要被收回 2、同过了解回收算法知道如何去回收</div>
+            <div class="post-description">1、通过引用计数和可达性算法可以分析出谁需要被收回2、同过了解回收算法知道如何去回收</div>
 
         </div>
       </header>
@@ -281,7 +281,7 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/GC%E5%9B%9E%E6%94%B6%E4%B8%89%EF%BC%9A%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/" rel="tag"># GC回收三：垃圾回收器</a>
+              <a href="/tags/GC%E5%9B%9E%E6%94%B6%E4%B8%89%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/" rel="tag"># GC回收三垃圾回收器</a>
           </div>
 
         
@@ -290,12 +290,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/2%E3%80%81java%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" rel="prev" title="java内存模型">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/2%E3%80%81java%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" rel="prev" title="java内存模型">
       <i class="fa fa-chevron-left"></i> java内存模型
     </a></div>
       <div class="post-nav-item">
-    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/AOP/%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86/" rel="next" title="声明式事务底层原理">
-      声明式事务底层原理 <i class="fa fa-chevron-right"></i>
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95/13%E3%80%81Interrupts/" rel="next" title="Interrupts">
+      Interrupts <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -371,20 +371,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">103</span>
+          <span class="site-state-item-count">430</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">51</span>
+        <span class="site-state-item-count">97</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">103</span>
+        <span class="site-state-item-count">427</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

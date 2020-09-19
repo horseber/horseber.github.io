@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta property="og:type" content="article">
+<meta property="og:title" content="JWT使用">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/8%E3%80%81%E5%B7%A5%E5%85%B7%E7%AF%87/JWT/1%E3%80%81JWT%E4%BD%BF%E7%94%A8/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:20.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:04:01.727Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="JWT使用">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/8%E3%80%81%E5%B7%A5%E5%85%B7%E7%AF%87/JWT/1%E3%80%81JWT%E4%BD%BF%E7%94%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>JWT使用 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/8%E3%80%81%E5%B7%A5%E5%85%B7%E7%AF%87/JWT/1%E3%80%81JWT%E4%BD%BF%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          JWT使用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:20" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:20+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:04:01" itemprop="dateModified" datetime="2020-09-19T18:04:01+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JWT/" itemprop="url" rel="index"><span itemprop="name">JWT</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description"><dependency></div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.auth0&lt;&#x2F;groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;java-jwt&lt;&#x2F;artifactId&gt;</span><br><span class="line">    &lt;version&gt;3.4.1&lt;&#x2F;version&gt;</span><br><span class="line">&lt;&#x2F;dependency&gt; </span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">import com.alibaba.fastjson.JSONObject;</span><br><span class="line">import com.alibaba.fastjson.serializer.SerializerFeature;</span><br><span class="line">import com.auth0.jwt.JWT;</span><br><span class="line">import com.auth0.jwt.JWTVerifier;</span><br><span class="line">import com.auth0.jwt.algorithms.Algorithm;</span><br><span class="line">import com.auth0.jwt.exceptions.JWTCreationException;</span><br><span class="line">import com.auth0.jwt.exceptions.JWTVerificationException;</span><br><span class="line">import com.auth0.jwt.interfaces.Claim;</span><br><span class="line">import com.auth0.jwt.interfaces.DecodedJWT;</span><br><span class="line">import com.xxl.job.core.util.DateUtil;</span><br><span class="line">import org.apache.commons.lang3.StringUtils;</span><br><span class="line">import org.apache.commons.lang3.time.DateUtils;</span><br><span class="line"></span><br><span class="line">import java.text.SimpleDateFormat;</span><br><span class="line">import java.util.Calendar;</span><br><span class="line">import java.util.Date;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">public class JWTUtil&lt;T&gt; &#123;</span><br><span class="line">    &#x2F;&#x2F; JWT密钥</span><br><span class="line">    private static final String JWT_SECRET &#x3D; &quot;MY_PROJECT&quot;;</span><br><span class="line">    &#x2F;&#x2F; 密钥生成者</span><br><span class="line">    private static final String JWT_OPERATOR &#x3D; JWT_SECRET + &quot;_SERVER&quot;;</span><br><span class="line">    &#x2F;&#x2F; JWT主题</span><br><span class="line">    private static final String JWT_SUBJECT &#x3D; JWT_SECRET + &quot;_TOKEN&quot;;</span><br><span class="line">    &#x2F;&#x2F;载荷</span><br><span class="line">    public static final String JWT_CLAIM_KEY &#x3D; JWT_SECRET + &quot;_CLAIM&quot;;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; JWT过期时间(小时)</span><br><span class="line">    private static final int JWT_EXPIRATION_HOUR &#x3D; 2;</span><br><span class="line"></span><br><span class="line">    public static String createToken(Object obj) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            &#x2F;&#x2F;将对象转为json,进行存储</span><br><span class="line">            String json &#x3D; JSONObject.toJSONString(obj, SerializerFeature.WriteMapNullValue);</span><br><span class="line">            &#x2F;&#x2F; 头部信息</span><br><span class="line">            Map&lt;String, Object&gt; map &#x3D; new HashMap&lt;&gt;();</span><br><span class="line">            map.put(&quot;alg&quot;, &quot;HS256&quot;);</span><br><span class="line">            map.put(&quot;typ&quot;, &quot;JWT&quot;);</span><br><span class="line">            Date nowDate &#x3D; new Date();</span><br><span class="line">            &#x2F;&#x2F;获取n小时后的时间</span><br><span class="line">            Date expireDate &#x3D; getAfterDate(nowDate, JWT_EXPIRATION_HOUR);&#x2F;&#x2F; 2小过期</span><br><span class="line">            String token &#x3D; JWT.create()</span><br><span class="line">                    &#x2F;* 设置头部信息 Header *&#x2F;</span><br><span class="line">                    .withHeader(map)</span><br><span class="line">                    &#x2F;* 设置 载荷 Payload *&#x2F;</span><br><span class="line">                    .withClaim(JWT_CLAIM_KEY, json)</span><br><span class="line">                    &#x2F;&#x2F; 签名是有谁生成 例如 服务器</span><br><span class="line">                    .withIssuer(JWT_OPERATOR)</span><br><span class="line">                    &#x2F;&#x2F; 签名的主题</span><br><span class="line">                    .withSubject(JWT_SUBJECT)</span><br><span class="line">                    &#x2F;&#x2F;定义在什么时间之前，该jwt都是不可用的.</span><br><span class="line">                    &#x2F;&#x2F; .withNotBefore(new Date())</span><br><span class="line">                    &#x2F;&#x2F; 签名的观众 也可以理解谁接受签名的</span><br><span class="line">                    &#x2F;&#x2F; .withAudience(&quot;APP&quot;)</span><br><span class="line">                    &#x2F;&#x2F; 生成签名的时间</span><br><span class="line">                    .withIssuedAt(nowDate)</span><br><span class="line">                    &#x2F;&#x2F; 签名过期的时间</span><br><span class="line">                    .withExpiresAt(expireDate)</span><br><span class="line">                    &#x2F;* 签名 Signature *&#x2F;</span><br><span class="line">                    .sign(Algorithm.HMAC256(JWT_SECRET));</span><br><span class="line">            return token;</span><br><span class="line">        &#125; catch (JWTCreationException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static &lt;T&gt; T verifyToken(String token, Class&lt;T&gt; clazz) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Algorithm algorithm &#x3D; Algorithm.HMAC256(JWT_SECRET);</span><br><span class="line">            JWTVerifier verifier &#x3D; JWT.require(algorithm).withIssuer(JWT_OPERATOR).build(); &#x2F;&#x2F; Reusable verifier</span><br><span class="line">            DecodedJWT jwt &#x3D; verifier.verify(token);</span><br><span class="line">			&#x2F;*String subject &#x3D; jwt.getSubject();</span><br><span class="line">			Map&lt;String, Claim&gt; claims &#x3D; jwt.getClaims();</span><br><span class="line">			Claim claim &#x3D; claims.get(JWT_CLAIM_KEY);</span><br><span class="line">			List&lt;String&gt; audience &#x3D; jwt.getAudience();*&#x2F;</span><br><span class="line">            &#x2F;&#x2F; 验证签名时间是否过期</span><br><span class="line">            Date expiresDate &#x3D; jwt.getExpiresAt();</span><br><span class="line">            Date now &#x3D; new Date();</span><br><span class="line">            if (expiresDate.before(now)) &#123;</span><br><span class="line">                return null;</span><br><span class="line">            &#125;</span><br><span class="line">            Map&lt;String, Claim&gt; claims &#x3D; jwt.getClaims();</span><br><span class="line">            Claim claim &#x3D; claims.get(JWTUtil.JWT_CLAIM_KEY);</span><br><span class="line">            &#x2F;&#x2F;获取存储在token中的json数据</span><br><span class="line">            String json &#x3D; claim.asString();</span><br><span class="line">            if (StringUtils.isBlank(json)) &#123;</span><br><span class="line">                return null;</span><br><span class="line">            &#125;</span><br><span class="line">            T t &#x3D; JsonUtils.toObject(json, clazz);</span><br><span class="line">            return t;</span><br><span class="line">        &#125; catch (JWTVerificationException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;获取n小时后的时间</span><br><span class="line">    public static Date getAfterDate(Date date, int hour) &#123;</span><br><span class="line">        SimpleDateFormat format &#x3D; new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</span><br><span class="line">        if (date &#x3D;&#x3D; null)</span><br><span class="line">            return null;</span><br><span class="line">        Calendar cal &#x3D; Calendar.getInstance();</span><br><span class="line">        cal.setTime(date);</span><br><span class="line">        cal.add(Calendar.HOUR, hour);</span><br><span class="line">        date &#x3D; cal.getTime();</span><br><span class="line">        cal &#x3D; null;</span><br><span class="line">        return date;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>附JsonUtil工具</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">package com.github.wangping.mp.demo.util;</span><br><span class="line"></span><br><span class="line">import com.alibaba.fastjson.JSONArray;</span><br><span class="line">import com.fasterxml.jackson.core.JsonProcessingException;</span><br><span class="line">import com.fasterxml.jackson.databind.ObjectMapper;</span><br><span class="line">import lombok.extern.slf4j.Slf4j;</span><br><span class="line"></span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.util.List;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@Slf4j</span><br><span class="line">public class JsonUtils &#123;</span><br><span class="line"></span><br><span class="line">    private static ObjectMapper objectMapper;</span><br><span class="line"></span><br><span class="line">    private JsonUtils() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    public static ObjectMapper getInstance() &#123;</span><br><span class="line">        if(objectMapper &#x3D;&#x3D; null)&#123;</span><br><span class="line">            synchronized (JsonUtils.class)&#123;</span><br><span class="line">                if(objectMapper &#x3D;&#x3D; null)&#123;</span><br><span class="line">                    objectMapper &#x3D; new ObjectMapper();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return objectMapper;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     * json字符串转换为对象</span><br><span class="line">     *&#x2F;</span><br><span class="line">    public static &lt;T&gt; T toObject(String json, Class&lt;T&gt; clazz) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            return getInstance().readValue(json, clazz);</span><br><span class="line">        &#125;  catch (IOException e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     * 对象转换为json字符串</span><br><span class="line">     *&#x2F;</span><br><span class="line">    public static String toJson(Object object) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            return getInstance().writeValueAsString(object);</span><br><span class="line">        &#125; catch (JsonProcessingException e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     *  转换为List</span><br><span class="line">     *</span><br><span class="line">     *&#x2F;</span><br><span class="line">    public static  &lt;T&gt; List&lt;T&gt; toList(String json,Class&lt;T&gt; clazz)&#123;</span><br><span class="line">        try&#123;</span><br><span class="line">            return JSONArray.parseArray(json).toJavaList(clazz);</span><br><span class="line">        &#125;catch(Exception e)&#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/JWT%E4%BD%BF%E7%94%A8/" rel="tag"># JWT使用</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E6%AD%BB%E9%94%81/" rel="prev" title="死锁">
+      <i class="fa fa-chevron-left"></i> 死锁
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/1%E3%80%81%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/mysql%E6%9E%B6%E6%9E%84/2%E3%80%81%E7%B4%A2%E5%BC%95%EF%BC%88%E4%B8%8A%EF%BC%89/" rel="next" title="索引（上）">
+      索引（上） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

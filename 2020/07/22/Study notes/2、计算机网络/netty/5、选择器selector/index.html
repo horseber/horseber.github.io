@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Java的NIO，用非阻塞的IO方式。可以用一个线程，处理多个的客户端连接,避免了多线程之间的上下文切换导致的开销（注意多核CPU，不使用多任务可能是在浪费CPU能力）为了将Channel和Selector配合使用，channel必须注册到selector上。通过SelectableChannel.register()方法来实现.Channel必须处于非阻塞模式下。这意味着不能将FileChann">
+<meta property="og:type" content="article">
+<meta property="og:title" content="选择器selector">
+<meta property="og:url" content="http://example.com/2020/07/22/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/5%E3%80%81%E9%80%89%E6%8B%A9%E5%99%A8selector/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="Java的NIO，用非阻塞的IO方式。可以用一个线程，处理多个的客户端连接,避免了多线程之间的上下文切换导致的开销（注意多核CPU，不使用多任务可能是在浪费CPU能力）为了将Channel和Selector配合使用，channel必须注册到selector上。通过SelectableChannel.register()方法来实现.Channel必须处于非阻塞模式下。这意味着不能将FileChann">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-07-22T14:28:01.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:55.053Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="选择器selector">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/07/22/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/5%E3%80%81%E9%80%89%E6%8B%A9%E5%99%A8selector/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>选择器selector | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/22/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/5%E3%80%81%E9%80%89%E6%8B%A9%E5%99%A8selector/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          选择器selector
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-22 22:28:01" itemprop="dateCreated datePublished" datetime="2020-07-22T22:28:01+08:00">2020-07-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:55" itemprop="dateModified" datetime="2020-09-19T18:03:55+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/netty/" itemprop="url" rel="index"><span itemprop="name">netty</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">Java的NIO，用非阻塞的IO方式。可以用一个线程，处理多个的客户端连接,避免了多线程之间的上下文切换导致的开销（注意多核CPU，不使用多任务可能是在浪费CPU能力）为了将Channel和Selector配合使用，channel必须注册到selector上。通过SelectableChannel.register()方法来实现.Channel必须处于非阻塞模式下。这意味着不能将FileChannel与Selector一起使用，因为FileChannel不能切换到非阻塞模式。而套接字通道都可以</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Java 的 NIO，用非阻塞的 IO 方式。可以用一个线程，处理多个的客户端连接,避免了多线程之间的上下文切换导致的开销（注意：多核CPU，不使用多任务可能是在浪费CPU能力）</p>
+<p>为了将Channel和Selector配合使用，==channel必须注册到selector上==。通过SelectableChannel.register()方法来实现.Channel必须处于非阻塞模式下。这意味着不能将FileChannel与Selector一起使用，因为FileChannel不能切换到非阻塞模式。而套接字通道都可以</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SelectionKey key &#x3D; channel.register(selector,Selectionkey.OP_READ);</span><br></pre></td></tr></table></figure>
+<p>第二个参数,Selector监听Channel时对什么事件感兴趣。可以监听四种不同类型的事件：</p>
+<ul>
+<li><p>SelectionKey.OP_CONNECT   某个channel成功连接到另一个服务器称为“连接就绪”</p>
+</li>
+<li><p>SelectionKey.OP_ACCEPT 一个server socket channel准备好接收新进入的连接称为“接收就绪”</p>
+</li>
+<li><p>SelectionKey.OP_READ 一个有数据可读的通道可以说是“读就绪”</p>
+</li>
+<li><p>SelectionKey.OP_WRITE 等待写数据的通道可以说是“写就绪</p>
+</li>
+<li><p>多个事件驱动 用|隔开<br>int interestSet = SelectionKey.OP_READ | SelectionKey.OP_WRITE;</p>
+</li>
+</ul>
+<p>==注意：==</p>
+<ul>
+<li>client的socketChannel:只监听 连接、读、写事件</li>
+<li>server的serverSocketChannel 只监听OP_ACCEPT</li>
+<li>server的socketChannel只监听 读、写事件<br>注册好之后会有一个多路复用器selector去循环检测对于管道上是否有该事件发生。</li>
+</ul>
+<p>注册后返回一个 SelectionKey，SelectionKey，表示 Selector 和网络通道的注册关系</p>
+<p>通过SelectionKey可以获取与之关联的Selector，channel,再完成后续业务处理</p>
+<p>SelectionKey相关方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public abstract class SelectionKey &#123;</span><br><span class="line">     public abstract Selector selector();&#x2F;&#x2F;得到与之关联的 Selector 对象</span><br><span class="line">    public abstract SelectableChannel channel();&#x2F;&#x2F;得到与之关联的通道</span><br><span class="line">    public final Object attachment();&#x2F;&#x2F;得到与之关联的共享数据</span><br><span class="line">    public abstract SelectionKey interestOps(int ops);&#x2F;&#x2F;设置或改变监听事件</span><br><span class="line">    public final boolean isAcceptable();&#x2F;&#x2F;是否可以 accept</span><br><span class="line">    public final boolean isReadable();&#x2F;&#x2F;是否可以读</span><br><span class="line">    public final boolean isWritable();&#x2F;&#x2F;是否可以写</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<p>Selector 常用方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public abstract class Selector implements Closeable &#123; </span><br><span class="line">    public static Selector open();&#x2F;&#x2F;得到一个选择器对象</span><br><span class="line">    public int select();&#x2F;&#x2F;阻塞到至少有一个通道在你注册的事件上就绪了。返回有事件发生的通道的个数.</span><br><span class="line">    public int select(long timeout);&#x2F;&#x2F;监控所有注册的通道，当其中有 IO 操作可以进行时，将</span><br><span class="line">    对应的 SelectionKey 加入到内部集合中并返回，参数用来设置超时时间，返回有事件发生的通道的个数.</span><br><span class="line">    public int selectNow();&#x2F;&#x2F;不阻塞，立马返还。此方法执行非阻塞的选择操作。如果自从前一次选择操作后，没有通道变成可选择的，则此方法直接返回零，返回有事件发生的通道的个数.</span><br><span class="line">    public Set&lt;SelectionKey&gt; selectedKeys();&#x2F;&#x2F;从内部集合中得到所有的 SelectionKey	</span><br><span class="line">    </span><br><span class="line">    public abstract Selector wakeup();&#x2F;&#x2F;某个线程调用select()方法后阻塞了，即使没有通道已经就绪，也有办法让其从select()方法返回。只要让其它线程在第一个线程调用select()方法的那个对象上调用Selector.wakeup()方法即可。阻塞在select()方法上的线程会立马返回。</span><br><span class="line">    public abstract void close() throws IOException;&#x2F;&#x2F;用完Selector后调用其close()方法会关闭该Selector，且使注册到该Selector上的所有SelectionKey实例无效。通道本身并不会关闭。</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>ServerSocketChannel【功能类似ServerSocket】 在服务器端监听新的客户端 Socket 连接。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public abstract class ServerSocketChannel    extends AbstractSelectableChannel   implements NetworkChannel&#123;</span><br><span class="line">    public static ServerSocketChannel open()，得到一个 ServerSocketChannel 通道</span><br><span class="line">    public final ServerSocketChannel bind(SocketAddress local)，设置服务器端端口号</span><br><span class="line">    public final SelectableChannel configureBlocking(boolean block)，设置阻塞或非阻塞模式，取值 false 表示采用非阻塞模式</span><br><span class="line">    public SocketChannel accept()，接受一个连接，返回代表这个连接的通道对象</span><br><span class="line">    public final SelectionKey register(Selector sel, int ops)，注册一个选择器并设置监听事件</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>SocketChannel，网络 IO 通道，具体负责进行读写操作。NIO 把缓冲区的数据写入通道，或者把通道里的数据读到缓冲区。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public abstract class SocketChannel extends AbstractSelectableChannel implements ByteChannel, ScatteringByteChannel, GatheringByteChannel, NetworkChannel&#123;</span><br><span class="line">    public static SocketChannel open();&#x2F;&#x2F;得到一个 SocketChannel 通道</span><br><span class="line">    public final SelectableChannel configureBlocking(boolean block);&#x2F;&#x2F;设置阻塞或非阻塞模式，取值 false 表示采用非阻塞模式</span><br><span class="line">    public boolean connect(SocketAddress remote);&#x2F;&#x2F;连接服务器</span><br><span class="line">    public boolean finishConnect();&#x2F;&#x2F;如果上面的方法连接失败，接下来就要通过该方法完成连接操作</span><br><span class="line">    public int write(ByteBuffer src);&#x2F;&#x2F;往通道里写数据</span><br><span class="line">    public int read(ByteBuffer dst);&#x2F;&#x2F;从通道里读数据</span><br><span class="line">    public final SelectionKey register(Selector sel, int ops, Object att);&#x2F;&#x2F;注册一个选择器并设置监听事件，最后一个参数可以设置共享数据</span><br><span class="line">    public final void close();&#x2F;&#x2F;关闭通道</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="实现服务器端和客户端之间的数据简单通讯的DEMO"><a href="#实现服务器端和客户端之间的数据简单通讯的DEMO" class="headerlink" title="实现服务器端和客户端之间的数据简单通讯的DEMO"></a>实现服务器端和客户端之间的数据简单通讯的DEMO</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;网络服务器端程序</span><br><span class="line">public class NIOServer &#123;</span><br><span class="line">    public static void main(String[] args) throws  Exception&#123;</span><br><span class="line">        &#x2F;&#x2F;1. 得到一个ServerSocketChannel对象</span><br><span class="line">        ServerSocketChannel serverSocketChannel&#x3D;ServerSocketChannel.open();</span><br><span class="line">        &#x2F;&#x2F;2. 得到一个Selector对象</span><br><span class="line">        Selector selector&#x3D;Selector.open();</span><br><span class="line">        &#x2F;&#x2F;3. 绑定一个端口号, 在服务器的6666监听</span><br><span class="line">        &#x2F;&#x2F;serverSocketChannel.bind(new InetSocketAddress(6666));</span><br><span class="line">        serverSocketChannel.socket().bind(new InetSocketAddress(6666));</span><br><span class="line">        &#x2F;&#x2F;4. 设置非阻塞方式</span><br><span class="line">        serverSocketChannel.configureBlocking(false);</span><br><span class="line">        &#x2F;&#x2F;5. 把ServerSocketChannel对象注册给Selector对象</span><br><span class="line">        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);</span><br><span class="line">        &#x2F;&#x2F;6. 干活</span><br><span class="line">        while(true)&#123;</span><br><span class="line">            &#x2F;&#x2F;6.1 监控客户端</span><br><span class="line">            &#x2F;&#x2F;如果使用 selector.select() 就会阻塞在这里的</span><br><span class="line">            if(selector.select(1000)&#x3D;&#x3D;0)&#123;  &#x2F;&#x2F;nio非阻塞式的优势</span><br><span class="line">                System.out.println(&quot;Server:等待了1秒，无客户端连接&quot;);</span><br><span class="line">                continue;</span><br><span class="line">            &#125;</span><br><span class="line">            &#x2F;&#x2F;6.2 得到SelectionKey,判断通道里的事件</span><br><span class="line">            Iterator&lt;SelectionKey&gt; keyIterator&#x3D;selector.selectedKeys().iterator();</span><br><span class="line">            while(keyIterator.hasNext())&#123;</span><br><span class="line">                SelectionKey key&#x3D;keyIterator.next();</span><br><span class="line">                if(key.isAcceptable())&#123;  &#x2F;&#x2F;客户端连接请求事件</span><br><span class="line"></span><br><span class="line">                    SocketChannel socketChannel&#x3D;serverSocketChannel.accept();</span><br><span class="line">                    socketChannel.configureBlocking(false);</span><br><span class="line">                    socketChannel.register(selector,SelectionKey.OP_READ, ByteBuffer.allocate(1024));</span><br><span class="line">                &#125;</span><br><span class="line">                if(key.isReadable())&#123;  &#x2F;&#x2F;读取客户端数据事件</span><br><span class="line">                    SocketChannel channel&#x3D;(SocketChannel) key.channel();</span><br><span class="line">                    ByteBuffer buffer&#x3D;(ByteBuffer) key.attachment();</span><br><span class="line">                    channel.read(buffer);</span><br><span class="line">                    System.out.println(&quot;接收到客户端数据：&quot;+new String(buffer.array()));</span><br><span class="line">                &#125;</span><br><span class="line">                &#x2F;&#x2F; 6.3 手动从集合中移除当前key,防止重复处理</span><br><span class="line">                keyIterator.remove();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;网络客户端程序</span><br><span class="line">public class NIOClient &#123;</span><br><span class="line">    public static void main(String[] args) throws  Exception&#123;</span><br><span class="line">        &#x2F;&#x2F;1. 得到一个网络通道</span><br><span class="line">        SocketChannel channel&#x3D;SocketChannel.open();</span><br><span class="line">        &#x2F;&#x2F;2. 设置非阻塞方式</span><br><span class="line">        channel.configureBlocking(false);</span><br><span class="line">        &#x2F;&#x2F;3. 提供服务器端的IP地址和端口号</span><br><span class="line">        InetSocketAddress address&#x3D;new InetSocketAddress(&quot;127.0.0.1&quot;,6666);</span><br><span class="line">        &#x2F;&#x2F;4. 连接服务器端</span><br><span class="line">        if(!channel.connect(address))&#123;</span><br><span class="line">            while(!channel.finishConnect())&#123;  &#x2F;&#x2F;nio非阻塞式</span><br><span class="line">                System.out.println(&quot;客户端: 因为连接需要时间，客户端不会阻塞，可以做个计算工作...&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;连接成功了..</span><br><span class="line">        &#x2F;&#x2F;5. 得到一个缓冲区并存入数据</span><br><span class="line">        String msg&#x3D;&quot;hello,尚硅谷&quot;;</span><br><span class="line">        ByteBuffer writeBuf &#x3D; ByteBuffer.wrap(msg.getBytes());</span><br><span class="line">        &#x2F;&#x2F;6. 发送数据</span><br><span class="line">        channel.write(writeBuf);</span><br><span class="line">        System.in.read();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%80%89%E6%8B%A9%E5%99%A8selector/" rel="tag"># 选择器selector</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/22/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/2%E3%80%81IO%E6%A8%A1%E5%9E%8B-NIO/" rel="prev" title="IO模型NIO">
+      <i class="fa fa-chevron-left"></i> IO模型NIO
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/22/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/8%E3%80%81Reactor%E6%A8%A1%E5%BC%8F/" rel="next" title="Reactor模式">
+      Reactor模式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E5%92%8C%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B9%8B%E9%97%B4%E7%9A%84%E6%95%B0%E6%8D%AE%E7%AE%80%E5%8D%95%E9%80%9A%E8%AE%AF%E7%9A%84DEMO"><span class="nav-number">1.</span> <span class="nav-text">实现服务器端和客户端之间的数据简单通讯的DEMO</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

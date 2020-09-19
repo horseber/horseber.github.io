@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="redis的值数据类型String、List、Set、Hash、Sortedset（zset）Redis数据类型内存结构分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redis数据结构">
+<meta property="og:url" content="http://example.com/2020/08/04/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/6%E3%80%81redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="redis的值数据类型String、List、Set、Hash、Sortedset（zset）Redis数据类型内存结构分析">
+<meta property="og:locale">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/783994/201607/783994-20160704114214311-826490781.png">
+<meta property="og:image" content="https://images2017.cnblogs.com/blog/1260387/201712/1260387-20171217225104530-830166094.png">
+<meta property="article:published_time" content="2020-08-04T08:18:08.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:59.803Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="redis数据结构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images2015.cnblogs.com/blog/783994/201607/783994-20160704114214311-826490781.png">
+
+<link rel="canonical" href="http://example.com/2020/08/04/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/6%E3%80%81redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>redis数据结构 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/08/04/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/6%E3%80%81redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          redis数据结构
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-04 16:18:08" itemprop="dateCreated datePublished" datetime="2020-08-04T16:18:08+08:00">2020-08-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:59" itemprop="dateModified" datetime="2020-09-19T18:03:59+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">redis的值数据类型String、List、Set、Hash、Sortedset（zset）Redis数据类型内存结构分析</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>redis的值数据类型：String、List、Set、Hash、Sorted set（zset）</p>
+<p>Redis数据类型内存结构分析：</p>
+<p>==Redis内部使用一个redisObject对象来表示所有的key和value==。所以每次在Redis数据库中创建一个键值对时，至少会创建两个对象，一个是键的redisObject对象，一个是值的redisObject对象。不允许一个key值对应多种数据结构</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">typedef struct redisObject&#123;</span><br><span class="line">     &#x2F;&#x2F;类型</span><br><span class="line">     unsigned type:4;</span><br><span class="line">     &#x2F;&#x2F;编码</span><br><span class="line">     unsigned encoding:4;</span><br><span class="line">     &#x2F;&#x2F;指向底层数据结构的指针</span><br><span class="line">     void *ptr;</span><br><span class="line">     &#x2F;&#x2F;引用计数</span><br><span class="line">     int refcount;</span><br><span class="line">     &#x2F;&#x2F;记录最后一次被程序访问的时间</span><br><span class="line">     unsigned lru:22;</span><br><span class="line"> </span><br><span class="line">&#125;robj</span><br></pre></td></tr></table></figure>
+
+<p>redisObject主要的信息包括</p>
+<p><img src="https://images2015.cnblogs.com/blog/783994/201607/783994-20160704114214311-826490781.png" alt="image"></p>
+<ul>
+<li>数据类型（type）：type代表一个value对象具体是何种数据类型</li>
+<li>编码方式(encoding)：encoding是不同数据类型在redis内部编码。==就是redis会根据存储的数据情况，动态调整底层数据结构==</li>
+<li>数据指针（ptr）：数据指针指向一个SDS抽象对象（简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示）</li>
+<li>虚拟内存（vm）</li>
+</ul>
+<p><img src="https://images2017.cnblogs.com/blog/1260387/201712/1260387-20171217225104530-830166094.png" alt="image"></p>
+<p>Redis这样设计有两个好处：</p>
+<p>第一，可以改进内部编码，而对外的数据结构和命令没有影响，这样一旦开发开发出优秀的内部编码，无需改动外部数据结构和命令。</p>
+<p>第二，多种内部编码实现可以在不同场景下发挥各自的优势。例如ziplist比较节省内存，但是在列表元素比较多的情况下，性能会有所下降，<br>这时候Redis会根据配置选项将列表类型的内部实现转换为linkedlist。</p>
+<h2 id="1、String"><a href="#1、String" class="headerlink" title="1、String"></a>1、String</h2><p>String是简单的 key-value 键值对，value 不仅可以是 String，也可以是数字。String在redis内部存储默认就是一个字符串，被redisObject所引用，当遇到incr,decr等操作时会转成数值型进行计算，此时redisObject的encoding字段为int。一个 redis 中字符串 value 最多可以是 512M。</p>
+<p>redis自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">struct sdshdr&#123;</span><br><span class="line">     &#x2F;&#x2F;记录buf数组中已使用字节的数量</span><br><span class="line">     &#x2F;&#x2F;等于 SDS 保存字符串的长度</span><br><span class="line">     int len;</span><br><span class="line">     &#x2F;&#x2F;记录 buf 数组中未使用字节的数量</span><br><span class="line">     int free;</span><br><span class="line">     &#x2F;&#x2F;字节数组，用于保存字符串</span><br><span class="line">     char buf[];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>字符串类型的内部编码有3种：Redis会根据当前值的类型和长度决定使用内部编码实现。</p>
+<ul>
+<li>int：8个字节的长整型。</li>
+<li>embstr：小于等于39个字节的字符串。</li>
+<li>raw：大于39个字节的字符串。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">SET key value                   设置key&#x3D;value</span><br><span class="line">GET key                         或者键key对应的值</span><br><span class="line">GETRANGE key start end          得到字符串的子字符串存放在一个键</span><br><span class="line">GETSET key value                设置键的字符串值，并返回旧值</span><br><span class="line">GETBIT key offset               返回存储在键位值的字符串值的偏移</span><br><span class="line">MGET key1 [key2..]              得到所有的给定键的值</span><br><span class="line">SETBIT key offset value         设置或清除该位在存储在键的字符串值偏移</span><br><span class="line">SETEX key seconds value         键到期时设置值</span><br><span class="line">SETNX key value                 设置键的值，只有当该键不存在</span><br><span class="line">SETRANGE key offset value       覆盖字符串的一部分从指定键的偏移</span><br><span class="line">STRLEN key                      得到存储在键的值的长度</span><br><span class="line">MSET key value [key value...]   设置多个键和多个值</span><br><span class="line">MSETNX key value [key value...] 设置多个键多个值，只有在当没有按键的存在时</span><br><span class="line">PSETEX key milliseconds value   设置键的毫秒值和到期时间</span><br><span class="line">INCR key                        增加键的整数值一次</span><br><span class="line">INCRBY key increment            由给定的数量递增键的整数值</span><br><span class="line">INCRBYFLOAT key increment       由给定的数量递增键的浮点值</span><br><span class="line">DECR key                        递减键一次的整数值</span><br><span class="line">DECRBY key decrement            由给定数目递减键的整数值</span><br><span class="line">APPEND key value                追加值到一个键</span><br><span class="line">DEL key                         如果存在删除键</span><br><span class="line">DUMP key                        返回存储在指定键的值的序列化版本</span><br><span class="line">EXISTS key                      此命令检查该键是否存在</span><br><span class="line">EXPIRE key seconds              指定键的过期时间</span><br><span class="line">EXPIREAT key timestamp          指定的键过期时间。在这里，时间是在Unix时间戳格式</span><br><span class="line">PEXPIRE key milliseconds        设置键以毫秒为单位到期</span><br><span class="line">PEXPIREAT key milliseconds-timestamp        设置键在Unix时间戳指定为毫秒到期</span><br><span class="line">KEYS pattern                    查找与指定模式匹配的所有键</span><br><span class="line">MOVE key db                     移动键到另一个数据库</span><br><span class="line">PERSIST key                     移除过期的键</span><br><span class="line">PTTL key                        以毫秒为单位获取剩余时间的到期键。</span><br><span class="line">TTL key                         获取键到期的剩余时间。</span><br><span class="line">RANDOMKEY                       从Redis返回随机键</span><br><span class="line">RENAME key newkey               更改键的名称</span><br><span class="line">RENAMENX key newkey             重命名键，如果新的键不存在</span><br><span class="line">TYPE key                        返回存储在键的数据类型的值。</span><br></pre></td></tr></table></figure>
+
+<h2 id="2、List（列表）"><a href="#2、List（列表）" class="headerlink" title="2、List（列表）"></a>2、List（列表）</h2><p>List的两种实现方法</p>
+<ul>
+<li>ziplist（压缩列表）:它并不是基础数据结构，而是 Redis 自己设计的一种数据存储结构。它跟数组不同的一点是，它允许存储的数据大小不同。</li>
+</ul>
+<p>压缩列表实际上类似于一个数组，数组中的每一个元素都对应保存一个数据。和数组不同的是，压缩列表在表头有三个字段 zlbytes、zltail 和 zllen，分别表示列表长度、列表尾的偏移量和列表中的 entry 个数；压缩列表在表尾还有一个 zlend，表示列表结束。</p>
+<p>在压缩列表中，如果我们要查找定位第一个元素和最后一个元素，可以通过表头三个字段的长度直接定位，复杂度是 O(1)。而查找其他元素时，就没有这么高效了，只能逐个查找，此时的复杂度就是 O(N)</p>
+<p>满足以下两个条件，redis的list采用压缩列表的方式存储数据：</p>
+<p>（1）列表中保存的单个数据（有可能是字符串类型的）小于 64 字节；</p>
+<p>(2)列表中数据个数少于 512 个。</p>
+<ul>
+<li>linkedlist（双向链表）：当列表类型无法满足ziplist的条件时，Redis会使用linkedlist作为列表的内部实现。redis双向链表的实现：</li>
+</ul>
+<p>通过多个 listNode 结构就可以组成链表，这是一个双端链表，Redis还提供了操作链表的数据结构：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">typedef  struct listNode&#123;</span><br><span class="line">       &#x2F;&#x2F;前置节点</span><br><span class="line">       struct listNode *prev;</span><br><span class="line">       &#x2F;&#x2F;后置节点</span><br><span class="line">       struct listNode *next;</span><br><span class="line">       &#x2F;&#x2F;节点的值</span><br><span class="line">       void *value;  </span><br><span class="line">&#125;listNode</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">typedef struct list&#123;</span><br><span class="line">     &#x2F;&#x2F;表头节点</span><br><span class="line">     listNode *head;</span><br><span class="line">     &#x2F;&#x2F;表尾节点</span><br><span class="line">     listNode *tail;</span><br><span class="line">     &#x2F;&#x2F;链表所包含的节点数量</span><br><span class="line">     unsigned long len;</span><br><span class="line">     &#x2F;&#x2F;节点值复制函数</span><br><span class="line">     void (*free) (void *ptr);</span><br><span class="line">     &#x2F;&#x2F;节点值释放函数</span><br><span class="line">     void (*free) (void *ptr);</span><br><span class="line">     &#x2F;&#x2F;节点值对比函数</span><br><span class="line">     int (*match) (void *ptr,void *key);</span><br><span class="line">&#125;list;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>　Redis链表特性：</p>
+<p>　　①、双端：链表具有前置节点和后置节点的引用，获取这两个节点时间复杂度都为O(1)。</p>
+<p>　　②、无环：表头节点的 prev 指针和表尾节点的 next 指针都指向 NULL,对链表的访问都是以 NULL 结束。　　</p>
+<p>　　③、带链表长度计数器：通过 len 属性获取链表长度的时间复杂度为 O(1)。</p>
+<p>　　④、多态：链表节点使用 void* 指针来保存节点值，可以保存各种不同类型的值。</p>
+<h5 id="List应用场景"><a href="#List应用场景" class="headerlink" title="List应用场景"></a>List应用场景</h5><p>Redis list的应用场景非常多，也是Redis最重要的数据结构之一，比如twitter的关注列表、粉丝列表等都可以用Redis的list结构来实现，再比如有的应用使用Redis的list类型实现一个简单的轻量级消息队列，生产者push，消费者pop/bpop。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">  ● BLPOP</span><br><span class="line">BLPOP key1 [key2 ] timeout 取出并获取列表中的第一个元素，或阻塞，直到有可用</span><br><span class="line">  ● BRPOP</span><br><span class="line">BRPOP key1 [key2 ] timeout 取出并获取列表中的最后一个元素，或阻塞，直到有可用</span><br><span class="line">  ● BRPOPLPUSH</span><br><span class="line">BRPOPLPUSH source destination timeout 从列表中弹出一个值，它推到另一个列表并返回它;或阻塞，直到有可用</span><br><span class="line">  ● LINDEX</span><br><span class="line">LINDEX key index 从一个列表其索引获取对应的元素</span><br><span class="line">  ● LINSERT</span><br><span class="line">LINSERT key BEFORE|AFTER pivot value 在列表中的其他元素之后或之前插入一个元素</span><br><span class="line">  ● LLEN</span><br><span class="line">LLEN key 获取列表的长度</span><br><span class="line">  ● LPOP</span><br><span class="line">LPOP key 获取并取出列表中的第一个元素</span><br><span class="line">  ● LPUSH</span><br><span class="line">LPUSH key value1 [value2] 在前面加上一个或多个值的列表</span><br><span class="line">  ● LPUSHX</span><br><span class="line">LPUSHX key value 在前面加上一个值列表，仅当列表中存在</span><br><span class="line">  ● LRANGE</span><br><span class="line">LRANGE key start stop 从一个列表获取各种元素</span><br><span class="line">  ● LREM</span><br><span class="line">LREM key count value 从列表中删除元素</span><br><span class="line">  ● LSET</span><br><span class="line">LSET key index value 在列表中的索引设置一个元素的值</span><br><span class="line">  ● LTRIM</span><br><span class="line">LTRIM key start stop 修剪列表到指定的范围内</span><br><span class="line">  ● RPOP</span><br><span class="line">RPOP key 取出并获取列表中的最后一个元素</span><br><span class="line">  ● RPOPLPUSH</span><br><span class="line">RPOPLPUSH source destination 删除最后一个元素的列表，将其附加到另一个列表并返回它</span><br><span class="line">  ● RPUSH</span><br><span class="line">RPUSH key value1 [value2] 添加一个或多个值到列表</span><br><span class="line">  ● RPUSHX</span><br><span class="line">RPUSHX key value 添加一个值列表，仅当列表中存在</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-Set（集合）"><a href="#3-Set（集合）" class="headerlink" title="3. Set（集合）"></a>3. Set（集合）</h2><p>==set(一堆值不重复的列表)的内部实现是一个value永远为null的HashMap==，实际就是通过计算hash的方式来快速排重的，这也是set能提供判断一个成员是否在集合内的原因。且Redis也提供了针对集合的求交集、并集、差集等操作。</p>
+<p>Set有两种实现：</p>
+<ul>
+<li><p>intset（有序数组）：当集合中的元素都是整数且元素个数小于set-max-intset-entries配置（默认512个）时</p>
+</li>
+<li><p>hashtable（哈希表）：当集合类型无法满足intset的条件时，Redis会使用hashtable作为集合的内部实现。</p>
+</li>
+</ul>
+<h4 id="Set应用场景"><a href="#Set应用场景" class="headerlink" title="Set应用场景"></a>Set应用场景</h4><p>Redis set对外提供的功能与list类似是一个列表的功能，特殊之处在于set是可以自动排重的，当你需要存储一个列表数据，又不希望出现重复数据时，set是一个很好的选择，并且set提供了判断某个成员是否在一个set集合内的重要接口，这个也是list所不能提供的。<br>又或者在微博应用中，每个用户关注的人存在一个集合中，就很容易实现求两个人的共同好友功能。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">● SADD</span><br><span class="line">SADD key member [member ...] 添加一个或者多个元素到集合(set)里</span><br><span class="line">  ● SACRD</span><br><span class="line">SCARD key 获取集合里面的元素数量</span><br><span class="line">  ● SDIFF</span><br><span class="line">SDIFF key [key ...] 获得队列不存在的元素</span><br><span class="line">  ● SDIFFSTORE</span><br><span class="line">SDIFFSTORE destination key [key ...] 获得队列不存在的元素，并存储在一个关键的结果集</span><br><span class="line">  ● SINTER</span><br><span class="line">SINTER key [key ...] 获得两个集合的交集</span><br><span class="line">  ● SINTERSTORE</span><br><span class="line">SINTERSTORE destination key [key ...] 获得两个集合的交集，并存储在一个集合中</span><br><span class="line">  ● SISMEMBER</span><br><span class="line">SISMEMBER key member 确定一个给定的值是一个集合的成员</span><br><span class="line">  ● SMEMBERS</span><br><span class="line">SMEMBERS key 获取集合里面的所有key</span><br><span class="line">  ● SMOVE</span><br><span class="line">SMOVE source destination member 移动集合里面的一个key到另一个集合</span><br><span class="line">  ● SPOP</span><br><span class="line">SPOP key [count] 获取并删除一个集合里面的元素</span><br><span class="line">  ● SRANDMEMBER</span><br><span class="line">SRANDMEMBER key [count] 从集合里面随机获取一个元素</span><br><span class="line">  ● SREM</span><br><span class="line">SREM key member [member ...] 从集合里删除一个或多个元素，不存在的元素会被忽略</span><br><span class="line">  ● SUNION</span><br><span class="line">SUNION key [key ...] 添加多个set元素</span><br><span class="line">  ● SUNIONSTORE</span><br><span class="line">SUNIONSTORE destination key [key ...] 合并set元素，并将结果存入新的set里面</span><br><span class="line">  ● SSCAN</span><br><span class="line">SSCAN key cursor [MATCH pattern] [COUNT count] 迭代set里面的元素</span><br></pre></td></tr></table></figure>
+
+<h2 id="4、Hash（字典，哈希表）"><a href="#4、Hash（字典，哈希表）" class="headerlink" title="4、Hash（字典，哈希表）"></a>4、Hash（字典，哈希表）</h2><p>字典类型也有两种实现方式。一种是压缩列表，另一种是散列表。</p>
+<ul>
+<li>ziplist（压缩列表）：==字典中键值对的个数要小于 512 个==（hash-max-ziplist-entries配置）<br>==同时字典中保存的键和值的大小都要小于 64 字节==（hash-max-ziplist-value配置（默认64个字节））</li>
+</ul>
+<p>ziplist使用更加紧凑的结构实现多个元素的连续存储，所以在节省内存方面比hashtable更加优秀。</p>
+<ul>
+<li>hashtable（哈希表）：当哈希类型无法满足ziplist的条件时，Redis会使用hashtable作为哈希的内部实现。因为此时ziplist的读写效率会下降，而hashtable的读写时间复杂度为O(1)。</li>
+</ul>
+<p>==Redis hash使用渐进式扩容缩容策略，将数据的搬移分批进行，避免了大量数据一次性搬移导致的服务停顿。==</p>
+<p>当有新数据要插入时，我们将新数据插入新散列表中，并且从老的散列表中拿出一个数据放入到新散列表。每次插入一个数据到散列表，我们都重复上面的过程。经过多次插入操作之后，老的散列表中的数据就一点一点全部搬移到新散列表中了。</p>
+<p>这期间的查询操作怎么来做呢？对于查询操作，为了兼容了新、老散列表中的数据，我们先从新散列表中查找，如果没有找到，再去老的散列表中查找</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">● HDEL</span><br><span class="line">HDEL key field[field...] 删除对象的一个或几个属性域，不存在的属性将被忽略</span><br><span class="line">  ● HEXISTS</span><br><span class="line">HEXISTS key field 查看对象是否存在该属性域</span><br><span class="line">  ● HGET</span><br><span class="line">HGET key field 获取对象中该field属性域的值</span><br><span class="line">  ● HGETALL</span><br><span class="line">HGETALL key 获取对象的所有属性域和值</span><br><span class="line">  ● HINCRBY</span><br><span class="line">HINCRBY key field value 将该对象中指定域的值增加给定的value，原子自增操作，只能是integer的属性值可以使用</span><br><span class="line">  ● HINCRBYFLOAT</span><br><span class="line">HINCRBYFLOAT key field increment 将该对象中指定域的值增加给定的浮点数</span><br><span class="line">  ● HKEYS</span><br><span class="line">HKEYS key 获取对象的所有属性字段</span><br><span class="line">  ● HVALS</span><br><span class="line">HVALS key 获取对象的所有属性值</span><br><span class="line">  ● HLEN</span><br><span class="line">HLEN key 获取对象的所有属性字段的总数</span><br><span class="line">  ● HMGET</span><br><span class="line">HMGET key field[field...] 获取对象的一个或多个指定字段的值</span><br><span class="line">  ● HSET</span><br><span class="line">HSET key field value 设置对象指定字段的值</span><br><span class="line">  ● HMSET</span><br><span class="line">HMSET key field value [field value ...] 同时设置对象中一个或多个字段的值</span><br><span class="line">  ● HSETNX</span><br><span class="line">HSETNX key field value 只在对象不存在指定的字段时才设置字段的值</span><br><span class="line">  ● HSTRLEN</span><br><span class="line">HSTRLEN key field 返回对象指定field的value的字符串长度，如果该对象或者field不存在，返回0.</span><br><span class="line">  ● HSCAN</span><br><span class="line">HSCAN key cursor [MATCH pattern] [COUNT count] 类似SCAN命令</span><br></pre></td></tr></table></figure>
+
+<h2 id="5、Sorted-Set（有序集合）"><a href="#5、Sorted-Set（有序集合）" class="headerlink" title="5、Sorted Set（有序集合）"></a>5、Sorted Set（有序集合）</h2><p>一个 zset 结构同时包含一个字典和一个跳跃表：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef struct zset &#123;</span><br><span class="line"></span><br><span class="line">    zskiplist *zsl;</span><br><span class="line"></span><br><span class="line">    dict *dict;</span><br><span class="line"></span><br><span class="line">&#125; zset;</span><br></pre></td></tr></table></figure>
+
+<p>有序集合类型的内部实现有两种：</p>
+<ul>
+<li><p>ziplist（zskiplist 压缩列表）：当有序集合的元素个数小于zset-max-ziplist-entries配置（默认128个）<br>　　　　同时每个元素的值小于zset-max-ziplist-value配置（默认64个字节）时，Redis会用ziplist来作为有序集合的内部实现，ziplist可以有效减少内存使用。</p>
+</li>
+<li><p>skiplist（跳跃链表+hash表）：当ziplist条件不满足时，有序集合会使用skiplist作为内部实现，因为此时zip的读写效率会下降。</p>
+<p>==跳跃链按分值从小到大保存了所有集合元素， 跳跃表节点的 object 属性保存了元素的成员， 而跳跃表节点的 score 属性则保存了元素的分值==。 通过这个跳跃表， 程序可以对有序集合进行范围型操作</p>
+</li>
+</ul>
+<p>==hash字典表为有序集合创建了一个从成员到分值的映射（key：成员数据，value:分值）,可以用 O(1) 复杂度查找给定成员的分值.==</p>
+<h5 id="为什么有序集合需要同时使用跳跃表和字典来实现？"><a href="#为什么有序集合需要同时使用跳跃表和字典来实现？" class="headerlink" title="为什么有序集合需要同时使用跳跃表和字典来实现？"></a>为什么有序集合需要同时使用跳跃表和字典来实现？</h5><ul>
+<li><p>只使用字典来实现有序集合,执行范围型操作,都需要对字典保存的所有元素进行排序</p>
+</li>
+<li><p>只使用跳跃表来实现有序集合,根据成员查找分值这一操作的复杂度将从 O(1) 上升为 O(\log N)</p>
+<p>==虽然 zset 结构同时使用跳跃表和字典来保存有序集合元素， 但这两种数据结构都会通过指针来共享相同元素的成员和分值,因此而浪费额外的内存。==</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">● ZADD</span><br><span class="line">ZADD key score1 member1 [score2 member2] 添加一个或多个成员到有序集合，或者如果它已经存在更新其分数</span><br><span class="line">  ● ZCARD</span><br><span class="line">ZCARD key 得到的有序集合成员的数量</span><br><span class="line">  ● ZCOUNT</span><br><span class="line">ZCOUNT key min max 计算一个有序集合成员与给定值范围内的分数</span><br><span class="line">  ● ZINCRBY</span><br><span class="line">ZINCRBY key increment member 在有序集合增加成员的分数</span><br><span class="line">  ● ZINTERSTORE</span><br><span class="line">ZINTERSTORE destination numkeys key [key ...] 多重交叉排序集合，并存储生成一个新的键有序集合。</span><br><span class="line">  ● ZLEXCOUNT</span><br><span class="line">ZLEXCOUNT key min max 计算一个给定的字典范围之间的有序集合成员的数量</span><br><span class="line">  ● ZRANGE</span><br><span class="line">ZRANGE key start stop [WITHSCORES] 由索引返回一个成员范围的有序集合（从低到高）</span><br><span class="line">  ● ZRANGEBYLEX</span><br><span class="line">ZRANGEBYLEX key min max [LIMIT offset count]返回一个成员范围的有序集合（由字典范围）</span><br><span class="line">  ● ZRANGEBYSCORE</span><br><span class="line">ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT] 返回有序集key中，所有 score 值介于 min 和 max 之间(包括等于 min 或 max )的成员，有序集成员按 score 值递增(从小到大)次序排列</span><br><span class="line">  ● ZRANK</span><br><span class="line">ZRANK key member 确定成员的索引中有序集合</span><br><span class="line">  ● ZREM</span><br><span class="line">ZREM key member [member ...] 从有序集合中删除一个或多个成员，不存在的成员将被忽略</span><br><span class="line">  ● ZREMRANGEBYLEX</span><br><span class="line">ZREMRANGEBYLEX key min max 删除所有成员在给定的字典范围之间的有序集合</span><br><span class="line">  ● ZREMRANGEBYRANK</span><br><span class="line">ZREMRANGEBYRANK key start stop 在给定的索引之内删除所有成员的有序集合</span><br><span class="line">  ● ZREMRANGEBYSCORE</span><br><span class="line">ZREMRANGEBYSCORE key min max 在给定的分数之内删除所有成员的有序集合</span><br><span class="line">  ● ZREVRANGE</span><br><span class="line">ZREVRANGE key start stop [WITHSCORES] 返回一个成员范围的有序集合，通过索引，以分数排序，从高分到低分</span><br><span class="line">  ● ZREVRANGEBYSCORE</span><br><span class="line">ZREVRANGEBYSCORE key max min [WITHSCORES] 返回一个成员范围的有序集合，以socre排序从高到低</span><br><span class="line">  ● ZREVRANK</span><br><span class="line">ZREVRANK key member 确定一个有序集合成员的索引，以分数排序，从高分到低分</span><br><span class="line">  ● ZSCORE</span><br><span class="line">ZSCORE key member 获取给定成员相关联的分数在一个有序集合</span><br><span class="line">  ● ZUNIONSTORE</span><br><span class="line">ZUNIONSTORE destination numkeys key [key ...] 添加多个集排序，所得排序集合存储在一个新的键</span><br><span class="line">  ● ZSCAN</span><br><span class="line">ZSCAN key cursor [MATCH pattern] [COUNT count] 增量迭代排序元素集和相关的分数</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag"># redis数据结构</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/02/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/6%E3%80%81synchronized%E4%BC%98%E5%8C%96/" rel="prev" title="synchronized优化">
+      <i class="fa fa-chevron-left"></i> synchronized优化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/08/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/7%E3%80%81BlockingQueue/" rel="next" title="BlockingQueue">
+      BlockingQueue <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81String"><span class="nav-number">1.</span> <span class="nav-text">1、String</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81List%EF%BC%88%E5%88%97%E8%A1%A8%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">2、List（列表）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#List%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">2.0.0.1.</span> <span class="nav-text">List应用场景</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Set%EF%BC%88%E9%9B%86%E5%90%88%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">3. Set（集合）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Set%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">3.0.1.</span> <span class="nav-text">Set应用场景</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81Hash%EF%BC%88%E5%AD%97%E5%85%B8%EF%BC%8C%E5%93%88%E5%B8%8C%E8%A1%A8%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">4、Hash（字典，哈希表）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5%E3%80%81Sorted-Set%EF%BC%88%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%EF%BC%89"><span class="nav-number">5.</span> <span class="nav-text">5、Sorted Set（有序集合）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E9%9C%80%E8%A6%81%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%E8%B7%B3%E8%B7%83%E8%A1%A8%E5%92%8C%E5%AD%97%E5%85%B8%E6%9D%A5%E5%AE%9E%E7%8E%B0%EF%BC%9F"><span class="nav-number">5.0.0.1.</span> <span class="nav-text">为什么有序集合需要同时使用跳跃表和字典来实现？</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

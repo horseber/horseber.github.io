@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="引入依赖">
+<meta property="og:type" content="article">
+<meta property="og:title" content="javaapi操作zk">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/7%E3%80%81%E5%BE%AE%E6%9C%8D%E5%8A%A1/zookeeper/5%E3%80%81java-api%E6%93%8D%E4%BD%9Czk/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="引入依赖">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:27.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:59.606Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="javaapi操作zk">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/7%E3%80%81%E5%BE%AE%E6%9C%8D%E5%8A%A1/zookeeper/5%E3%80%81java-api%E6%93%8D%E4%BD%9Czk/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>javaapi操作zk | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/7%E3%80%81%E5%BE%AE%E6%9C%8D%E5%8A%A1/zookeeper/5%E3%80%81java-api%E6%93%8D%E4%BD%9Czk/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          javaapi操作zk
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:27" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:27+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:59" itemprop="dateModified" datetime="2020-09-19T18:03:59+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/zookeeper/" itemprop="url" rel="index"><span itemprop="name">zookeeper</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">引入依赖</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>引入依赖</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.zookeeper&lt;&#x2F;groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;zookeeper&lt;&#x2F;artifactId&gt;</span><br><span class="line">    &lt;version&gt;3.4.6&lt;&#x2F;version&gt;</span><br><span class="line">&lt;&#x2F;dependency&gt;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="1、创建会话，连接ZooKeeper"><a href="#1、创建会话，连接ZooKeeper" class="headerlink" title="1、创建会话，连接ZooKeeper"></a>1、创建会话，连接ZooKeeper</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Zookeeper(String connectString,int sessionTimeout,Watcher watcher)</span><br><span class="line">Zookeeper(String connectString,int sessionTimeout,Watcher watcher,boolean canBeReadOnly)</span><br><span class="line">Zookeeper(String connectString,int sessionTimeout,Watcher watcher,long sessionId,byte[] sessionPasswd)</span><br><span class="line">Zookeeper(String connectString,int sessionTimeout,Watcher watcher,long sessionId,byte[] sessionPasswd,boolean canBeReadOnly)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ZooKeeper zooKeeper &#x3D; new ZooKeeper(&quot;127.0.0.1:2181,127.0.0.1:2182&quot;, 5000, watcher);</span><br></pre></td></tr></table></figure>
+
+
+<p>参数说明：</p>
+<p>connectString – 连接地址，多个路径使用,隔开</p>
+<p>sessionTimeOut – 会话超时时间。以毫秒为单位。客户端和服务器端之间的连接通过心跳包进行维系，如果心跳包超过这个指定时间则认为会话超时失效。</p>
+<p>watcher – 指定默认观察者。如果为null表示不需要观察者。</p>
+<p>canBeReadOnly – 是否支持只读服务。只当一个服务器失去过半连接后不能再进行写入操作时，是否继续支持读取操作。略</p>
+<p>sessionId、SessionPassword – 会话编号 会话密码，用来实现会话恢复。</p>
+<p>**注意，整个创建会话的过程是异步的，构造方法会在初始化连接后即返回，并不代表真正建立好了一个会话，此时会话处于”CONNECTING”状态。</p>
+<p>**当会话真正创建起来后，服务器会发送事件通知给客户端，只有客户端获取到这个通知后，会话才真正建立。</p>
+<h1 id="2、创建节点"><a href="#2、创建节点" class="headerlink" title="2、创建节点:"></a>2、创建节点:</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">String create(final String path,byte data[],List&lt;ACL&gt; acl,CreateMode createMode);&#x2F;&#x2F;同步方式创建</span><br><span class="line">void create(final String path,byte data[],List&lt;ACL&gt; acl,CreateMode createMode,StringCallback cb,Object ctx);&#x2F;&#x2F;异步方式创建</span><br></pre></td></tr></table></figure>
+
+<p>参数说明:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">path 要创建的数据节点的路径</span><br><span class="line"></span><br><span class="line">data [] 节点创建时初始数据内容</span><br><span class="line"></span><br><span class="line">acl 节点acl安全策略</span><br><span class="line"></span><br><span class="line">createMode 创建模式</span><br><span class="line"></span><br><span class="line">PERSISTENT 持久</span><br><span class="line"></span><br><span class="line">PERSISTENT_SEQUENTIAL 持久顺序</span><br><span class="line"></span><br><span class="line">EPHEMERAL 临时</span><br><span class="line"></span><br><span class="line">EPHEMERAL_SEQUENTIAL 临时顺序</span><br><span class="line"></span><br><span class="line">cb 回调接口</span><br><span class="line"></span><br><span class="line">ctx 传递对象，用来在回调方法中使用 通常是个上下文对象</span><br></pre></td></tr></table></figure>
+
+
+<ul>
+<li>注意：不支持递归创建，即不能在无父节点的情况下创建出子节点</li>
+<li>尝试创建已经存在的节点将失败并抛出异常</li>
+<li>在不需要进行任何权限控制时，只需传入Ids.OPEN_ACL_UNSAFE即可<h1 id="3、删除节点"><a href="#3、删除节点" class="headerlink" title="3、删除节点:"></a>3、删除节点:</h1></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">public void delete(final String path,int version)</span><br><span class="line">public void delete(final String path,int version,VoidCallback cb,Object ctx)</span><br></pre></td></tr></table></figure>
+
+
+<p>注意：无法删除存在子节点的节点，即如果要删除一个节点，必须要先删除其所有子节点</p>
+<h1 id="4、查询节点"><a href="#4、查询节点" class="headerlink" title="4、查询节点:"></a>4、查询节点:</h1><p><strong>4.1、getChildren</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;同步方式</span><br><span class="line">List&lt;String&gt; getChildren(final String path,Watcher watcher)</span><br><span class="line">List&lt;String&gt; getChildren(String path,boolean watch)</span><br><span class="line">List&lt;String&gt; getChildren(final String path,Watcher watcher,Stat stat)</span><br><span class="line">List&lt;String&gt; getChildren(String path,boolean watch,Stat stat)</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;异步方式</span><br><span class="line">void getChildred(final String path,Watcher watcher,ChildrenCallback cb,Object ctx)</span><br><span class="line">void getChildred(String path,boolean watch,ChildrednCallback cb,Object ctx)</span><br><span class="line">void getChildred(final String path,Watcher watcher,Children2Callback cb,Object ctx)</span><br><span class="line">void getChildred(String path,boolean watch,Children2Callback cb,Object ctx)</span><br></pre></td></tr></table></figure>
+
+
+<p>参数说明:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">path 要创建的数据节点的路径</span><br><span class="line"></span><br><span class="line">watcher 观察者，一旦在本子节点获取之后，子节点列表发生变更，服务器端向客户端发送消息，触发watcher中的回调。注意，仅仅是通知而已，如果需要新的子节点列表，需要自己再次去获取。允许传入null。</span><br><span class="line"></span><br><span class="line">watch 表明是否需要注册一个Watcher。为true则通知默认到默认watcher，如果为false则不使用</span><br><span class="line"></span><br><span class="line">cb 回掉函数</span><br><span class="line"></span><br><span class="line">ctx 上下文对象</span><br><span class="line"></span><br><span class="line">stat 指定数据节点的状态信息。用法是在接口中传入一个旧的stat变量，该stat变量会在方法执行过程中，被来自服务端响应的新stat对象替换。</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>4.2、getData</strong> </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;同步方式</span><br><span class="line">byte [] getData(final String path,Watcher watcher, Stat stat)</span><br><span class="line">byte [] getData(String path,boolean watch, Stat stat)</span><br><span class="line">&#x2F;&#x2F;异步方式</span><br><span class="line">void getData(final String path,Watcher watcher, DataCallback cb,Object ctx)</span><br><span class="line">void getData(String path,boolean watch, DataCallback cb,Object ctx)</span><br></pre></td></tr></table></figure>
+
+
+<p>*可以通过注册Watcher进行监听，一旦该节点数据被更新会通知客户端</p>
+<h1 id="5、更新节点"><a href="#5、更新节点" class="headerlink" title="5、更新节点"></a>5、更新节点</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;同步方式</span><br><span class="line">Stat setData(final String path,byte data[],int version)&#x2F;&#x2F;version可以传入-1，表明要基于最新版本进行更新操作</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;异步方式</span><br><span class="line">void setData(final String path,byte data[],int version,StatCallback cb,Object ctx)</span><br></pre></td></tr></table></figure>
+<h1 id="6、检查节点是否存在"><a href="#6、检查节点是否存在" class="headerlink" title="6、检查节点是否存在"></a>6、检查节点是否存在</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;同步方式</span><br><span class="line">public Stat exists(final String path,Watcher watcher)</span><br><span class="line">public Stat exists(String path,boolean watch)</span><br><span class="line">&#x2F;&#x2F;异步方式</span><br><span class="line">public Stat exists(final String path,Watcher watcher,StatCallback cb,Object ctx)</span><br><span class="line">public Stat exists(String path,boolean watch,StatCallback cb,Object ctx)</span><br></pre></td></tr></table></figure>
+
+
+<p>*可以通过注册Watcher进行监听，一旦节点被创建、删除、数据被更新都会通知客户端</p>
+<h1 id="7、zookeeper权限控制："><a href="#7、zookeeper权限控制：" class="headerlink" title="7、zookeeper权限控制："></a>7、zookeeper权限控制：</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addAuthInfo(String schema,byte [] auth)</span><br></pre></td></tr></table></figure>
+
+<p>参数说明;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">schema 权限模式，可以是world auth digest ip</span><br><span class="line"></span><br><span class="line">super，我们使用digest</span><br><span class="line"></span><br><span class="line">byte[] auth 权限控制标识，由&quot;foo:123&quot;.getByte()方式组成，后续操作只有auth值相同才可以进行</span><br><span class="line"> </span><br><span class="line">**注意删除操作，如果在增加节点时指定了权限，则对于删除操作，认为权限加在了子节点上，删除当前结点不需要权限，删除子节点需要权限。</span><br></pre></td></tr></table></figure>
+
+
+<p>8、ZooKeeper watcher的实现</p>
+<p>当节点发生变化时，通过watcher机制，可以让客户端得到通知，watcher需要实现org.apache.ZooKeeper.Watcher接口。节点的状态变化主要包含如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public class ZWatcher implements Watcher &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void process(WatchedEvent event) &#123;</span><br><span class="line">        &#x2F;&#x2F; TODO Auto-generated method stub</span><br><span class="line">        if(event.getType() &#x3D;&#x3D; EventType.NodeCreated)&#123;</span><br><span class="line">            System.out.println(&quot;创建节点&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        if(event.getType() &#x3D;&#x3D; EventType.NodeDataChanged)&#123;</span><br><span class="line">            System.out.println(&quot;节点改变&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        if(event.getType() &#x3D;&#x3D; EventType.NodeChildrenChanged)&#123;</span><br><span class="line">            System.out.println(&quot;子节点节点改变&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        if(event.getType() &#x3D;&#x3D; EventType.NodeDeleted)&#123;</span><br><span class="line">            System.out.println(&quot;节点删除&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 需要注意的是watcher是一次性的，也就是处理完一次状态变化之后需要重新注册watcher，这点很让人抓狂。这个特性也使得在处理时间上和重新加载上watcher这段时间发生的节点状态变化将无法感知。</p>
+<p>通常会抛出下面两种异常:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode &#x3D; NodeExists for &#x2F;root</span><br><span class="line">    at org.apache.zookeeper.KeeperException.create(KeeperException.java:119)</span><br><span class="line">    at org.apache.zookeeper.KeeperException.create(KeeperException.java:51)</span><br><span class="line">    at org.apache.zookeeper.ZooKeeper.create(ZooKeeper.java:783)</span><br></pre></td></tr></table></figure>
+<p>客户机与其中一台服务器socket连接出现异常，连接丢失</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">org.apache.zookeeper.KeeperException.SessionExpiredException: KeeperErrorCode &#x3D; Session expired</span><br></pre></td></tr></table></figure>
+
+<p>客户端的session已经超时sessionTimeout，未进行任何操作。</p>
+<p>KeeperException.ConnectionLossException:异常可以通过重试进行处理，客户端会根据初始化Zookeeper时传递的服务列表，自动尝试下一节点。这段时间内，服务端节点就会丢失<br>KeeperException.SessionExpiredException:异常不能通过重试进行解决，需要应用重新创建一个新的客户端（new ZooKeeper()），这是所有的watcher和EPHEMRAL节点都将消失</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/javaapi%E6%93%8D%E4%BD%9Czk/" rel="tag"># javaapi操作zk</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/JUC%E9%94%81/CyclicBarrier/" rel="prev" title="CyclicBarrier">
+      <i class="fa fa-chevron-left"></i> CyclicBarrier
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/4%E3%80%81%E4%B8%AD%E9%97%B4%E4%BB%B6/1%E3%80%81ActiveMQ/3%E3%80%81%E6%95%B4%E5%90%88JmsTemplate/" rel="next" title="整合JmsTemplate">
+      整合JmsTemplate <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1%E3%80%81%E5%88%9B%E5%BB%BA%E4%BC%9A%E8%AF%9D%EF%BC%8C%E8%BF%9E%E6%8E%A5ZooKeeper"><span class="nav-number">1.</span> <span class="nav-text">1、创建会话，连接ZooKeeper</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2%E3%80%81%E5%88%9B%E5%BB%BA%E8%8A%82%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">2、创建节点:</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3%E3%80%81%E5%88%A0%E9%99%A4%E8%8A%82%E7%82%B9"><span class="nav-number">3.</span> <span class="nav-text">3、删除节点:</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4%E3%80%81%E6%9F%A5%E8%AF%A2%E8%8A%82%E7%82%B9"><span class="nav-number">4.</span> <span class="nav-text">4、查询节点:</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#5%E3%80%81%E6%9B%B4%E6%96%B0%E8%8A%82%E7%82%B9"><span class="nav-number">5.</span> <span class="nav-text">5、更新节点</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#6%E3%80%81%E6%A3%80%E6%9F%A5%E8%8A%82%E7%82%B9%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8"><span class="nav-number">6.</span> <span class="nav-text">6、检查节点是否存在</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#7%E3%80%81zookeeper%E6%9D%83%E9%99%90%E6%8E%A7%E5%88%B6%EF%BC%9A"><span class="nav-number">7.</span> <span class="nav-text">7、zookeeper权限控制：</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

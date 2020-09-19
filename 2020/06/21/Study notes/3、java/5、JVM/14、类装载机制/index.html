@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="一、类加载步骤虚拟机把描述类的数据从class文件加载到内存，并对数据进行校验、转换解析和初始化。最终形成可以被虚拟机最直接使用的java类型的过程就是虚拟机的类加载机制。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="类装载机制">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/14%E3%80%81%E7%B1%BB%E8%A3%85%E8%BD%BD%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="一、类加载步骤虚拟机把描述类的数据从class文件加载到内存，并对数据进行校验、转换解析和初始化。最终形成可以被虚拟机最直接使用的java类型的过程就是虚拟机的类加载机制。">
+<meta property="og:locale">
+<meta property="og:image" content="https://img-blog.csdn.net/20180902110236855?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3c4ODI3MTMw/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+<meta property="article:published_time" content="2020-06-21T01:23:28.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:55.549Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="类装载机制">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20180902110236855?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3c4ODI3MTMw/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/14%E3%80%81%E7%B1%BB%E8%A3%85%E8%BD%BD%E6%9C%BA%E5%88%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>类装载机制 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/14%E3%80%81%E7%B1%BB%E8%A3%85%E8%BD%BD%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          类装载机制
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:28" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:28+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:55" itemprop="dateModified" datetime="2020-09-19T18:03:55+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">一、类加载步骤虚拟机把描述类的数据从class文件加载到内存，并对数据进行校验、转换解析和初始化。最终形成可以被虚拟机最直接使用的java类型的过程就是虚拟机的类加载机制。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、类加载步骤："><a href="#一、类加载步骤：" class="headerlink" title="一、类加载步骤："></a>一、类加载步骤：</h2><p>虚拟机把描述类的数据从class文件加载到内存，并对数据进行校验、转换解析和初始化。最终形成可以被虚拟机最直接使用的java类型的过程就是虚拟机的类加载机制。</p>
+<p>JVM类加载机制分为五个部分：加载，验证，准备，解析，初始化，下面我们就分别来看一下这五个过程。</p>
+<p><img src="https://img-blog.csdn.net/20180902110236855?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3c4ODI3MTMw/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="image"></p>
+<p>在五个阶段中，加载、验证、准备和初始化这四个阶段发生的顺序是确定的，而解析阶段则不一定，它在某些情况下可以在初始化阶段之后开始，这是为了支持Java语言的运行时绑定（也成为动态绑定或晚期绑定）。另外注意这里的几个阶段是==按顺序开始，而不是按顺序进行或完成，因为这些阶段通常都是互相交叉地混合进行的==，通常在一个阶段执行的过程中调用或激活另一个阶段。</p>
+<h2 id="1、加载-查找并加载类的二进制数据"><a href="#1、加载-查找并加载类的二进制数据" class="headerlink" title="1、加载:查找并加载类的二进制数据"></a>1、加载:查找并加载类的二进制数据</h2><p><strong>1.1：步骤</strong>：</p>
+<ul>
+<li>(1)类加载器通过一个类的全限定名来获取其定义的二进制字节流。</li>
+</ul>
+<p>注意：虚拟机并未指定二进制字节流必从哪里获取以及如何获取，所以可以相对开放获取二进制流如：从ZIP包、网络中、运行时计算生成（动态代理类）、从JSP等其他文件、从数据库中读取都是可以的。</p>
+<ul>
+<li>(2)将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构。</li>
+</ul>
+<p>将加载的二进制字节流按照虚拟机所属格式（不同虚拟机可自行定义），存储在方法区之中（JDK8为元数据区）</p>
+<ul>
+<li>(3)在内存中（具体区域并未明确规定在堆中，HotSpot（JDK7）则在方法区中）生成一个代表这个类的java.lang.Class对象，作为对方法区这个类的各种数据的访问入口。</li>
+</ul>
+<h2 id="2、验证：确保被加载的类的正确性"><a href="#2、验证：确保被加载的类的正确性" class="headerlink" title="2、验证：确保被加载的类的正确性"></a>2、验证：确保被加载的类的正确性</h2><p>验证内容包含：</p>
+<ul>
+<li>文件格式验证</li>
+</ul>
+<p>class文件字节流是否以魔数开头，主次版本号是否在规定范围之内；详情见class文件内容。验证之后才会进入内存</p>
+<ul>
+<li>元数据验证：</li>
+</ul>
+<p>这个阶段是对字节码描述的信息进行语义分析，以保证起描述的信息符合java语言规范要求。</p>
+<p>如：（1）这个类是否有父类(除了java.lang.Object之外，所有的类都应当有父类)、</p>
+<p>（2）这个类是否继承了不允许被继承的类(被final修饰的)、如果这个类的父类是抽象类，是否实现了起父类或接口中要求实现的所有方法。</p>
+<ul>
+<li>字节码验证：</li>
+</ul>
+<p>这个阶段对类的方法体进行校验分析，这个阶段的任务是保证被校验类的方法在运行时不会做出危害虚拟机安全的行为。如：保证访法体中的类型转换有效，</p>
+<ul>
+<li>符号引用验证：</li>
+</ul>
+<p>虚拟机将符号引用转化为直接引用（转化动作在解析阶段完成）如：引用类中属性（private public protected）是否可以被当前类访问</p>
+<h2 id="3、准备：正式为类静态变量（仅仅是静态变量，实例变量将在类初始化时分配到堆中）分配内存并设置类变量初始值的阶段"><a href="#3、准备：正式为类静态变量（仅仅是静态变量，实例变量将在类初始化时分配到堆中）分配内存并设置类变量初始值的阶段" class="headerlink" title="3、准备：正式为类静态变量（仅仅是静态变量，实例变量将在类初始化时分配到堆中）分配内存并设置类变量初始值的阶段"></a>3、准备：正式为类静态变量（仅仅是静态变量，实例变量将在类初始化时分配到堆中）分配内存并设置类变量初始值的阶段</h2><p>方法区中分配这些变量所使用的内存空间。注意这里所说的初始值概念，比如一个类变量定义为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">public static int v &#x3D; 123;</span><br></pre></td></tr></table></figure>
+<p>实际上变量v在准备阶段过后的初始值为0而不是8080，将v赋值为123的putstatic指令是程序被编译后，存放于类构造器<client>方法之中，<br>所以把v、赋值为123的动作将在初始化阶段才会执行。</p>
+<p>注意如下几点：</p>
+<ul>
+<li>· 对基本数据类型来说，对于类变量（static）和全局变量，如果不显式地对其赋值而直接使用，则系统会为其赋予默认的零值，而对于局部变量来说，在使用前必须显式地为其赋值，否则编译时不通过。</li>
+<li>· 对于同时被static和final修饰的常量，必须在声明的时候就为其显式地赋值，否则编译时不通过；而只被final修饰的常量则既可以在声明时显式地为其赋值，也可以在类初始化时显式地为其赋值，总之，在使用前必须为其显式地赋值，系统不会为其赋予默认零值。</li>
+<li>· 对于引用数据类型reference来说，如数组引用、对象引用等，如果没有对其进行显式地赋值而直接使用，系统都会为其赋予默认的零值，即null。<br>· 如果在数组初始化时没有对数组中的各元素赋值，那么其中的元素将根据对应的数据类型而被赋予默认的零值。</li>
+</ul>
+<h2 id="4、解析：把类中的符号引用转换为直接引用"><a href="#4、解析：把类中的符号引用转换为直接引用" class="headerlink" title="4、解析：把类中的符号引用转换为直接引用"></a>4、解析：把类中的符号引用转换为直接引用</h2><p>解析阶段是指虚拟机将常量池中的符号引用替换为直接引用的过程。</p>
+<p>下面我们解释一下符号引用和直接引用的概念：</p>
+<p>符号引用就是class文件中的：<br>CONSTANT_Class_info<br>CONSTANT_Field_info<br>CONSTANT_Method_info<br>等类型的常量。</p>
+<p>符号引用与虚拟机实现的布局无关，引用的目标并不一定要已经加载到内存中。各种虚拟机实现的内存布局可以各不相同，但是它们能接受的符号引用必须是一致的，因为符号引用的字面量形式明确定义在Java虚拟机规范的Class文件格式中。<br>直接引用可以是指向目标的指针，相对偏移量或是一个能间接定位到目标的句柄。如果有了直接引用，那引用的目标必定已经在内存中存在。</p>
+<h2 id="5、初始化"><a href="#5、初始化" class="headerlink" title="5、初始化"></a>5、初始化</h2><p>初始化，为类的静态变量赋予正确的初始值，JVM负责对类进行初始化，主要对类变量进行初始化。在Java中对类变量进行初始值设定有两种方式:</p>
+<ul>
+<li><p>①声明类变量是指定初始值</p>
+</li>
+<li><p>②使用静态代码块为类变量指定初始值</p>
+</li>
+</ul>
+<h4 id="初始化步骤："><a href="#初始化步骤：" class="headerlink" title="初始化步骤："></a>初始化步骤：</h4><p>1、假如这个类还没有被加载和连接，则程序先加载并连接该类</p>
+<p> 2、假如该类的直接父类还没有被初始化，则先初始化其直接父类</p>
+<p> 3、假如类中有初始化语句，则系统依次执行这些初始化语句</p>
+<h4 id="会初始化的情况："><a href="#会初始化的情况：" class="headerlink" title="会初始化的情况："></a>会初始化的情况：</h4><p>只有当对类的主动使用的时候才会导致类的初始化，类的主动使用包括以下六种：</p>
+<ul>
+<li><p>创建类的实例，也就是new的方式</p>
+</li>
+<li><p>访问某个类或接口的静态变量，或者对该静态变量赋值</p>
+</li>
+<li><p>调用类的静态方法</p>
+</li>
+<li><p>反射（如Class.forName(“com.shengsiyuan.Test”)）</p>
+</li>
+<li><p>初始化某个类的子类，则其父类也会被初始化</p>
+</li>
+<li><p>Java虚拟机启动时被标明为启动类的类（Java Test），直接使用java.exe命令来运行某个主类</p>
+</li>
+</ul>
+<h4 id="不会初始化的情况："><a href="#不会初始化的情况：" class="headerlink" title="不会初始化的情况："></a>不会初始化的情况：</h4><ul>
+<li>通过子类引用父类的静态字段，只会触发父类的初始化，而不会触发子类的初始化。</li>
+<li>定义对象数组，不会触发该类的初始化。</li>
+<li>常量在编译期间会存入调用类的常量池中，本质上并没有直接引用定义常量的类，不会触发定义常量所在的类。</li>
+<li>通过类名获取Class对象，不会触发类的初始化。</li>
+<li>通过Class.forName加载指定类时，如果指定参数initialize为false时，也不会触发类初始化，其实这个参数是告诉虚拟机，是否要对类进行初始化。</li>
+<li>通过ClassLoader默认的loadClass方法，也不会触发初始化动作。</li>
+</ul>
+<h2 id="二：类加载有三种方式"><a href="#二：类加载有三种方式" class="headerlink" title="二：类加载有三种方式"></a>二：类加载有三种方式</h2><ul>
+<li><p>1、命令行启动应用时候由JVM初始化加载</p>
+</li>
+<li><p>2、通过Class.forName()方法动态加载</p>
+</li>
+<li><p>3、通过ClassLoader.loadClass()方法动态加载</p>
+</li>
+</ul>
+<h2 id="三：JVM类加载机制"><a href="#三：JVM类加载机制" class="headerlink" title="三：JVM类加载机制"></a>三：JVM类加载机制</h2><ul>
+<li><p>全盘负责，当一个类加载器负责加载某个Class时，该Class所依赖的和引用的其他Class也将由该类加载器负责载入，除非显示使用另外一个类加载器来载入</p>
+</li>
+<li><p>双亲委派，先让父类加载器试图加载该类，只有在父类加载器无法加载该类时才尝试从自己的类路径中加载该类</p>
+</li>
+<li><p>缓存机制，缓存机制将会保证所有加载过的Class都会被缓存，当程序中需要使用某个Class时，类加载器先从缓存区寻找该Class，只有缓存区不存在，系统才会读取该类对应的二进制数据，并将其转换成Class对象，存入缓存区。这就是为什么修改了Class后，必须重启JVM，程序的修改才会生效</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%B1%BB%E8%A3%85%E8%BD%BD%E6%9C%BA%E5%88%B6/" rel="tag"># 类装载机制</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/8%E3%80%81%E5%BC%82%E5%B8%B8%E4%BD%93%E7%B3%BB/%E5%BC%82%E5%B8%B8/" rel="prev" title="异常">
+      <i class="fa fa-chevron-left"></i> 异常
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/2%E3%80%81%E9%93%BE%E8%A1%A8/4%E3%80%81%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8/" rel="next" title="双向链表">
+      双向链表 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%AD%A5%E9%AA%A4%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">一、类加载步骤：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E5%8A%A0%E8%BD%BD-%E6%9F%A5%E6%89%BE%E5%B9%B6%E5%8A%A0%E8%BD%BD%E7%B1%BB%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E6%8D%AE"><span class="nav-number">2.</span> <span class="nav-text">1、加载:查找并加载类的二进制数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81%E9%AA%8C%E8%AF%81%EF%BC%9A%E7%A1%AE%E4%BF%9D%E8%A2%AB%E5%8A%A0%E8%BD%BD%E7%9A%84%E7%B1%BB%E7%9A%84%E6%AD%A3%E7%A1%AE%E6%80%A7"><span class="nav-number">3.</span> <span class="nav-text">2、验证：确保被加载的类的正确性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81%E5%87%86%E5%A4%87%EF%BC%9A%E6%AD%A3%E5%BC%8F%E4%B8%BA%E7%B1%BB%E9%9D%99%E6%80%81%E5%8F%98%E9%87%8F%EF%BC%88%E4%BB%85%E4%BB%85%E6%98%AF%E9%9D%99%E6%80%81%E5%8F%98%E9%87%8F%EF%BC%8C%E5%AE%9E%E4%BE%8B%E5%8F%98%E9%87%8F%E5%B0%86%E5%9C%A8%E7%B1%BB%E5%88%9D%E5%A7%8B%E5%8C%96%E6%97%B6%E5%88%86%E9%85%8D%E5%88%B0%E5%A0%86%E4%B8%AD%EF%BC%89%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98%E5%B9%B6%E8%AE%BE%E7%BD%AE%E7%B1%BB%E5%8F%98%E9%87%8F%E5%88%9D%E5%A7%8B%E5%80%BC%E7%9A%84%E9%98%B6%E6%AE%B5"><span class="nav-number">4.</span> <span class="nav-text">3、准备：正式为类静态变量（仅仅是静态变量，实例变量将在类初始化时分配到堆中）分配内存并设置类变量初始值的阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81%E8%A7%A3%E6%9E%90%EF%BC%9A%E6%8A%8A%E7%B1%BB%E4%B8%AD%E7%9A%84%E7%AC%A6%E5%8F%B7%E5%BC%95%E7%94%A8%E8%BD%AC%E6%8D%A2%E4%B8%BA%E7%9B%B4%E6%8E%A5%E5%BC%95%E7%94%A8"><span class="nav-number">5.</span> <span class="nav-text">4、解析：把类中的符号引用转换为直接引用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5%E3%80%81%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">6.</span> <span class="nav-text">5、初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E6%AD%A5%E9%AA%A4%EF%BC%9A"><span class="nav-number">6.0.1.</span> <span class="nav-text">初始化步骤：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%9A%E5%88%9D%E5%A7%8B%E5%8C%96%E7%9A%84%E6%83%85%E5%86%B5%EF%BC%9A"><span class="nav-number">6.0.2.</span> <span class="nav-text">会初始化的情况：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E4%BC%9A%E5%88%9D%E5%A7%8B%E5%8C%96%E7%9A%84%E6%83%85%E5%86%B5%EF%BC%9A"><span class="nav-number">6.0.3.</span> <span class="nav-text">不会初始化的情况：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%EF%BC%9A%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%89%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">7.</span> <span class="nav-text">二：类加载有三种方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%EF%BC%9AJVM%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6"><span class="nav-number">8.</span> <span class="nav-text">三：JVM类加载机制</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

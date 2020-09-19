@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="今天的任务就是要把这个树状结构实现出来，并且还要把它遍历一遍，根节点">
+<meta property="og:type" content="article">
+<meta property="og:title" content="组合模式">
+<meta property="og:url" content="http://example.com/2020/07/08/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/10%E3%80%81%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="今天的任务就是要把这个树状结构实现出来，并且还要把它遍历一遍，根节点">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-07-08T10:57:06.000Z">
+<meta property="article:modified_time" content="2020-09-19T10:03:55.211Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="组合模式">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/07/08/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/10%E3%80%81%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>组合模式 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/08/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/10%E3%80%81%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          组合模式
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-08 18:57:06" itemprop="dateCreated datePublished" datetime="2020-07-08T18:57:06+08:00">2020-07-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 18:03:55" itemprop="dateModified" datetime="2020-09-19T18:03:55+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">今天的任务就是要把这个树状结构实现出来，并且还要把它遍历一遍，根节点</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>今天的任务就是 要把这个树状结构实现出来，并且还要把它遍历一遍，<br>根节点<br>枝节点<br>叶节点</p>
+<p>根节点接口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public interface IRoot &#123; </span><br><span class="line">	 &#x2F;&#x2F; 得到总经理的信息 </span><br><span class="line">	 public String getInfo(); </span><br><span class="line">	 &#x2F;&#x2F; 总经理下边要有小兵，那要能增加小兵，比如研发部总经理，这是个树枝节点 </span><br><span class="line">	 public void add(IBranch branch); </span><br><span class="line">	 &#x2F;&#x2F; 那要能增加树叶节点 </span><br><span class="line">	 public void add(ILeaf leaf); </span><br><span class="line">	 &#x2F;&#x2F; 既然能增加，那还要能够遍历，不可能总经理不知道他手下有哪些人</span><br><span class="line">	 public ArrayList getSubordinateInfo(); </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>根节点实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">public class Root implements IRoot &#123; </span><br><span class="line">	 &#x2F;&#x2F; 保存根节点下的树枝节点和树叶节点，Subordinate的意思是下级 </span><br><span class="line">	 private ArrayList subordinateList &#x3D; new ArrayList(); </span><br><span class="line">	 &#x2F;&#x2F; 根节点的名称 </span><br><span class="line">	 private String name &#x3D; &quot;&quot;; </span><br><span class="line">	 &#x2F;&#x2F; 根节点的职位 </span><br><span class="line">	 private String position &#x3D; &quot;&quot;; </span><br><span class="line">	 &#x2F;&#x2F; 根节点的薪水 </span><br><span class="line">	 private int salary &#x3D; 0; </span><br><span class="line">	 &#x2F;&#x2F; 通过构造函数传递进来总经理的信息 </span><br><span class="line">	 public Root(String name,String position,int salary)&#123; this.name &#x3D; name; this.position &#x3D; position; this.salary &#x3D; salary; &#125;</span><br><span class="line">	 &#x2F;&#x2F; 增加树枝节点 </span><br><span class="line">	 public void add(IBranch branch) &#123; this.subordinateList.add(branch); &#125;</span><br><span class="line">	 &#x2F;&#x2F; 增加叶子节点，比如秘书，直接隶属于总经理</span><br><span class="line">	 public void add(ILeaf leaf) &#123; this.subordinateList.add(leaf); &#125;</span><br><span class="line">	 &#x2F;&#x2F; 得到自己的信息 </span><br><span class="line">	 public String getInfo() &#123; </span><br><span class="line">		 String info &#x3D; &quot;&quot;; </span><br><span class="line">		 info &#x3D; &quot;名称：&quot;+ this.name;; </span><br><span class="line">		 info &#x3D; info + &quot;\t职位：&quot; + this.position; </span><br><span class="line">		 info &#x3D; info + &quot;\t薪水： &quot; + this.salary; </span><br><span class="line">		 return info; </span><br><span class="line">	 &#125;</span><br><span class="line"></span><br><span class="line">	 &#x2F;&#x2F; 得到下级的信息 </span><br><span class="line">	 public ArrayList getSubordinateInfo() &#123; return this.subordinateList; &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>分支的节点接口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public interface IBranch &#123; </span><br><span class="line">	 &#x2F;&#x2F; 获得信息 </span><br><span class="line">	 public String getInfo(); </span><br><span class="line">	 &#x2F;&#x2F; 增加数据节点，例如研发部下设的研发一组 </span><br><span class="line">	 public void add(IBranch branch); </span><br><span class="line">	 &#x2F;&#x2F; 增加叶子节点 </span><br><span class="line">	 public void add(ILeaf leaf); </span><br><span class="line">	 &#x2F;&#x2F; 获得下级信息 </span><br><span class="line">	 public ArrayList getSubordinateInfo(); </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>分支的节点实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">public class Branch implements IBranch &#123; </span><br><span class="line">	 &#x2F;&#x2F; 存储子节点的信息 </span><br><span class="line">	 private ArrayList subordinateList &#x3D; new ArrayList(); </span><br><span class="line">	 &#x2F;&#x2F; 树枝节点的名称 </span><br><span class="line">	 private String name&#x3D;&quot;&quot;; </span><br><span class="line">	 &#x2F;&#x2F; 树枝节点的职位 </span><br><span class="line">	 private String position &#x3D; &quot;&quot;; </span><br><span class="line">	 &#x2F;&#x2F; 树枝节点的薪水 </span><br><span class="line">	 private int salary &#x3D; 0; </span><br><span class="line">	 &#x2F;&#x2F; 通过构造函数传递树枝节点的参数 </span><br><span class="line">	 public Branch(String name,String position,int salary)&#123; this.name &#x3D; name; this.position &#x3D; position; this.salary &#x3D; salary; &#125;</span><br><span class="line">	 &#x2F;&#x2F; 增加一个子树枝节点 </span><br><span class="line">	 public void add(IBranch branch) &#123; this.subordinateList.add(branch); &#125;</span><br><span class="line">	 &#x2F;&#x2F; 增加一个叶子节点 </span><br><span class="line">	 public void add(ILeaf leaf) &#123; this.subordinateList.add(leaf); &#125;</span><br><span class="line">	 &#x2F;&#x2F; 获得自己树枝节点的信息 </span><br><span class="line">	 public String getInfo() &#123;</span><br><span class="line">	String info &#x3D; &quot;&quot;; info &#x3D; &quot;名称：&quot; + this.name; info &#x3D; info + &quot;\t职位：&quot;+ this.position; info &#x3D; info + &quot;\t薪水：&quot;+this.salary; return info; &#125;</span><br><span class="line">	 &#x2F;&#x2F; 获得下级的信息 </span><br><span class="line">	 public ArrayList getSubordinateInfo() &#123; return this.subordinateList; &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>叶子节点的接口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public interface ILeaf &#123; </span><br><span class="line">    &#x2F;&#x2F;获得自己的信息 </span><br><span class="line">    public String getInfo(); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>叶子节点实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public class Leaf implements ILeaf &#123; </span><br><span class="line">	 &#x2F;&#x2F; 叶子叫什么名字 </span><br><span class="line">	 private String name &#x3D; &quot;&quot;; </span><br><span class="line">	 &#x2F;&#x2F; 叶子的职位 </span><br><span class="line">	 private String position &#x3D; &quot;&quot;; </span><br><span class="line">	 &#x2F;&#x2F; 叶子的薪水 </span><br><span class="line">	 private int salary&#x3D;0; </span><br><span class="line">	 &#x2F;&#x2F; 通过构造函数传递信息 </span><br><span class="line">	 public Leaf(String name,String position,int salary)&#123; this.name &#x3D; name; this.position &#x3D; position; this.salary &#x3D; salary; &#125;</span><br><span class="line">	 &#x2F;&#x2F; 最小的小兵只能获得自己的信息了 </span><br><span class="line">	 public String getInfo() &#123; </span><br><span class="line">		 String info &#x3D; &quot;&quot;; info &#x3D; &quot;名称：&quot; + this.name; </span><br><span class="line">		 info &#x3D; info + &quot;\t职位：&quot;+ this.position; </span><br><span class="line">		 info &#x3D; info + &quot;\t薪水：&quot;+this.salary; return info; </span><br><span class="line">	 &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class Client &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        &#x2F;&#x2F; 首先产生了一个根节点 </span><br><span class="line">        IRoot ceo &#x3D; new Root(&quot;王大麻子&quot;, &quot;总经理&quot;, 100000);</span><br><span class="line">        &#x2F;&#x2F; 产生三个部门经理，也就是树枝节点 </span><br><span class="line">        IBranch developDep &#x3D; new Branch(&quot;刘大瘸子&quot;, &quot;研发部门经理&quot;, 10000);</span><br><span class="line">        IBranch salesDep &#x3D; new Branch(&quot;马二拐子&quot;, &quot;销售部门经理&quot;, 20000);</span><br><span class="line">        IBranch financeDep &#x3D; new Branch(&quot;赵三驼子&quot;, &quot;财务部经理&quot;, 30000);</span><br><span class="line">        &#x2F;&#x2F; 再把三个小组长产生出来 </span><br><span class="line">        IBranch firstDevGroup &#x3D; new Branch(&quot;杨三乜斜&quot;, &quot;开发一组组长&quot;, 5000);</span><br><span class="line">        IBranch secondDevGroup &#x3D; new Branch(&quot;吴大棒槌&quot;, &quot;开发二组组长&quot;, 6000);</span><br><span class="line">        &#x2F;&#x2F; 剩下的就是我们这些小兵了,就是路人甲、路人乙 </span><br><span class="line">        ILeaf a &#x3D; new Leaf(&quot;a&quot;, &quot;开发人员&quot;, 2000);</span><br><span class="line">        ILeaf b &#x3D; new Leaf(&quot;b&quot;, &quot;开发人员&quot;, 2000);</span><br><span class="line">        ILeaf c &#x3D; new Leaf(&quot;c&quot;, &quot;开发人员&quot;, 2000);</span><br><span class="line">        ILeaf d &#x3D; new Leaf(&quot;d&quot;, &quot;开发人员&quot;, 2000);</span><br><span class="line">        ILeaf e &#x3D; new Leaf(&quot;e&quot;, &quot;开发人员&quot;, 2000);</span><br><span class="line">        ILeaf f &#x3D; new Leaf(&quot;f&quot;, &quot;开发人员&quot;, 2000);</span><br><span class="line">        ILeaf g &#x3D; new Leaf(&quot;g&quot;, &quot;开发人员&quot;, 2000);</span><br><span class="line">        ILeaf h &#x3D; new Leaf(&quot;h&quot;, &quot;销售人员&quot;, 5000);</span><br><span class="line">        ILeaf i &#x3D; new Leaf(&quot;i&quot;, &quot;销售人员&quot;, 4000);</span><br><span class="line">        ILeaf j &#x3D; new Leaf(&quot;j&quot;, &quot;财务人员&quot;, 5000);</span><br><span class="line">        ILeaf k &#x3D; new Leaf(&quot;k&quot;, &quot;CEO秘书&quot;, 8000);</span><br><span class="line">        ILeaf zhengLaoLiu &#x3D; new Leaf(&quot;郑老六&quot;, &quot;研发部副总&quot;, 20000);</span><br><span class="line">        &#x2F;&#x2F; 该产生的人都产生出来了，然后我们怎么组装这棵树 </span><br><span class="line">        &#x2F;&#x2F; 首先是定义总经理下有三个部门经理 </span><br><span class="line">        ceo.add(developDep);</span><br><span class="line">        ceo.add(salesDep);</span><br><span class="line">        ceo.add(financeDep);</span><br><span class="line">        &#x2F;&#x2F; 总经理下还有一个秘书 </span><br><span class="line">        ceo.add(k);</span><br><span class="line">        &#x2F;&#x2F; 定义研发部门下的结构 </span><br><span class="line">        developDep.add(firstDevGroup);</span><br><span class="line">        developDep.add(secondDevGroup);</span><br><span class="line">        &#x2F;&#x2F; 研发部经理下还有一个副总</span><br><span class="line">        developDep.add(zhengLaoLiu);</span><br><span class="line">        &#x2F;&#x2F; 看看开发两个开发小组下有什么 </span><br><span class="line">        firstDevGroup.add(a);</span><br><span class="line">        firstDevGroup.add(b);</span><br><span class="line">        firstDevGroup.add(c);</span><br><span class="line">        secondDevGroup.add(d);</span><br><span class="line">        secondDevGroup.add(e);</span><br><span class="line">        secondDevGroup.add(f);</span><br><span class="line">        &#x2F;&#x2F; 再看销售部下的人员情况 </span><br><span class="line">        salesDep.add(h);</span><br><span class="line">        salesDep.add(i);</span><br><span class="line">        &#x2F;&#x2F; 最后一个财务 </span><br><span class="line">        financeDep.add(j);</span><br><span class="line">        &#x2F;&#x2F; 打印写完的树状结构</span><br><span class="line">        System.out.println(ceo.getInfo());</span><br><span class="line">        &#x2F;&#x2F; 打印出来整个树形 </span><br><span class="line">        getAllSubordinateInfo(ceo.getSubordinateInfo());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 遍历所有的树枝节点，打印出信息</span><br><span class="line">    private static void getAllSubordinateInfo(ArrayList subordinateList) &#123;</span><br><span class="line">        int length &#x3D; subordinateList.size();</span><br><span class="line">        &#x2F;&#x2F; 定义一个ArrayList长度，不要在for循环中每次计算</span><br><span class="line">        for (int m &#x3D; 0; m &lt; length; m++) &#123;</span><br><span class="line">            Object s &#x3D; subordinateList.get(m);</span><br><span class="line">            if (s instanceof Leaf) &#123;</span><br><span class="line">                &#x2F;&#x2F; 是个叶子节点，也就是员工 </span><br><span class="line">                ILeaf employee &#x3D; (ILeaf) s;</span><br><span class="line">                System.out.println(((Leaf) s).getInfo());</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                IBranch branch &#x3D; (IBranch) s;</span><br><span class="line">                System.out.println(branch.getInfo());</span><br><span class="line">                &#x2F;&#x2F; 再递归调用 </span><br><span class="line">                getAllSubordinateInfo(branch.getSubordinateInfo());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>和我们期望的结果一样，一棵完整的树就生成了，而且我们还能够遍历。不错，不错， 但是看类图或程序的时候，你有没有发觉有问题？getInfo每个接口都有，为什么不能抽象出 来？Root类和Branch类有什么差别？根节点本身就是树枝节点的一种，为什么要定义成两个 接口两个类?如果我要加一个任职期限，你是不是每个类都需要修改？如果我要后序遍历 （从员工找到他的上级领导）能做到吗</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" rel="tag"># 组合模式</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/08/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/9%E3%80%81%E9%97%A8%E9%9D%A2%E6%A8%A1%E5%BC%8F/" rel="prev" title="门面模式">
+      <i class="fa fa-chevron-left"></i> 门面模式
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/12%E3%80%81%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" rel="next" title="观察者模式">
+      观察者模式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">430</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
