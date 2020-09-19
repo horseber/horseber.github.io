@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前缀记法、中缀记法和后缀记法。它们之间的区别在于运算符相对与操作数的位置不同 (3 + 4) × 5  6 就是中缀表达式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="前中后缀表达式">
+<meta property="og:url" content="http://example.com/2020/09/19/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/5%E3%80%81%E6%A0%88/3%E3%80%81%E5%89%8D%E4%B8%AD%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="前缀记法、中缀记法和后缀记法。它们之间的区别在于运算符相对与操作数的位置不同 (3 + 4) × 5  6 就是中缀表达式">
+<meta property="og:locale">
+<meta property="og:image" content="https://img-blog.csdn.net/20140402144303578?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd2Fsa2Vya2Fscg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="article:published_time" content="2020-09-19T08:41:21.000Z">
+<meta property="article:modified_time" content="2020-09-19T09:26:45.689Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="前中后缀表达式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20140402144303578?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd2Fsa2Vya2Fscg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+
+<link rel="canonical" href="http://example.com/2020/09/19/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/5%E3%80%81%E6%A0%88/3%E3%80%81%E5%89%8D%E4%B8%AD%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>前中后缀表达式 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/09/19/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/5%E3%80%81%E6%A0%88/3%E3%80%81%E5%89%8D%E4%B8%AD%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          前中后缀表达式
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-09-19 16:41:21 / 修改时间：17:26:45" itemprop="dateCreated datePublished" datetime="2020-09-19T16:41:21+08:00">2020-09-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%88/" itemprop="url" rel="index"><span itemprop="name">栈</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">前缀记法、中缀记法和后缀记法。它们之间的区别在于运算符相对与操作数的位置不同 (3 + 4) × 5  6 就是中缀表达式</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前缀记法、中缀记法和后缀记法。它们之间的区别在于运算符相对与操作数的位置不同</p>
+<ul>
+<li>(3 + 4) × 5 - 6 就是中缀表达式</li>
+<li>一 * + 3 4 5 6 前缀表达式（波兰式）</li>
+<li>3 4 + 5 × 6 - 后缀表达式（逆波兰式）</li>
+</ul>
+<p>虽然人的大脑很容易理解与分析中缀表达式，但对计算机来说中缀表达式却是很复杂的，因此计算表达式的值时，通常需要先将中缀表达式转换为前缀或后缀表达式，然后再进行求值。对计算机来说，计算前缀或后缀表达式的值非常简单。</p>
+<h3 id="前缀表达式求值："><a href="#前缀表达式求值：" class="headerlink" title="前缀表达式求值："></a>前缀表达式求值：</h3><p>从右至左扫描表达式，遇到数字时，将数字压入堆栈，遇到运算符时，弹出栈顶的两个数，用运算符对它们做相应的计算（栈顶元素 op 次顶元素），并将结果入栈；重复上述过程直到表达式最左端，最后运算得出的值即为表达式的结果。</p>
+<p>例如前缀表达式“- × + 3 4 5 6”：</p>
+<ul>
+<li>(1) 从右至左扫描，将6、5、4、3压入堆栈；</li>
+<li>(2) 遇到+运算符，因此弹出3和4（3为栈顶元素，4为次顶元素，注意与后缀表达式做比较），计算出3+4的值，得7，再将7入栈；</li>
+<li>(3) 接下来是×运算符，因此弹出7和5，计算出7×5=35，将35入栈；</li>
+<li>(4) 最后是-运算符，计算出35-6的值，即29，由此得出最终结果。</li>
+</ul>
+<h3 id="后缀表达式求值："><a href="#后缀表达式求值：" class="headerlink" title="后缀表达式求值："></a>后缀表达式求值：</h3><p>与前缀表达式类似，只是顺序是从左至右</p>
+<p>例如后缀表达式“3 4 + 5 × 6 -”：</p>
+<ul>
+<li>(1) 从左至右扫描，将3和4压入堆栈；</li>
+<li>(2) 遇到+运算符，因此弹出4和3（4为栈顶元素，3为次顶元素，注意与前缀表达式做比较），计算出3+4的值，得7，再将7入栈；</li>
+<li>(3) 将5入栈；</li>
+<li>(4)接下来是×运算符，因此弹出5和7，计算出7×5=35，将35入栈；</li>
+<li>(5) 将6入栈；</li>
+<li>(6) 最后是-运算符，计算出35-6的值，即29，由此得出最终结果。</li>
+</ul>
+<h3 id="中缀表达式转后缀表达式："><a href="#中缀表达式转后缀表达式：" class="headerlink" title="中缀表达式转后缀表达式："></a>中缀表达式转后缀表达式：</h3><p>中缀表达式1 + (( 2 + 3)* 4 ) –5，请将它转化为后缀表达式。</p>
+<p>首先将中缀表达式转换为表达式树，然后后序遍历表达式树，所得结果就是后缀表达式。</p>
+<p>将中缀表达式转化为表达式树方法：表达式树的树叶是操作数，而其他的节点为操作符，根节点为优先级最低且靠右的操作符（如上述表达式优先级最低的是- 和+，但 + 更靠右，所以根为+），圆括号不包括。如上述中缀表达式转换后的表达式树如下：</p>
+<p><img src="https://img-blog.csdn.net/20140402144303578?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd2Fsa2Vya2Fscg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="image"></p>
+<p>经过后序遍历表达式树后得到的后缀表达式为：12 3 + 4 * + 5 –</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br></pre></td><td class="code"><pre><span class="line">public class PolandNotation &#123;</span><br><span class="line"></span><br><span class="line">	public static void main(String[] args) &#123;</span><br><span class="line">		</span><br><span class="line">		</span><br><span class="line">		&#x2F;&#x2F;完成将一个中缀表达式转成后缀表达式的功能</span><br><span class="line">		&#x2F;&#x2F;说明</span><br><span class="line">		&#x2F;&#x2F;1. 1+((2+3)×4)-5 &#x3D;&gt; 转成  1 2 3 + 4 × + 5 –</span><br><span class="line">		&#x2F;&#x2F;2. 因为直接对str 进行操作，不方便，因此 先将  &quot;1+((2+3)×4)-5&quot; &#x3D;》 中缀的表达式对应的List</span><br><span class="line">		&#x2F;&#x2F;   即 &quot;1+((2+3)×4)-5&quot; &#x3D;&gt; ArrayList [1,+,(,(,2,+,3,),*,4,),-,5]</span><br><span class="line">		&#x2F;&#x2F;3. 将得到的中缀表达式对应的List &#x3D;&gt; 后缀表达式对应的List</span><br><span class="line">		&#x2F;&#x2F;   即 ArrayList [1,+,(,(,2,+,3,),*,4,),-,5]  &#x3D;》 ArrayList [1,2,3,+,4,*,+,5,–]</span><br><span class="line">		</span><br><span class="line">		String expression &#x3D; &quot;1+((2+3)*4)-5&quot;;&#x2F;&#x2F;注意表达式 </span><br><span class="line">		List&lt;String&gt; infixExpressionList &#x3D; toInfixExpressionList(expression);</span><br><span class="line">		System.out.println(&quot;中缀表达式对应的List&#x3D;&quot; + infixExpressionList); &#x2F;&#x2F; ArrayList [1,+,(,(,2,+,3,),*,4,),-,5]</span><br><span class="line">		List&lt;String&gt; suffixExpreesionList &#x3D; parseSuffixExpreesionList(infixExpressionList);</span><br><span class="line">		System.out.println(&quot;后缀表达式对应的List&quot; + suffixExpreesionList); &#x2F;&#x2F;ArrayList [1,2,3,+,4,*,+,5,–] </span><br><span class="line">		</span><br><span class="line">		System.out.printf(&quot;expression&#x3D;%d&quot;, calculate(suffixExpreesionList)); &#x2F;&#x2F; ?</span><br><span class="line">		</span><br><span class="line">		</span><br><span class="line">		</span><br><span class="line">		&#x2F;*</span><br><span class="line">		</span><br><span class="line">		&#x2F;&#x2F;先定义给逆波兰表达式</span><br><span class="line">		&#x2F;&#x2F;(30+4)×5-6  &#x3D;&gt; 30 4 + 5 × 6 - &#x3D;&gt; 164</span><br><span class="line">		&#x2F;&#x2F; 4 * 5 - 8 + 60 + 8 &#x2F; 2 &#x3D;&gt; 4 5 * 8 - 60 + 8 2 &#x2F; + </span><br><span class="line">		&#x2F;&#x2F;测试 </span><br><span class="line">		&#x2F;&#x2F;说明为了方便，逆波兰表达式 的数字和符号使用空格隔开</span><br><span class="line">		&#x2F;&#x2F;String suffixExpression &#x3D; &quot;30 4 + 5 * 6 -&quot;;</span><br><span class="line">		String suffixExpression &#x3D; &quot;4 5 * 8 - 60 + 8 2 &#x2F; +&quot;; &#x2F;&#x2F; 76</span><br><span class="line">		&#x2F;&#x2F;思路</span><br><span class="line">		&#x2F;&#x2F;1. 先将 &quot;3 4 + 5 × 6 - &quot; &#x3D;&gt; 放到ArrayList中</span><br><span class="line">		&#x2F;&#x2F;2. 将 ArrayList 传递给一个方法，遍历 ArrayList 配合栈 完成计算</span><br><span class="line">		</span><br><span class="line">		List&lt;String&gt; list &#x3D; getListString(suffixExpression);</span><br><span class="line">		System.out.println(&quot;rpnList&#x3D;&quot; + list);</span><br><span class="line">		int res &#x3D; calculate(list);</span><br><span class="line">		System.out.println(&quot;计算的结果是&#x3D;&quot; + res);</span><br><span class="line">		</span><br><span class="line">		*&#x2F;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	</span><br><span class="line">	</span><br><span class="line">	&#x2F;&#x2F;即 ArrayList [1,+,(,(,2,+,3,),*,4,),-,5]  &#x3D;》 ArrayList [1,2,3,+,4,*,+,5,–]</span><br><span class="line">	&#x2F;&#x2F;方法：将得到的中缀表达式对应的List &#x3D;&gt; 后缀表达式对应的List</span><br><span class="line">	public static List&lt;String&gt; parseSuffixExpreesionList(List&lt;String&gt; ls) &#123;</span><br><span class="line">		&#x2F;&#x2F;定义两个栈</span><br><span class="line">		Stack&lt;String&gt; s1 &#x3D; new Stack&lt;String&gt;(); &#x2F;&#x2F; 符号栈</span><br><span class="line">		&#x2F;&#x2F;说明：因为s2 这个栈，在整个转换过程中，没有pop操作，而且后面我们还需要逆序输出</span><br><span class="line">		&#x2F;&#x2F;因此比较麻烦，这里我们就不用 Stack&lt;String&gt; 直接使用 List&lt;String&gt; s2</span><br><span class="line">		&#x2F;&#x2F;Stack&lt;String&gt; s2 &#x3D; new Stack&lt;String&gt;(); &#x2F;&#x2F; 储存中间结果的栈s2</span><br><span class="line">		List&lt;String&gt; s2 &#x3D; new ArrayList&lt;String&gt;(); &#x2F;&#x2F; 储存中间结果的Lists2</span><br><span class="line">		</span><br><span class="line">		&#x2F;&#x2F;遍历ls</span><br><span class="line">		for(String item: ls) &#123;</span><br><span class="line">			&#x2F;&#x2F;如果是一个数，加入s2</span><br><span class="line">			if(item.matches(&quot;\\d+&quot;)) &#123;</span><br><span class="line">				s2.add(item);</span><br><span class="line">			&#125; else if (item.equals(&quot;(&quot;)) &#123;</span><br><span class="line">				s1.push(item);</span><br><span class="line">			&#125; else if (item.equals(&quot;)&quot;)) &#123;</span><br><span class="line">				&#x2F;&#x2F;如果是右括号“)”，则依次弹出s1栈顶的运算符，并压入s2，直到遇到左括号为止，此时将这一对括号丢弃</span><br><span class="line">				while(!s1.peek().equals(&quot;(&quot;)) &#123;</span><br><span class="line">					s2.add(s1.pop());</span><br><span class="line">				&#125;</span><br><span class="line">				s1.pop();&#x2F;&#x2F;!!! 将 ( 弹出 s1栈， 消除小括号</span><br><span class="line">			&#125; else &#123;</span><br><span class="line">				&#x2F;&#x2F;当item的优先级小于等于s1栈顶运算符, 将s1栈顶的运算符弹出并加入到s2中，再次转到(4.1)与s1中新的栈顶运算符相比较</span><br><span class="line">				&#x2F;&#x2F;问题：我们缺少一个比较优先级高低的方法</span><br><span class="line">				while(s1.size() !&#x3D; 0 &amp;&amp; Operation.getValue(s1.peek()) &gt;&#x3D; Operation.getValue(item) ) &#123;</span><br><span class="line">					s2.add(s1.pop());</span><br><span class="line">				&#125;</span><br><span class="line">				&#x2F;&#x2F;还需要将item压入栈</span><br><span class="line">				s1.push(item);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		&#x2F;&#x2F;将s1中剩余的运算符依次弹出并加入s2</span><br><span class="line">		while(s1.size() !&#x3D; 0) &#123;</span><br><span class="line">			s2.add(s1.pop());</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		return s2; &#x2F;&#x2F;注意因为是存放到List, 因此按顺序输出就是对应的后缀表达式对应的List</span><br><span class="line">		</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	&#x2F;&#x2F;方法：将 中缀表达式转成对应的List</span><br><span class="line">	&#x2F;&#x2F;  s&#x3D;&quot;1+((2+3)×4)-5&quot;;</span><br><span class="line">	public static List&lt;String&gt; toInfixExpressionList(String s) &#123;</span><br><span class="line">		&#x2F;&#x2F;定义一个List,存放中缀表达式 对应的内容</span><br><span class="line">		List&lt;String&gt; ls &#x3D; new ArrayList&lt;String&gt;();</span><br><span class="line">		int i &#x3D; 0; &#x2F;&#x2F;这时是一个指针，用于遍历 中缀表达式字符串</span><br><span class="line">		String str; &#x2F;&#x2F; 对多位数的拼接</span><br><span class="line">		char c; &#x2F;&#x2F; 每遍历到一个字符，就放入到c</span><br><span class="line">		do &#123;</span><br><span class="line">			&#x2F;&#x2F;如果c是一个非数字，我需要加入到ls</span><br><span class="line">			if((c&#x3D;s.charAt(i)) &lt; 48 ||  (c&#x3D;s.charAt(i)) &gt; 57) &#123;</span><br><span class="line">				ls.add(&quot;&quot; + c);</span><br><span class="line">				i++; &#x2F;&#x2F;i需要后移</span><br><span class="line">			&#125; else &#123; &#x2F;&#x2F;如果是一个数，需要考虑多位数</span><br><span class="line">				str &#x3D; &quot;&quot;; &#x2F;&#x2F;先将str 置成&quot;&quot; &#39;0&#39;[48]-&gt;&#39;9&#39;[57]</span><br><span class="line">				while(i &lt; s.length() &amp;&amp; (c&#x3D;s.charAt(i)) &gt;&#x3D; 48 &amp;&amp; (c&#x3D;s.charAt(i)) &lt;&#x3D; 57) &#123;</span><br><span class="line">					str +&#x3D; c;&#x2F;&#x2F;拼接</span><br><span class="line">					i++;</span><br><span class="line">				&#125;</span><br><span class="line">				ls.add(str);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;while(i &lt; s.length());</span><br><span class="line">		return ls;&#x2F;&#x2F;返回</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	&#x2F;&#x2F;将一个逆波兰表达式， 依次将数据和运算符 放入到 ArrayList中</span><br><span class="line">	public static List&lt;String&gt; getListString(String suffixExpression) &#123;</span><br><span class="line">		&#x2F;&#x2F;将 suffixExpression 分割</span><br><span class="line">		String[] split &#x3D; suffixExpression.split(&quot; &quot;);</span><br><span class="line">		List&lt;String&gt; list &#x3D; new ArrayList&lt;String&gt;();</span><br><span class="line">		for(String ele: split) &#123;</span><br><span class="line">			list.add(ele);</span><br><span class="line">		&#125;</span><br><span class="line">		return list;</span><br><span class="line">		</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	&#x2F;&#x2F;完成对逆波兰表达式的运算</span><br><span class="line">	&#x2F;*</span><br><span class="line">	 * 1)从左至右扫描，将3和4压入堆栈；</span><br><span class="line">		2)遇到+运算符，因此弹出4和3（4为栈顶元素，3为次顶元素），计算出3+4的值，得7，再将7入栈；</span><br><span class="line">		3)将5入栈；</span><br><span class="line">		4)接下来是×运算符，因此弹出5和7，计算出7×5&#x3D;35，将35入栈；</span><br><span class="line">		5)将6入栈；</span><br><span class="line">		6)最后是-运算符，计算出35-6的值，即29，由此得出最终结果</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	</span><br><span class="line">	public static int calculate(List&lt;String&gt; ls) &#123;</span><br><span class="line">		&#x2F;&#x2F; 创建给栈, 只需要一个栈即可</span><br><span class="line">		Stack&lt;String&gt; stack &#x3D; new Stack&lt;String&gt;();</span><br><span class="line">		&#x2F;&#x2F; 遍历 ls</span><br><span class="line">		for (String item : ls) &#123;</span><br><span class="line">			&#x2F;&#x2F; 这里使用正则表达式来取出数</span><br><span class="line">			if (item.matches(&quot;\\d+&quot;)) &#123; &#x2F;&#x2F; 匹配的是多位数</span><br><span class="line">				&#x2F;&#x2F; 入栈</span><br><span class="line">				stack.push(item);</span><br><span class="line">			&#125; else &#123;</span><br><span class="line">				&#x2F;&#x2F; pop出两个数，并运算， 再入栈</span><br><span class="line">				int num2 &#x3D; Integer.parseInt(stack.pop());</span><br><span class="line">				int num1 &#x3D; Integer.parseInt(stack.pop());</span><br><span class="line">				int res &#x3D; 0;</span><br><span class="line">				if (item.equals(&quot;+&quot;)) &#123;</span><br><span class="line">					res &#x3D; num1 + num2;</span><br><span class="line">				&#125; else if (item.equals(&quot;-&quot;)) &#123;</span><br><span class="line">					res &#x3D; num1 - num2;</span><br><span class="line">				&#125; else if (item.equals(&quot;*&quot;)) &#123;</span><br><span class="line">					res &#x3D; num1 * num2;</span><br><span class="line">				&#125; else if (item.equals(&quot;&#x2F;&quot;)) &#123;</span><br><span class="line">					res &#x3D; num1 &#x2F; num2;</span><br><span class="line">				&#125; else &#123;</span><br><span class="line">					throw new RuntimeException(&quot;运算符有误&quot;);</span><br><span class="line">				&#125;</span><br><span class="line">				&#x2F;&#x2F;把res 入栈</span><br><span class="line">				stack.push(&quot;&quot; + res);</span><br><span class="line">			&#125;</span><br><span class="line">			</span><br><span class="line">		&#125;</span><br><span class="line">		&#x2F;&#x2F;最后留在stack中的数据是运算结果</span><br><span class="line">		return Integer.parseInt(stack.pop());</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;编写一个类 Operation 可以返回一个运算符 对应的优先级</span><br><span class="line">class Operation &#123;</span><br><span class="line">	private static int ADD &#x3D; 1;</span><br><span class="line">	private static int SUB &#x3D; 1;</span><br><span class="line">	private static int MUL &#x3D; 2;</span><br><span class="line">	private static int DIV &#x3D; 2;</span><br><span class="line">	</span><br><span class="line">	&#x2F;&#x2F;写一个方法，返回对应的优先级数字</span><br><span class="line">	public static int getValue(String operation) &#123;</span><br><span class="line">		int result &#x3D; 0;</span><br><span class="line">		switch (operation) &#123;</span><br><span class="line">		case &quot;+&quot;:</span><br><span class="line">			result &#x3D; ADD;</span><br><span class="line">			break;</span><br><span class="line">		case &quot;-&quot;:</span><br><span class="line">			result &#x3D; SUB;</span><br><span class="line">			break;</span><br><span class="line">		case &quot;*&quot;:</span><br><span class="line">			result &#x3D; MUL;</span><br><span class="line">			break;</span><br><span class="line">		case &quot;&#x2F;&quot;:</span><br><span class="line">			result &#x3D; DIV;</span><br><span class="line">			break;</span><br><span class="line">		default:</span><br><span class="line">			System.out.println(&quot;不存在该运算符&quot; + operation);</span><br><span class="line">			break;</span><br><span class="line">		&#125;</span><br><span class="line">		return result;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%89%8D%E4%B8%AD%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F/" rel="tag"># 前中后缀表达式</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/09/19/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/5%E3%80%81%E6%A0%88/%E6%A0%88%EF%BC%9A%E5%BA%94%E7%94%A8/" rel="prev" title="栈：应用">
+      <i class="fa fa-chevron-left"></i> 栈：应用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/09/19/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/5%E3%80%81CocurrentHashMap1.7/" rel="next" title="CocurrentHashMap1.7">
+      CocurrentHashMap1.7 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B1%82%E5%80%BC%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">前缀表达式求值：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B1%82%E5%80%BC%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">后缀表达式求值：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F%E8%BD%AC%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">中缀表达式转后缀表达式：</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">103</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">51</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">103</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

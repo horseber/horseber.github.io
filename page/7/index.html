@@ -172,7 +172,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/6%E3%80%81%E6%A1%A5%E6%A2%81%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/4%E3%80%81%E4%B8%AD%E9%97%B4%E4%BB%B6/3%E3%80%81RocketMQ/8%E3%80%81%E6%B6%88%E6%81%AF%E5%B9%BF%E6%92%AD/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -186,7 +186,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/6%E3%80%81%E6%A1%A5%E6%A2%81%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">桥梁模式</a>
+            <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/4%E3%80%81%E4%B8%AD%E9%97%B4%E4%BB%B6/3%E3%80%81RocketMQ/8%E3%80%81%E6%B6%88%E6%81%AF%E5%B9%BF%E6%92%AD/" class="post-title-link" itemprop="url">消息广播</a>
         </h2>
 
         <div class="post-meta">
@@ -196,14 +196,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-10 14:51:03" itemprop="dateCreated datePublished" datetime="2020-07-10T14:51:03+08:00">2020-07-10</time>
+              <time title="创建时间：2020-06-21 09:22:57" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:57+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:48" itemprop="dateModified" datetime="2020-09-19T17:26:48+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -211,7 +211,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/RocketMQ/" itemprop="url" rel="index"><span itemprop="name">RocketMQ</span></a>
                 </span>
             </span>
 
@@ -226,10 +226,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>GoF 的《设计模式》一书中对桥接模式的定义：将抽象和实现解耦，让它们可以独立变化</p>
+          <p>上面发送消息，我们测试的时候，可以发现消息只有一个消费者能收到，如果我们想实现消息广播，让每个消费者都能收到消息也是可以实现的。而且上面发送消息的时候，每次都是发送单条Message对象，能否批量发送呢？答案是可以的。 广播生产者：</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/6%E3%80%81%E6%A1%A5%E6%A2%81%E6%A8%A1%E5%BC%8F/">
+              <a class="btn" href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/4%E3%80%81%E4%B8%AD%E9%97%B4%E4%BB%B6/3%E3%80%81RocketMQ/8%E3%80%81%E6%B6%88%E6%81%AF%E5%B9%BF%E6%92%AD/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -253,7 +253,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/8%E3%80%81%E8%B0%83%E5%BA%A6%E6%A1%86%E6%9E%B6/SpringTask/SpringTask/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -267,7 +267,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">中介者模式</a>
+            <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/8%E3%80%81%E8%B0%83%E5%BA%A6%E6%A1%86%E6%9E%B6/SpringTask/SpringTask/" class="post-title-link" itemprop="url">SpringTask</a>
         </h2>
 
         <div class="post-meta">
@@ -277,14 +277,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-10 14:47:42" itemprop="dateCreated datePublished" datetime="2020-07-10T14:47:42+08:00">2020-07-10</time>
+              <time title="创建时间：2020-06-21 09:22:57" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:57+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:48" itemprop="dateModified" datetime="2020-09-19T17:26:48+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -292,7 +292,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/SpringTask/" itemprop="url" rel="index"><span itemprop="name">SpringTask</span></a>
                 </span>
             </span>
 
@@ -307,10 +307,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>采购、销售、库存这三个模块都有自己的行为，并且与其他模块之间的行为产生关联。</p>
+          <p>定时任务的几种实现： java自带的Timer</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">
+              <a class="btn" href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/8%E3%80%81%E8%B0%83%E5%BA%A6%E6%A1%86%E6%9E%B6/SpringTask/SpringTask/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -334,7 +334,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2.3%E3%80%81%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AADI%E5%AE%B9%E5%99%A8/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/7%E3%80%81linux/linux/2%E3%80%81%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -348,7 +348,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2.3%E3%80%81%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AADI%E5%AE%B9%E5%99%A8/" class="post-title-link" itemprop="url">工厂模式应用：如何实现一个DI容器</a>
+            <a href="/2020/06/21/Study%20notes/7%E3%80%81linux/linux/2%E3%80%81%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">用户管理</a>
         </h2>
 
         <div class="post-meta">
@@ -358,14 +358,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-10 14:02:31" itemprop="dateCreated datePublished" datetime="2020-07-10T14:02:31+08:00">2020-07-10</time>
+              <time title="创建时间：2020-06-21 09:22:55" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:55+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:49" itemprop="dateModified" datetime="2020-09-19T17:26:49+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -373,7 +373,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
                 </span>
             </span>
 
@@ -388,10 +388,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>DI 容器底层最基本的设计思路就是基于工厂模式的。DI 容器相当于一个大的工厂类，负责在程序启动的时候，根据配置（要创建哪些类对象，每个类对象的创建需要依赖哪些其他类对象）事先创建好对象。当应用程序需要使用某个类对象的时候，直接从容器中获取即可。还包括配置的解析、对象生命周期的管理</p>
+          <p>Linux系统是一个多用户多任务的分时操作系统，任何一个要使用系统资源的用户，都必须首先向系统管理员申请一个账号，然后以这个账号的身份进入系统。 添加账号</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/10/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2.3%E3%80%81%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AADI%E5%AE%B9%E5%99%A8/">
+              <a class="btn" href="/2020/06/21/Study%20notes/7%E3%80%81linux/linux/2%E3%80%81%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -415,7 +415,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/19%E3%80%81%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/8%E3%80%81%E5%9B%BE/1%E3%80%81%E5%9B%BE/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -429,7 +429,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/19%E3%80%81%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">访问者模式</a>
+            <a href="/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/8%E3%80%81%E5%9B%BE/1%E3%80%81%E5%9B%BE/" class="post-title-link" itemprop="url">图</a>
         </h2>
 
         <div class="post-meta">
@@ -439,14 +439,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-09 19:25:55" itemprop="dateCreated datePublished" datetime="2020-07-09T19:25:55+08:00">2020-07-09</time>
+              <time title="创建时间：2020-06-21 09:22:52" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:52+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:45" itemprop="dateModified" datetime="2020-09-19T17:26:45+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -454,7 +454,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/%E5%9B%BE/" itemprop="url" rel="index"><span itemprop="name">图</span></a>
                 </span>
             </span>
 
@@ -469,10 +469,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>23 种经典设计模式中最难理解的几个之一。因为它难理解、难实现，应用它会导致代码的可读性、可维护性变差，所以，访问者模式在实际的软件开发中很少被用到，在没有特别必要的情况下，建议你不要使用访问者模式。</p>
+          <p>相关术语： 顶点：树中的元素我们称为节点，图中的元素我们就叫作顶点。例如微博中的一个用户</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/19%E3%80%81%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">
+              <a class="btn" href="/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/8%E3%80%81%E5%9B%BE/1%E3%80%81%E5%9B%BE/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -496,7 +496,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/4%E3%80%81%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/11%E3%80%81AtomicInteger/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -510,7 +510,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/4%E3%80%81%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">原型模式</a>
+            <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/11%E3%80%81AtomicInteger/" class="post-title-link" itemprop="url">AtomicInteger</a>
         </h2>
 
         <div class="post-meta">
@@ -520,14 +520,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-09 19:23:32" itemprop="dateCreated datePublished" datetime="2020-07-09T19:23:32+08:00">2020-07-09</time>
+              <time title="创建时间：2020-06-21 09:22:52" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:52+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:47" itemprop="dateModified" datetime="2020-09-19T17:26:47+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -535,7 +535,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/JUC/" itemprop="url" rel="index"><span itemprop="name">JUC</span></a>
                 </span>
             </span>
 
@@ -550,10 +550,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>如果对象的创建成本比较大，（如对象中的数据需要经过复杂的计算才能得到（比如排序、计算哈希值），或者需要从 RPC、网络、数据库、文件系统等非常慢速的 IO 中读取），而同一个类的不同对象之间差别不大（大部分字段都相同），在这种情况下，我们可以利用对已有对象（原型）进行复制（或者叫拷贝）的方式来创建新对象，以达到节省创建时间的目的。这种基于原型来创建对象的方式就叫作原型设计模式（Prototype Design Pattern），简称原型模式</p>
+          <p>jdk5之后 java.util.concurrent.atomic下提供了很多常用原子变量 AtomicBoolean 、AtomicInteger 、AtomicLong 、 AtomicReference</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/4%E3%80%81%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+              <a class="btn" href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/11%E3%80%81AtomicInteger/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -577,7 +577,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/3%E3%80%81%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/7%E3%80%81%E5%BE%AE%E6%9C%8D%E5%8A%A1/zookeeper/4%E3%80%81zookeeper%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -591,7 +591,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/3%E3%80%81%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">建造者模式</a>
+            <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/7%E3%80%81%E5%BE%AE%E6%9C%8D%E5%8A%A1/zookeeper/4%E3%80%81zookeeper%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">zookeeper常用命令</a>
         </h2>
 
         <div class="post-meta">
@@ -601,14 +601,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-09 19:23:29" itemprop="dateCreated datePublished" datetime="2020-07-09T19:23:29+08:00">2020-07-09</time>
+              <time title="创建时间：2020-06-21 09:22:50" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:50+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:48" itemprop="dateModified" datetime="2020-09-19T17:26:48+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -616,7 +616,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/zookeeper/" itemprop="url" rel="index"><span itemprop="name">zookeeper</span></a>
                 </span>
             </span>
 
@@ -631,10 +631,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>建造者模式的原理和代码实现非常简单，掌握起来并不难，难点在于应用场景。比如，你有没有考虑过这样几个问题： 直接使用构造函数或者配合 set 方法就能创建对象，为什么还需要建造者模式来创建呢？</p>
+          <p>用给定的路径创建一个znode。flag参数指定创建的znode是临时的，持久的还是顺序的。节点创建后临时和永久特性不能被更改 默认情况下，所有znode都是持久的。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/3%E3%80%81%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">
+              <a class="btn" href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/7%E3%80%81%E5%BE%AE%E6%9C%8D%E5%8A%A1/zookeeper/4%E3%80%81zookeeper%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -658,7 +658,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/JDBC/%E6%89%B9%E5%A4%84%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -672,7 +672,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">迭代器模式</a>
+            <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/JDBC/%E6%89%B9%E5%A4%84%E7%90%86/" class="post-title-link" itemprop="url">批处理</a>
         </h2>
 
         <div class="post-meta">
@@ -682,14 +682,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-09 19:22:21" itemprop="dateCreated datePublished" datetime="2020-07-09T19:22:21+08:00">2020-07-09</time>
+              <time title="创建时间：2020-06-21 09:22:49" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:49+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:48" itemprop="dateModified" datetime="2020-09-19T17:26:48+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -697,7 +697,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/JDBC/" itemprop="url" rel="index"><span itemprop="name">JDBC</span></a>
                 </span>
             </span>
 
@@ -712,10 +712,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>已经没落的模式</p>
+          <p>需要进行批量增删改的操作 拼接SQL的方式：sql长度有限制，clob类型不能这样使用，只能用于insert语句</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">
+              <a class="btn" href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/JDBC/%E6%89%B9%E5%A4%84%E7%90%86/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -739,7 +739,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/15%E3%80%81%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/14%E3%80%81TreeMap/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -753,7 +753,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/15%E3%80%81%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">责任链模式</a>
+            <a href="/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/14%E3%80%81TreeMap/" class="post-title-link" itemprop="url">TreeMap</a>
         </h2>
 
         <div class="post-meta">
@@ -763,14 +763,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-09 19:00:36" itemprop="dateCreated datePublished" datetime="2020-07-09T19:00:36+08:00">2020-07-09</time>
+              <time title="创建时间：2020-06-21 09:22:48" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:48+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:47" itemprop="dateModified" datetime="2020-09-19T17:26:47+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -778,7 +778,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/java%E5%AE%B9%E5%99%A8/" itemprop="url" rel="index"><span itemprop="name">java容器</span></a>
                 </span>
             </span>
 
@@ -793,10 +793,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>职责链模式中，多个处理器（也就是刚刚定义中说的“接收对象”）依次处理同一个请求。一个请求先经过 A 处理器处理，然后再把请求传递给 B 处理器，B 处理器处理完后再传递给 C 处理器，以此类推，形成一个链条。链条上的每个处理器各自承担各自的处理职责，所以叫作职责链模式。</p>
+          <p>TreeMap的实现是红黑树算法的实现 红黑树又称红黑二叉树，它首先是一颗二叉树，。同时红黑树更是一颗自平衡的排序二叉树。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/15%E3%80%81%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">
+              <a class="btn" href="/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/14%E3%80%81TreeMap/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -820,7 +820,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/14%E3%80%81%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/1%E3%80%81JVM%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -834,7 +834,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/14%E3%80%81%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">策略模式</a>
+            <a href="/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/1%E3%80%81JVM%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">JVM介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -844,14 +844,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-09 16:22:43" itemprop="dateCreated datePublished" datetime="2020-07-09T16:22:43+08:00">2020-07-09</time>
+              <time title="创建时间：2020-06-21 09:22:48" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:48+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:47" itemprop="dateModified" datetime="2020-09-19T17:26:47+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -859,7 +859,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
                 </span>
             </span>
 
@@ -874,16 +874,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class OrderService &#123;</span><br><span class="line">  public double discount(Order order) &#123;</span><br><span class="line">    double discount &#x3D; 0.0;</span><br><span class="line">    OrderType type &#x3D; order.getType();</span><br><span class="line">    if (type.equals(OrderType.NORMAL)) &#123; &#x2F;&#x2F; 普通订单</span><br><span class="line">      &#x2F;&#x2F;...省略折扣计算算法代码</span><br><span class="line">    &#125; else if (type.equals(OrderType.GROUPON)) &#123; &#x2F;&#x2F; 团购订单</span><br><span class="line">      &#x2F;&#x2F;...省略折扣计算算法代码</span><br><span class="line">    &#125; else if (type.equals(OrderType.PROMOTION)) &#123; &#x2F;&#x2F; 促销订单</span><br><span class="line">      &#x2F;&#x2F;...省略折扣计算算法代码</span><br><span class="line">    &#125;</span><br><span class="line">    return discount;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如何来移除掉分支判断逻辑呢？那策略模式就派上用场了。我们使用策略模式对上面的代码重构，将不同类型订单的打折策略设计成策略类，并由工厂类来负责创建策略对象</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; 策略的定义</span><br><span class="line">public interface DiscountStrategy &#123;</span><br><span class="line">  double calDiscount(Order order);</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F; 省略NormalDiscountStrategy、GrouponDiscountStrategy、PromotionDiscountStrategy类代码...</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 策略的创建</span><br><span class="line">public class DiscountStrategyFactory &#123;</span><br><span class="line">  private static final Map&lt;OrderType, DiscountStrategy&gt; strategies &#x3D; new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">  static &#123;</span><br><span class="line">    strategies.put(OrderType.NORMAL, new NormalDiscountStrategy());</span><br><span class="line">    strategies.put(OrderType.GROUPON, new GrouponDiscountStrategy());</span><br><span class="line">    strategies.put(OrderType.PROMOTION, new PromotionDiscountStrategy());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public static DiscountStrategy getDiscountStrategy(OrderType type) &#123;</span><br><span class="line">    return strategies.get(type);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 策略的使用</span><br><span class="line">public class OrderService &#123;</span><br><span class="line">  public double discount(Order order) &#123;</span><br><span class="line">    OrderType type &#x3D; order.getType();</span><br><span class="line">    DiscountStrategy discountStrategy &#x3D; DiscountStrategyFactory.getDiscountStrategy(type);</span><br><span class="line">    return discountStrategy.calDiscount(order);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>策略模式用来解耦策略的定义、创建、使用。实际上，一个完整的策略模式就是由这三个部分组成的。</p>
-<ul>
-<li>策略类的定义比较简单，包含一个策略接口和一组实现这个接口的策略类。</li>
-<li>策略的创建由工厂类来完成，封装策略创建的细节。</li>
-<li>策略模式包含一组策略可选，客户端代码如何选择使用哪个策略，有两种确定方法：编译时静态确定和运行时动态确定。其中，“运行时动态确定”才是策略模式最典型的应用场景。</li>
-</ul>
-
+          <p>https://www.cnblogs.com/leesf456/p/5338951.html 1.什么是jvm?</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/1%E3%80%81JVM%E4%BB%8B%E7%BB%8D/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -902,7 +901,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/13%E3%80%81%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/1%E3%80%81%E4%BC%A0%E7%BB%9FJDBC%E7%BC%96%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -916,7 +915,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/07/09/Study%20notes/3%E3%80%81java/13%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/2%E3%80%81%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/13%E3%80%81%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">模板方法模式</a>
+            <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/1%E3%80%81%E4%BC%A0%E7%BB%9FJDBC%E7%BC%96%E7%A8%8B/" class="post-title-link" itemprop="url">传统JDBC编程</a>
         </h2>
 
         <div class="post-meta">
@@ -926,14 +925,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-07-09 13:51:36" itemprop="dateCreated datePublished" datetime="2020-07-09T13:51:36+08:00">2020-07-09</time>
+              <time title="创建时间：2020-06-21 09:22:48" itemprop="dateCreated datePublished" datetime="2020-06-21T09:22:48+08:00">2020-06-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+                <time title="修改时间：2020-09-19 17:26:48" itemprop="dateModified" datetime="2020-09-19T17:26:48+08:00">2020-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -941,7 +940,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                  <a href="/categories/MyBatis/" itemprop="url" rel="index"><span itemprop="name">MyBatis</span></a>
                 </span>
             </span>
 
@@ -956,32 +955,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>模板方法模式确实非常简单，仅仅使用了Java的继承机制，定义一个抽象类，定义抽象的基本方法和具体的模板方法（==模板方法中调用基本方法，实现固定逻辑==）</p>
-<p> 基本方法：基本方法也叫做基本操作，是由子类实现的方法，并且在模板方法被调用</p>
-<p> 模板方法：可以有一个或几个，一般是一个具体方法，也就是一个框架，实现对基本方法的调度， 完成固定的逻辑。==为了防止恶意的操作，一般模板方法都加上final关键字，不允许被覆写。==</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public abstract class AbstractClass &#123;</span><br><span class="line">  public final void templateMethod() &#123;</span><br><span class="line">    method1();</span><br><span class="line">    method2();</span><br><span class="line">  &#125;</span><br><span class="line">  protected abstract void method1();</span><br><span class="line">  protected abstract void method2();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class ConcreteClass1 extends AbstractClass &#123;</span><br><span class="line">  @Override</span><br><span class="line">  protected void method1() &#123;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  @Override</span><br><span class="line">  protected void method2() &#123;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class ConcreteClass2 extends AbstractClass &#123;</span><br><span class="line">  @Override</span><br><span class="line">  protected void method1() &#123;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  @Override</span><br><span class="line">  protected void method2() &#123;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">AbstractClass demo &#x3D; ConcreteClass1();</span><br><span class="line">demo.templateMethod();</span><br></pre></td></tr></table></figure>
-
-
-
-
-
-
-<p> Java Servlet中模板方法的使用。</p>
-<p> HttpServlet 的 service() 方法就是一个模板方法，它实现了整个 HTTP 请求的执行流程，doGet()、doPost() 是模板中可以由子类来定制的部分。实际上，这就相当于 Servlet 框架提供了一个扩展点（doGet()、doPost() 方法），让框架用户在不用修改 Servlet 框架源码的情况下，将业务代码通过扩展点镶嵌到框架中执行。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class HelloServlet extends HttpServlet &#123;</span><br><span class="line">  @Override</span><br><span class="line">  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException &#123;</span><br><span class="line">    this.doPost(req, resp);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  @Override</span><br><span class="line">  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException &#123;</span><br><span class="line">    resp.getWriter().write(&quot;Hello World.&quot;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;   </span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;servlet&gt;</span><br><span class="line">    &lt;servlet-name&gt;HelloServlet&lt;&#x2F;servlet-name&gt;</span><br><span class="line">    &lt;servlet-class&gt;com.xzg.cd.HelloServlet&lt;&#x2F;servlet-class&gt;</span><br><span class="line">&lt;&#x2F;servlet&gt;</span><br><span class="line"></span><br><span class="line">&lt;servlet-mapping&gt;</span><br><span class="line">    &lt;servlet-name&gt;HelloServlet&lt;&#x2F;servlet-name&gt;</span><br><span class="line">    &lt;url-pattern&gt;&#x2F;hello&lt;&#x2F;url-pattern&gt;</span><br><span class="line">&lt;&#x2F;servlet-mapping&gt;</span><br></pre></td></tr></table></figure>
-
-<p>当我们在浏览器中输入网址（比如，<a target="_blank" rel="noopener" href="http://127.0.0.1:8080/hello">http://127.0.0.1:8080/hello</a> ）的时候，Servlet 容器会接收到相应的请求，并且根据 URL 和 Servlet 之间的映射关系，找到相应的 Servlet（HelloServlet），然后执行它的 service() 方法。service() 方法定义在父类 HttpServlet 中，它会调用 doGet() 或 doPost() 方法，然后输出数据（“Hello world”）到网页。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public void service(ServletRequest req, ServletResponse res)</span><br><span class="line">    throws ServletException, IOException</span><br><span class="line">&#123;</span><br><span class="line">    HttpServletRequest  request;</span><br><span class="line">    HttpServletResponse response;</span><br><span class="line">    if (!(req instanceof HttpServletRequest &amp;&amp;</span><br><span class="line">            res instanceof HttpServletResponse)) &#123;</span><br><span class="line">        throw new ServletException(&quot;non-HTTP request or response&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    request &#x3D; (HttpServletRequest) req;</span><br><span class="line">    response &#x3D; (HttpServletResponse) res;</span><br><span class="line">    service(request, response);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">protected void service(HttpServletRequest req, HttpServletResponse resp)</span><br><span class="line">    throws ServletException, IOException</span><br><span class="line">&#123;</span><br><span class="line">    String method &#x3D; req.getMethod();</span><br><span class="line">    if (method.equals(METHOD_GET)) &#123;</span><br><span class="line">        long lastModified &#x3D; getLastModified(req);</span><br><span class="line">        if (lastModified &#x3D;&#x3D; -1) &#123;</span><br><span class="line">            &#x2F;&#x2F; servlet doesn&#39;t support if-modified-since, no reason</span><br><span class="line">            &#x2F;&#x2F; to go through further expensive logic</span><br><span class="line">            doGet(req, resp);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            long ifModifiedSince &#x3D; req.getDateHeader(HEADER_IFMODSINCE);</span><br><span class="line">            if (ifModifiedSince &lt; lastModified) &#123;</span><br><span class="line">                &#x2F;&#x2F; If the servlet mod time is later, call doGet()</span><br><span class="line">                &#x2F;&#x2F; Round down to the nearest second for a proper compare</span><br><span class="line">                &#x2F;&#x2F; A ifModifiedSince of -1 will always be less</span><br><span class="line">                maybeSetLastModified(resp, lastModified);</span><br><span class="line">                doGet(req, resp);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else if (method.equals(METHOD_HEAD)) &#123;</span><br><span class="line">        long lastModified &#x3D; getLastModified(req);</span><br><span class="line">        maybeSetLastModified(resp, lastModified);</span><br><span class="line">        doHead(req, resp);</span><br><span class="line">    &#125; else if (method.equals(METHOD_POST)) &#123;</span><br><span class="line">        doPost(req, resp);</span><br><span class="line">    &#125; else if (method.equals(METHOD_PUT)) &#123;</span><br><span class="line">        doPut(req, resp);</span><br><span class="line">    &#125; else if (method.equals(METHOD_DELETE)) &#123;</span><br><span class="line">        doDelete(req, resp);</span><br><span class="line">    &#125; else if (method.equals(METHOD_OPTIONS)) &#123;</span><br><span class="line">        doOptions(req,resp);</span><br><span class="line">    &#125; else if (method.equals(METHOD_TRACE)) &#123;</span><br><span class="line">        doTrace(req,resp);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        String errMsg &#x3D; lStrings.getString(&quot;http.method_not_implemented&quot;);</span><br><span class="line">        Object[] errArgs &#x3D; new Object[1];</span><br><span class="line">        errArgs[0] &#x3D; method;</span><br><span class="line">        errMsg &#x3D; MessageFormat.format(errMsg, errArgs);</span><br><span class="line">        resp.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED, errMsg);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<p>回调的原理解析：</p>
-<p>回调是一种双向调用关系。A 类事先注册某个函数 F 到 B 类，A 类在调用 B 类的 P 函数的时候，B 类反过来调用 A 类注册给它的 F 函数。这里的 F 函数就是“回调函数”。A 调用 B，B 反过来又调用 A，这种调用机制就叫作“回调”</p>
-<p>同步回调：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public interface ICallback &#123;</span><br><span class="line">  void methodToCallback();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class BClass &#123;</span><br><span class="line">  public void process(ICallback callback) &#123;</span><br><span class="line">    &#x2F;&#x2F;...</span><br><span class="line">    callback.methodToCallback();</span><br><span class="line">    &#x2F;&#x2F;...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class AClass &#123;</span><br><span class="line">  public static void main(String[] args) &#123;</span><br><span class="line">    BClass b &#x3D; new BClass();</span><br><span class="line">    b.process(new ICallback() &#123; &#x2F;&#x2F;回调对象</span><br><span class="line">      @Override</span><br><span class="line">      public void methodToCallback() &#123;</span><br><span class="line">        System.out.println(&quot;Call back me.&quot;);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>回调可以细分为同步回调和异步回调。从应用场景上来看，同步回调看起来更像模板模式，异步回调看起来更像观察者模式。回调跟模板模式的区别，更多的是在代码实现上，而非应用场景上。回调基于组合关系来实现，模板模式基于继承关系来实现，回调比模板模式更加灵活。</p>
-
+          <p>传统JDBC编程 1、加载数据库驱动</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/3%E3%80%81%E6%8C%81%E4%B9%85%E5%B1%82/MyBatis/1%E3%80%81%E4%BC%A0%E7%BB%9FJDBC%E7%BC%96%E7%A8%8B/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -999,7 +981,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/6/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><span class="space">&hellip;</span><a class="page-number" href="/page/33/">33</a><a class="extend next" rel="next" href="/page/8/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/6/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><a class="extend next" rel="next" href="/page/8/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1067,20 +1049,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-count">103</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-count">51</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-count">103</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

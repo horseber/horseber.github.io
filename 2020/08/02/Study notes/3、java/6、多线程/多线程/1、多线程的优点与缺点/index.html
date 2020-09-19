@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="减少上下文切换的方案： 无锁并发编程：多线程竞争时，会引起上下文切换（因为只有一个线程能进入临界区，获取锁失败的线程会被阻塞在临界区之外，线程此时挂起），所以多线程处理数据时，可以用一些办法来避免使用锁，如将数据的 ID 按照 Hash 取模分段，不同的线程处理不同段的数据。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="多线程的优点与缺点">
+<meta property="og:url" content="http://example.com/2020/08/02/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/1%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%9A%84%E4%BC%98%E7%82%B9%E4%B8%8E%E7%BC%BA%E7%82%B9/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="减少上下文切换的方案： 无锁并发编程：多线程竞争时，会引起上下文切换（因为只有一个线程能进入临界区，获取锁失败的线程会被阻塞在临界区之外，线程此时挂起），所以多线程处理数据时，可以用一些办法来避免使用锁，如将数据的 ID 按照 Hash 取模分段，不同的线程处理不同段的数据。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-08-02T09:38:11.000Z">
+<meta property="article:modified_time" content="2020-09-19T09:26:47.800Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="多线程的优点与缺点">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/08/02/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/1%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%9A%84%E4%BC%98%E7%82%B9%E4%B8%8E%E7%BC%BA%E7%82%B9/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>多线程的优点与缺点 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/08/02/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/1%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%9A%84%E4%BC%98%E7%82%B9%E4%B8%8E%E7%BC%BA%E7%82%B9/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          多线程的优点与缺点
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-02 17:38:11" itemprop="dateCreated datePublished" datetime="2020-08-02T17:38:11+08:00">2020-08-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 17:26:47" itemprop="dateModified" datetime="2020-09-19T17:26:47+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">多线程</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">减少上下文切换的方案： 无锁并发编程：多线程竞争时，会引起上下文切换（因为只有一个线程能进入临界区，获取锁失败的线程会被阻塞在临界区之外，线程此时挂起），所以多线程处理数据时，可以用一些办法来避免使用锁，如将数据的 ID 按照 Hash 取模分段，不同的线程处理不同段的数据。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>减少上下文切换的方案：</p>
+<ul>
+<li>无锁并发编程：多线程竞争时，会引起上下文切换（因为只有一个线程能进入临界区，获取锁失败的线程会被阻塞在临界区之外，线程此时挂起），所以多线程处理数据时，可以用一些办法来避免使用锁，如将数据的 ID 按照 Hash 取模分段，不同的线程处理不同段的数据。</li>
+<li>CAS 算法：Java 的 Atomic 包使用 CAS 算法来更新数据，而不需要加锁。（这种方式思想同无锁并发编程一样，只不过这是一种具体的且常见的实现手段）</li>
+<li>使用最少线程：避免创建不需要的线程，比如任务很少，但是创建了很多线程来处理，这样会造成大量线程都处于等待状态。（使用少量线程不止可以减少上下文切换，同时也减少了系统的开销）</li>
+<li>使用协程：在单线程里实现多任务的调度，并在单线程里维持多个任务间的切换。</li>
+</ul>
+<ul>
+<li>缓存导致的可见性问题</li>
+<li>线程切换带来的原子性问题，</li>
+<li>指令重排带来的有序性问题。</li>
+</ul>
+<h2 id="多线程优点："><a href="#多线程优点：" class="headerlink" title="多线程优点："></a>多线程优点：</h2><h4 id="1-资源利用率更好，发挥多处理器的能力"><a href="#1-资源利用率更好，发挥多处理器的能力" class="headerlink" title="1.  资源利用率更好，发挥多处理器的能力"></a>1.  资源利用率更好，发挥多处理器的能力</h4><p>从磁盘读取一个文件需要5秒，处理一个文件需要2秒。处理两个文件则需要：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">5秒读取文件A</span><br><span class="line">2秒处理文件A</span><br><span class="line">5秒读取文件B</span><br><span class="line">2秒处理文件B</span><br><span class="line">---------------------</span><br><span class="line">6总共需要14秒</span><br></pre></td></tr></table></figure>
+
+<p>大部分的CPU时间用于等待磁盘去读取数据。在这段时间里，CPU非常的空闲。它可以做一些别的事情：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">5秒读取文件A</span><br><span class="line">5秒读取文件B + 2秒处理文件A</span><br><span class="line">2秒处理文件B</span><br><span class="line">---------------------</span><br><span class="line">总共需要12秒</span><br></pre></td></tr></table></figure>
+<p>总结：CPU能够在等待磁盘/网络IO的时候做一些其他的事情。</p>
+<h4 id="2、公平性"><a href="#2、公平性" class="headerlink" title="2、公平性"></a>2、公平性</h4><p>通过粗粒度的时间分片，使用户和程序都能共享计算机资源，而不是等一个进程执行完了，在执行下一个进程。</p>
+<h4 id="3-程序设计在某些情况下更简单"><a href="#3-程序设计在某些情况下更简单" class="headerlink" title="3.  程序设计在某些情况下更简单"></a>3.  程序设计在某些情况下更简单</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">多线程处理一个程序比多进程处理同一个程序设计更容易实现</span><br></pre></td></tr></table></figure>
+<h4 id="3-程序响应更快"><a href="#3-程序响应更快" class="headerlink" title="3. 程序响应更快"></a>3. 程序响应更快</h4><h2 id="多线程缺点："><a href="#多线程缺点：" class="headerlink" title="多线程缺点："></a>多线程缺点：</h2><h4 id="1-并发线程安全问题"><a href="#1-并发线程安全问题" class="headerlink" title="1. 并发线程安全问题"></a>1. 并发线程安全问题</h4><h4 id="2、活跃性问题"><a href="#2、活跃性问题" class="headerlink" title="2、活跃性问题"></a>2、活跃性问题</h4><p>在单线程中活跃性问题表现之一就是无限循环，使得循环后面的代码无法得到执行。多线程活跃性时常见形式是死锁，线程A在等待线程B释放锁，而线程B永远不释放</p>
+<h4 id="3-性能问题"><a href="#3-性能问题" class="headerlink" title="3.性能问题"></a>3.性能问题</h4><ul>
+<li>如上下文切换的开销等性能问题，当CPU从执行一个线程切换到执行另外一个线程的时候，它需要先存储当前线程的本地的数据，程序指针等，然后载入另一个线程的本地数据，程序指针等，最后才开始执行。上下文切换并不廉价。</li>
+</ul>
+<p>lmbench3可检测上下文切换的时间</p>
+<ul>
+<li>增加资源消耗：线程在运行的时候需要从计算机里面得到一些资源。除了CPU，线程还需要一些内存来维持它本地的堆栈。它也需要占用操作系统中一些资源来管理线程。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%9A%84%E4%BC%98%E7%82%B9%E4%B8%8E%E7%BC%BA%E7%82%B9/" rel="tag"># 多线程的优点与缺点</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/23/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/9%E3%80%81Netty%E7%9A%84%E4%BB%8B%E7%BB%8D/" rel="prev" title="Netty的介绍">
+      <i class="fa fa-chevron-left"></i> Netty的介绍
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/02/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/6%E3%80%81synchronized%E4%BC%98%E5%8C%96/" rel="next" title="synchronized优化">
+      synchronized优化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%BC%98%E7%82%B9%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">多线程优点：</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E8%B5%84%E6%BA%90%E5%88%A9%E7%94%A8%E7%8E%87%E6%9B%B4%E5%A5%BD%EF%BC%8C%E5%8F%91%E6%8C%A5%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8%E7%9A%84%E8%83%BD%E5%8A%9B"><span class="nav-number">1.0.1.</span> <span class="nav-text">1.  资源利用率更好，发挥多处理器的能力</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%E3%80%81%E5%85%AC%E5%B9%B3%E6%80%A7"><span class="nav-number">1.0.2.</span> <span class="nav-text">2、公平性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E5%9C%A8%E6%9F%90%E4%BA%9B%E6%83%85%E5%86%B5%E4%B8%8B%E6%9B%B4%E7%AE%80%E5%8D%95"><span class="nav-number">1.0.3.</span> <span class="nav-text">3.  程序设计在某些情况下更简单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E7%A8%8B%E5%BA%8F%E5%93%8D%E5%BA%94%E6%9B%B4%E5%BF%AB"><span class="nav-number">1.0.4.</span> <span class="nav-text">3. 程序响应更快</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%BA%E7%82%B9%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">多线程缺点：</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%B9%B6%E5%8F%91%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98"><span class="nav-number">2.0.1.</span> <span class="nav-text">1. 并发线程安全问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%E3%80%81%E6%B4%BB%E8%B7%83%E6%80%A7%E9%97%AE%E9%A2%98"><span class="nav-number">2.0.2.</span> <span class="nav-text">2、活跃性问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98"><span class="nav-number">2.0.3.</span> <span class="nav-text">3.性能问题</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">103</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">51</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">103</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Elasticsearch使用案例 （1）2013年初，GitHub抛弃了Solr，采取ElasticSearch 来做PB级的搜索。 “GitHub使用ElasticSearch搜索20TB的数据，包括13亿文件和1300亿行代码”">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lasticsearch安装">
+<meta property="og:url" content="http://example.com/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/3%E3%80%81elasticsearch/2%E3%80%81lasticsearch%E5%AE%89%E8%A3%85/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="Elasticsearch使用案例 （1）2013年初，GitHub抛弃了Solr，采取ElasticSearch 来做PB级的搜索。 “GitHub使用ElasticSearch搜索20TB的数据，包括13亿文件和1300亿行代码”">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-09-19T09:08:41.000Z">
+<meta property="article:modified_time" content="2020-09-19T09:26:48.644Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="lasticsearch安装">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/3%E3%80%81elasticsearch/2%E3%80%81lasticsearch%E5%AE%89%E8%A3%85/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>lasticsearch安装 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/3%E3%80%81elasticsearch/2%E3%80%81lasticsearch%E5%AE%89%E8%A3%85/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lasticsearch安装
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-09-19 17:08:41 / 修改时间：17:26:48" itemprop="dateCreated datePublished" datetime="2020-09-19T17:08:41+08:00">2020-09-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/elasticsearch/" itemprop="url" rel="index"><span itemprop="name">elasticsearch</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">Elasticsearch使用案例 （1）2013年初，GitHub抛弃了Solr，采取ElasticSearch 来做PB级的搜索。 “GitHub使用ElasticSearch搜索20TB的数据，包括13亿文件和1300亿行代码”</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="Elasticsearch使用案例"><a href="#Elasticsearch使用案例" class="headerlink" title="Elasticsearch使用案例"></a>Elasticsearch使用案例</h3><ul>
+<li><p>（1）2013年初，GitHub抛弃了Solr，采取ElasticSearch 来做PB级的搜索。 “GitHub使用ElasticSearch搜索20TB的数据，包括13亿文件和1300亿行代码”</p>
+</li>
+<li><p>（2）维基百科：启动以elasticsearch为基础的核心搜索架构SoundCloud：“SoundCloud使用ElasticSearch为1.8亿用户提供即时而精准的音乐搜索服务”</p>
+</li>
+<li><p>（3）百度：百度目前广泛使用ElasticSearch作为文本数据分析，采集百度所有服务器上的各类指标数据及用户自定义数据，通过对各种数据进行多维分析展示，辅助定位分析实例异常或业务层面异常。目前覆盖百度内部20多个业务线（包括casio、云分析、网盟、预测、文库、直达号、钱包、风控等），单集群最大100台机器，200个ES节点，每天导入30TB+数据</p>
+</li>
+<li><p>（4）新浪使用ES 分析处理32亿条实时日志</p>
+</li>
+<li><p>（5）阿里使用ES 构建挖财自己的日志采集和分析体系</p>
+</li>
+</ul>
+<h3 id="Solr、ES区别"><a href="#Solr、ES区别" class="headerlink" title="Solr、ES区别"></a>Solr、ES区别</h3><p>solr和es都基于lucene</p>
+<ol>
+<li><p>Solr 利用 Zookeeper 进行分布式管理，而 Elasticsearch 自身带有分布式协调管理功能;</p>
+</li>
+<li><p>Solr 支持更多格式的数据，而 Elasticsearch 仅支持json文件格式；</p>
+</li>
+<li><p>Solr 官方提供的功能更多，而 Elasticsearch 本身更注重于核心功能，高级功能多有第三方插件提供；</p>
+</li>
+<li><p>Solr 在传统的搜索应用中表现好于 Elasticsearch，但在处理实时搜索应用时效率明显低于 Elasticsearch—–附近的人</p>
+</li>
+</ol>
+<p>ELK官网：<a target="_blank" rel="noopener" href="https://www.elastic.co/">https://www.elastic.co/</a></p>
+<p>ELK官网文档：<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/index.html">https://www.elastic.co/guide/index.html</a></p>
+<p>ELK中文手册：<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html">https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html</a></p>
+<p>ELK中文社区：<a target="_blank" rel="noopener" href="https://elasticsearch.cn/">https://elasticsearch.cn/</a></p>
+<p>ELK API :<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/elasticsearch/client/java-api/current/travelansport-client.html">https://www.elastic.co/guide/en/elasticsearch/client/java-api/current/travelansport-client.html</a></p>
+<p>1、下载并解压：</p>
+<p>下载地址：<a target="_blank" rel="noopener" href="https://www.elastic.co/cn/downloads/elasticsearch">https://www.elastic.co/cn/downloads/elasticsearch</a></p>
+<p>2、安装Marvel插件（Marvel是Elasticsearch的管理和监控工具）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#安装监控：Marvel插件</span><br><span class="line">.&#x2F;bin&#x2F;plugin -i elasticsearch&#x2F;marvel&#x2F;latest</span><br><span class="line"></span><br><span class="line">#禁止监控：</span><br><span class="line">echo &#39;marvel.agent.enabled: false&#39; &gt;&gt; .&#x2F;config&#x2F;elasticsearch.yml</span><br></pre></td></tr></table></figure>
+
+<p>3、修改配置文件：elasticsearch.yml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#允许所有ip访问</span><br><span class="line">network.host: 0.0.0.0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>4、启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;bin&#x2F;elasticsearch</span><br><span class="line"></span><br><span class="line">#后台启动</span><br><span class="line">.&#x2F;bin&#x2F;elasticsearch -d</span><br></pre></td></tr></table></figure>
+
+
+
+<p>5、测试：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl &#39;http:&#x2F;&#x2F;localhost:9200&#x2F;?pretty&#39;</span><br></pre></td></tr></table></figure>
+<p>返回</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">   &quot;status&quot;: 200,</span><br><span class="line">   &quot;name&quot;: &quot;Shrunken Bones&quot;,</span><br><span class="line">   &quot;version&quot;: &#123;</span><br><span class="line">      &quot;number&quot;: &quot;1.4.0&quot;,</span><br><span class="line">      &quot;lucene_version&quot;: &quot;4.10&quot;</span><br><span class="line">   &#125;,</span><br><span class="line">   &quot;tagline&quot;: &quot;You Know, for Search&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>查看Marvel和Sense</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http:&#x2F;&#x2F;localhost:9200&#x2F;_plugin&#x2F;marvel&#x2F;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="集群搭建"><a href="#集群搭建" class="headerlink" title="集群搭建:"></a>集群搭建:</h3><p>修改elasticserach.yml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">cluster.name: aubin-cluster#必须相同</span><br><span class="line"># 集群名称（不能重复）</span><br><span class="line">node.name: els1（必须不同）</span><br><span class="line"># 节点名称，仅仅是描述名称，用于在日志中区分（自定义）</span><br><span class="line">#指定了该节点可能成为 master 节点，还可以是数据节点</span><br><span class="line">node.master: true</span><br><span class="line">node.data: true</span><br><span class="line">path.data: &#x2F;var&#x2F;lib&#x2F;elasticsearch</span><br><span class="line"># 数据的默认存放路径（自定义）</span><br><span class="line">path.logs: &#x2F;var&#x2F;log&#x2F;elasticsearch </span><br><span class="line"># 日志的默认存放路径</span><br><span class="line">network.host: 192.168.0.1 </span><br><span class="line"># 当前节点的 IP 地址</span><br><span class="line">http.port: 9200 </span><br><span class="line"># 对外提供服务的端口</span><br><span class="line">transport.tcp.port: 9300</span><br><span class="line">#9300 为集群服务的端口</span><br><span class="line">discovery.zen.ping.unicast.hosts: [&quot;172.18.68.11&quot;, &quot;172.18.68.12&quot;,&quot;172.18.68.13&quot;] </span><br><span class="line"># 集群个节点 IP 地址，也可以使用域名，需要各节点能够解析</span><br><span class="line">discovery.zen.minimum_master_nodes: 2 </span><br><span class="line"># 为了避免脑裂，集群节点数最少为 半数+1</span><br></pre></td></tr></table></figure>
+
+
+<p>备注：配置文件详解</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"># 集群的名字，以此作为是否同一集群的判断条件</span><br><span class="line">cluster.name: elasticsearch</span><br><span class="line"># 节点名字，以此作为集群中不同节点的区分条件</span><br><span class="line">node.name: node-1</span><br><span class="line">#设置当前节点既可以为主节点也可以为数据节点</span><br><span class="line">node.master: true</span><br><span class="line">node.data: true</span><br><span class="line"># 索引分片个数，默认为 5 片</span><br><span class="line">#index.number_of_shards: 5</span><br><span class="line"># 索引副本个数，默认为 1 个副本</span><br><span class="line">#index.number_of_replicas: 1</span><br><span class="line"># 数据存储目录（多个路径用逗号分隔）</span><br><span class="line">discovery.zen.ping.unicast.hosts: [&quot;192.168.14.14&quot;,&quot;192.168.14.15&quot;]</span><br><span class="line">discovery.zen.minimum_master_nodes: 2</span><br><span class="line">#数据目录</span><br><span class="line">path.data: &#x2F;home&#x2F;elk1&#x2F;elasticserach&#x2F;data</span><br><span class="line"># 日志目录</span><br><span class="line">path.logs: &#x2F;home&#x2F;elk1&#x2F;elasticserach&#x2F;logs</span><br><span class="line"># 修改一下 ES 的监听地址，这样别的机器才可以访问</span><br><span class="line">network.host: 192.168.14.13</span><br><span class="line"># 设置节点间交互的 tcp 端口（集群）,默认是 9300</span><br><span class="line">transport.tcp.port: 9300</span><br><span class="line"># 监听端口（默认的就好）</span><br><span class="line">http.port: 9200</span><br><span class="line"># 增加新的参数，这样 head 插件才可以访问 es</span><br><span class="line">http.cors.enabled: true</span><br><span class="line">http.cors.allow-origin: &quot;*&quot;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/lasticsearch%E5%AE%89%E8%A3%85/" rel="tag"># lasticsearch安装</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/09/19/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring-cloud/4%E3%80%81hystrix%20%E6%96%AD%E8%B7%AF%E5%99%A8/1%E3%80%81hystrix%E4%BB%8B%E7%BB%8D/" rel="prev" title="hystrix介绍">
+      <i class="fa fa-chevron-left"></i> hystrix介绍
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Elasticsearch%E4%BD%BF%E7%94%A8%E6%A1%88%E4%BE%8B"><span class="nav-number">1.</span> <span class="nav-text">Elasticsearch使用案例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Solr%E3%80%81ES%E5%8C%BA%E5%88%AB"><span class="nav-number">2.</span> <span class="nav-text">Solr、ES区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA"><span class="nav-number">3.</span> <span class="nav-text">集群搭建:</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">103</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">51</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">103</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
