@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="我们在字符串 A 中查找字符串 B，那字符串 A 就是主串，字符串 B 就是模式串。我们把主串的长度记作 n，模式串的长度记作 m。因为我们是在主串中查找模式串，所以 n&gt;m。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="字符串匹配">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/2%E3%80%81%E7%AE%97%E6%B3%95/10%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8C%B9%E9%85%8D/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="我们在字符串 A 中查找字符串 B，那字符串 A 就是主串，字符串 B 就是模式串。我们把主串的长度记作 n，模式串的长度记作 m。因为我们是在主串中查找模式串，所以 n&gt;m。">
+<meta property="og:locale">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/43/f9/4316dd98eac500a01a0fd632bb5e77f9.jpg">
+<meta property="article:published_time" content="2020-06-21T01:23:22.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:38.861Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="字符串匹配">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://static001.geekbang.org/resource/image/43/f9/4316dd98eac500a01a0fd632bb5e77f9.jpg">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/2%E3%80%81%E7%AE%97%E6%B3%95/10%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8C%B9%E9%85%8D/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>字符串匹配 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/2%E3%80%81%E7%AE%97%E6%B3%95/10%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8C%B9%E9%85%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          字符串匹配
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:22" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:22+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:38" itemprop="dateModified" datetime="2020-09-19T08:57:38+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">我们在字符串 A 中查找字符串 B，那字符串 A 就是主串，字符串 B 就是模式串。我们把主串的长度记作 n，模式串的长度记作 m。因为我们是在主串中查找模式串，所以 n>m。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>我们在字符串 A 中查找字符串 B，那字符串 A 就是主串，字符串 B 就是模式串。我们把主串的长度记作 n，模式串的长度记作 m。因为我们是在主串中查找模式串，所以 n&gt;m。</p>
+<h2 id="BF（暴力匹配算法、朴素算法）O-n-m"><a href="#BF（暴力匹配算法、朴素算法）O-n-m" class="headerlink" title="BF（暴力匹配算法、朴素算法）O(n*m)"></a>BF（暴力匹配算法、朴素算法）O(n*m)</h2><p>在主串中，检查起始位置分别是 0、1、2…n-m 且长度为 m 的 n-m+1 个子串，看有没有跟模式串匹配的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">public class ViolenceMatch &#123;</span><br><span class="line"></span><br><span class="line">	public static void main(String[] args) &#123;</span><br><span class="line">		&#x2F;&#x2F; TODO Auto-generated method stub</span><br><span class="line">		&#x2F;&#x2F;测试暴力匹配算法</span><br><span class="line">		String str1 &#x3D; &quot;aaabbaaaccssdd&quot;;</span><br><span class="line">		String str2 &#x3D; &quot;acc&quot;;</span><br><span class="line">		int index &#x3D; violenceMatch(str1, str2);</span><br><span class="line">		System.out.println(&quot;index&#x3D;&quot; + index);</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 暴力匹配算法实现</span><br><span class="line">	public static int violenceMatch(String str1, String str2) &#123;</span><br><span class="line">		char[] s1 &#x3D; str1.toCharArray();</span><br><span class="line">		char[] s2 &#x3D; str2.toCharArray();</span><br><span class="line"></span><br><span class="line">		int s1Len &#x3D; s1.length;</span><br><span class="line">		int s2Len &#x3D; s2.length;</span><br><span class="line"></span><br><span class="line">		int i &#x3D; 0; &#x2F;&#x2F; i索引指向s1</span><br><span class="line">		int j &#x3D; 0; &#x2F;&#x2F; j索引指向s2</span><br><span class="line">		while (i &lt; s1Len &amp;&amp; j &lt; s2Len) &#123;&#x2F;&#x2F; 保证匹配时，不越界</span><br><span class="line"></span><br><span class="line">			if(s1[i] &#x3D;&#x3D; s2[j]) &#123;&#x2F;&#x2F;匹配ok</span><br><span class="line">				i++;</span><br><span class="line">				j++;</span><br><span class="line">			&#125; else &#123; &#x2F;&#x2F;没有匹配成功</span><br><span class="line">				&#x2F;&#x2F;如果失配（即str1[i]! &#x3D; str2[j]），令i &#x3D; i - (j - 1)，j &#x3D; 0。</span><br><span class="line">				i &#x3D; i - (j - 1);</span><br><span class="line">				j &#x3D; 0;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		&#x2F;&#x2F;判断是否匹配成功</span><br><span class="line">		if(j &#x3D;&#x3D; s2Len) &#123;</span><br><span class="line">			return i - j;</span><br><span class="line">		&#125; else &#123;</span><br><span class="line">			return -1;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="RK算法-O-n-：-是BF算法的升级版引入hash算法用于字符串的比较"><a href="#RK算法-O-n-：-是BF算法的升级版引入hash算法用于字符串的比较" class="headerlink" title="RK算法 O(n)： 是BF算法的升级版引入hash算法用于字符串的比较"></a>RK算法 O(n)： 是BF算法的升级版引入hash算法用于字符串的比较</h2><p>在BF算法中，如果模式串长度为 m，主串长度为 n，那在主串中，就会有 n-m+1 个长度为 m 的子串，我们只需要暴力地对比这 n-m+1 个子串与模式串，就可以找出主串与模式串匹配的子串。但是，每次检查主串与子串是否匹配，需要依次比对每个字符，时间复杂较高O(n*m )</p>
+<p>我们通过哈希算法对主串中的 n-m+1 个子串分别求哈希值，然后逐个与模式串的哈希值是否相等（数字比较效率优于字符串的比较）只是比较的效率提高 整体的效率还是一样。</p>
+<p>hash算法的设计就很重要:==假设要匹配的字符串的字符集中只包含 K 个字符，我们可以用一个 K 进制数来表示一个子串，这个 K 进制数转化成十进制数，作为子串的哈希值。==</p>
+<h2 id="BM算法："><a href="#BM算法：" class="headerlink" title="BM算法："></a>BM算法：</h2><p>我们把模式串和主串的匹配过程，看作模式串在主串中不停地往后滑动。当遇到不匹配的字符时，BF 算法和 RK 算法的做法是，模式串往后滑动一位，然后从模式串的第一个字符开始重新匹配。<br><img src="https://static001.geekbang.org/resource/image/43/f9/4316dd98eac500a01a0fd632bb5e77f9.jpg" alt="image"></p>
+<p>主串中的 c，在模式串中是不存在的，所以，模式串向后滑动的时候，只要 c 与模式串有重合，肯定无法匹配。所以，我们可以一次性把模式串往后多滑动几位，把模式串移动到 c 的后面。到底将模式串往后多滑动几位呢， BM算法的本质就是寻找这个规律。</p>
+<p>模式串的末尾往前倒着匹配，当我们发现某个字符没法匹配的时候。我们把这个没有匹配的字符叫作坏字符（主串中的字符）。</p>
+<h2 id="KMP算法"><a href="#KMP算法" class="headerlink" title="KMP算法"></a>KMP算法</h2><p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/ZuoAndFutureGirl/p/9028287.html">https://www.cnblogs.com/ZuoAndFutureGirl/p/9028287.html</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">public class KMPAlgorithm &#123;</span><br><span class="line"></span><br><span class="line">	public static void main(String[] args) &#123;</span><br><span class="line">		&#x2F;&#x2F; TODO Auto-generated method stub</span><br><span class="line">		String str1 &#x3D; &quot;BBC ABCDAB ABCDABCDABDE&quot;;</span><br><span class="line">		String str2 &#x3D; &quot;ABCDABD&quot;;</span><br><span class="line">		&#x2F;&#x2F;String str2 &#x3D; &quot;BBC&quot;;</span><br><span class="line">		</span><br><span class="line">		int[] next &#x3D; kmpNext(&quot;ABCDABD&quot;); &#x2F;&#x2F;[0, 1, 2, 0]</span><br><span class="line">		System.out.println(&quot;next&#x3D;&quot; + Arrays.toString(next));</span><br><span class="line">		</span><br><span class="line">		int index &#x3D; kmpSearch(str1, str2, next);</span><br><span class="line">		System.out.println(&quot;index&#x3D;&quot; + index); &#x2F;&#x2F; 15了</span><br><span class="line">		</span><br><span class="line">		</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	&#x2F;&#x2F;写出我们的kmp搜索算法</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 * </span><br><span class="line">	 * @param str1 源字符串</span><br><span class="line">	 * @param str2 子串</span><br><span class="line">	 * @param next 部分匹配表, 是子串对应的部分匹配表</span><br><span class="line">	 * @return 如果是-1就是没有匹配到，否则返回第一个匹配的位置</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	public static int kmpSearch(String str1, String str2, int[] next) &#123;</span><br><span class="line">		</span><br><span class="line">		&#x2F;&#x2F;遍历 </span><br><span class="line">		for(int i &#x3D; 0, j &#x3D; 0; i &lt; str1.length(); i++) &#123;</span><br><span class="line">			</span><br><span class="line">			&#x2F;&#x2F;需要处理 str1.charAt(i) ！&#x3D; str2.charAt(j), 去调整j的大小</span><br><span class="line">			&#x2F;&#x2F;KMP算法核心点, 可以验证...</span><br><span class="line">			while( j &gt; 0 &amp;&amp; str1.charAt(i) !&#x3D; str2.charAt(j)) &#123;</span><br><span class="line">				j &#x3D; next[j-1]; </span><br><span class="line">			&#125;</span><br><span class="line">			</span><br><span class="line">			if(str1.charAt(i) &#x3D;&#x3D; str2.charAt(j)) &#123;</span><br><span class="line">				j++;</span><br><span class="line">			&#125;			</span><br><span class="line">			if(j &#x3D;&#x3D; str2.length()) &#123;&#x2F;&#x2F;找到了 &#x2F;&#x2F; j &#x3D; 3 i </span><br><span class="line">				return i - j + 1;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		return  -1;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;获取到一个字符串(子串) 的部分匹配值表</span><br><span class="line">	public static  int[] kmpNext(String dest) &#123;</span><br><span class="line">		&#x2F;&#x2F;创建一个next 数组保存部分匹配值</span><br><span class="line">		int[] next &#x3D; new int[dest.length()];</span><br><span class="line">		next[0] &#x3D; 0; &#x2F;&#x2F;如果字符串是长度为1 部分匹配值就是0</span><br><span class="line">		for(int i &#x3D; 1, j &#x3D; 0; i &lt; dest.length(); i++) &#123;</span><br><span class="line">			&#x2F;&#x2F;当dest.charAt(i) !&#x3D; dest.charAt(j) ，我们需要从next[j-1]获取新的j</span><br><span class="line">			&#x2F;&#x2F;直到我们发现 有  dest.charAt(i) &#x3D;&#x3D; dest.charAt(j)成立才退出</span><br><span class="line">			&#x2F;&#x2F;这时kmp算法的核心点</span><br><span class="line">			while(j &gt; 0 &amp;&amp; dest.charAt(i) !&#x3D; dest.charAt(j)) &#123;</span><br><span class="line">				j &#x3D; next[j-1];</span><br><span class="line">			&#125;</span><br><span class="line">			</span><br><span class="line">			&#x2F;&#x2F;当dest.charAt(i) &#x3D;&#x3D; dest.charAt(j) 满足时，部分匹配值就是+1</span><br><span class="line">			if(dest.charAt(i) &#x3D;&#x3D; dest.charAt(j)) &#123;</span><br><span class="line">				j++;</span><br><span class="line">			&#125;</span><br><span class="line">			next[i] &#x3D; j;</span><br><span class="line">		&#125;</span><br><span class="line">		return next;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="多模式串匹配：AC自动机"><a href="#多模式串匹配：AC自动机" class="headerlink" title="多模式串匹配：AC自动机"></a>多模式串匹配：AC自动机</h2><p>BF 算法、RK 算法、BM 算法、KMP 算法，还有 Trie 树。前面四种算法都是单模式串匹配算法，只有 Trie 树是多模式串匹配算法。</p>
+<p>多个模式串和一个主串之间做匹配。</p>
+<p>将模式串作为主串，从第一个字符（假设是字符 C）开始，在 Trie 树中匹配。当匹配到 Trie 树的叶子节点，或者中途遇到不匹配字符的时候，我们将主串的开始匹配位置后移一位，也就是从字符 C 的下一个字符开始，重新在 Trie 树中匹配。</p>
+<p>基于 Trie 树的这种处理方法，有点类似单模式串匹配的 BF 算法。我们知道，单模式串匹配算法中，KMP 算法对 BF 算法进行改进，引入了 next 数组，让匹配失败时，尽可能将模式串往后多滑动几位。借鉴单模式串的优化改进方法，能否对多模式串 Trie 树进行改进，进一步提高 Trie 树的效率呢？这就要用到 AC 自动机算法了。</p>
+<p>==AC 自动机实际上就是在 Trie 树之上，加了类似 KMP 的 next 数组，只不过此处的 next 数组是构建在树上罢了==</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public class AcNode &#123;</span><br><span class="line">  public char data; </span><br><span class="line">  public AcNode[] children &#x3D; new AcNode[26]; &#x2F;&#x2F; 字符集只包含 a~z 这 26 个字符</span><br><span class="line">  public boolean isEndingChar &#x3D; false; &#x2F;&#x2F; 结尾字符为 true</span><br><span class="line">  public int length &#x3D; -1; &#x2F;&#x2F; 当 isEndingChar&#x3D;true 时，记录模式串长度</span><br><span class="line">  public AcNode fail; &#x2F;&#x2F; 失败指针</span><br><span class="line">  public AcNode(char data) &#123;</span><br><span class="line">    this.data &#x3D; data;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>AC 自动机的构建，包含两个操作：</p>
+<ul>
+<li>将多个模式串构建成 Trie 树；</li>
+<li>在 Trie 树上构建失败指针（相当于 KMP 中的失效函数 next 数组）</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8C%B9%E9%85%8D/" rel="tag"># 字符串匹配</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/RPC/3%E3%80%81%E5%9F%BA%E4%BA%8EHTTP%E7%9A%84RPC%E5%AE%9E%E7%8E%B0/" rel="prev" title="基于HTTP的RPC实现">
+      <i class="fa fa-chevron-left"></i> 基于HTTP的RPC实现
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/7%E3%80%81jedis%E5%8E%9F%E7%90%86/" rel="next" title="jedis原理">
+      jedis原理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#BF%EF%BC%88%E6%9A%B4%E5%8A%9B%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95%E3%80%81%E6%9C%B4%E7%B4%A0%E7%AE%97%E6%B3%95%EF%BC%89O-n-m"><span class="nav-number">1.</span> <span class="nav-text">BF（暴力匹配算法、朴素算法）O(n*m)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RK%E7%AE%97%E6%B3%95-O-n-%EF%BC%9A-%E6%98%AFBF%E7%AE%97%E6%B3%95%E7%9A%84%E5%8D%87%E7%BA%A7%E7%89%88%E5%BC%95%E5%85%A5hash%E7%AE%97%E6%B3%95%E7%94%A8%E4%BA%8E%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E6%AF%94%E8%BE%83"><span class="nav-number">2.</span> <span class="nav-text">RK算法 O(n)： 是BF算法的升级版引入hash算法用于字符串的比较</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BM%E7%AE%97%E6%B3%95%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">BM算法：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#KMP%E7%AE%97%E6%B3%95"><span class="nav-number">4.</span> <span class="nav-text">KMP算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E6%A8%A1%E5%BC%8F%E4%B8%B2%E5%8C%B9%E9%85%8D%EF%BC%9AAC%E8%87%AA%E5%8A%A8%E6%9C%BA"><span class="nav-number">5.</span> <span class="nav-text">多模式串匹配：AC自动机</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

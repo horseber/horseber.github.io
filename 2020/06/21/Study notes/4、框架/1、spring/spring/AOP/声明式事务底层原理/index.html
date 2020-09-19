@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Spring 的声明式事务管理在底层是建立在 AOP 的基础之上的。其本质是对方法前后进行拦截，然后在目标方法开始之前创建或者加入一个事务，在执行完目标方法之后根据执行情况提交或者回滚事务。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="声明式事务底层原理">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/AOP/%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="Spring 的声明式事务管理在底层是建立在 AOP 的基础之上的。其本质是对方法前后进行拦截，然后在目标方法开始之前创建或者加入一个事务，在执行完目标方法之后根据执行情况提交或者回滚事务。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:19.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:40.485Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="声明式事务底层原理">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/AOP/%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>声明式事务底层原理 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/AOP/%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          声明式事务底层原理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:19" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:19+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:40" itemprop="dateModified" datetime="2020-09-19T08:57:40+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AOP/" itemprop="url" rel="index"><span itemprop="name">AOP</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">Spring 的声明式事务管理在底层是建立在 AOP 的基础之上的。其本质是对方法前后进行拦截，然后在目标方法开始之前创建或者加入一个事务，在执行完目标方法之后根据执行情况提交或者回滚事务。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Spring 的声明式事务管理在底层是建立在 AOP 的基础之上的。其本质是对方法前后进行拦截，然后在目标方法开始之前创建或者加入一个事务，在执行完目标方法之后根据执行情况提交或者回滚事务。</p>
+<ul>
+<li>基于<tx>和<aop>命名空间的xml配置文件；</li>
+<li>基于@Transactional注解。</li>
+</ul>
+<p>声明式事务结合IoC容器和Spirng已有的FactoryBean来对事务管理进行属性配置</p>
+<ul>
+<li><p>TransactionAttributeSourceAdvisor，这是一个通知器，用它来对属性值进行存储、处理。</p>
+</li>
+<li><p>创建事物的过程，这个过程是委托给具体的事物管理器来创建的，Spring通过TransactionStatus来传递相关的信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"> public class TransactionProxyFactoryBean extends AbstractSingletonProxyFactoryBean  </span><br><span class="line">        implements FactoryBean, BeanFactoryAware &#123;  </span><br><span class="line">&#x2F;&#x2F;这里是Spring事务处理而使用的AOP拦截器，中间封装了Spring对事务处理的代码来支持声明式事务处理的实现  </span><br><span class="line">    private final TransactionInterceptor transactionInterceptor &#x3D; new TransactionInterceptor();  </span><br><span class="line">  </span><br><span class="line">    private Pointcut pointcut;  </span><br><span class="line">  </span><br><span class="line">&#x2F;&#x2F;这里Spring把TransactionManager注入到TransactionInterceptor中去  </span><br><span class="line">    public void setTransactionManager(PlatformTransactionManager transactionManager) &#123;  </span><br><span class="line">        this.transactionInterceptor.setTransactionManager(transactionManager);  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">&#x2F;&#x2F;这里把在bean配置文件中读到的事务管理的属性信息注入到TransactionInterceptor中去  </span><br><span class="line">    public void setTransactionAttributes(Properties transactionAttributes) &#123;  </span><br><span class="line">        this.transactionInterceptor.setTransactionAttributes(transactionAttributes);  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    .........中间省略了其他一些方法.......  </span><br><span class="line">  </span><br><span class="line">    &#x2F;&#x2F;这里创建Spring AOP对事务处理的Advisor  </span><br><span class="line">    protected Object createMainInterceptor() &#123;  </span><br><span class="line">        this.transactionInterceptor.afterPropertiesSet();  </span><br><span class="line">        if (this.pointcut !&#x3D; null) &#123;  </span><br><span class="line">            &#x2F;&#x2F;这里使用默认的通知器  </span><br><span class="line">            return new DefaultPointcutAdvisor(this.pointcut, this.transactionInterceptor);  </span><br><span class="line">        &#125;  </span><br><span class="line">        else &#123;  </span><br><span class="line">            &#x2F;&#x2F; 使用上面定义好的TransactionInterceptor作为拦截器，同时使用TransactionAttributeSourceAdvisor  </span><br><span class="line">            return new TransactionAttributeSourceAdvisor(this.transactionInterceptor);  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>IOC初始化bean的时候</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public void afterPropertiesSet() &#123;  </span><br><span class="line">    .......  </span><br><span class="line">    &#x2F;&#x2F;TransactionProxyFactoryBean实际上使用ProxyFactory完成AOP的基本功能。  </span><br><span class="line">    ProxyFactory proxyFactory &#x3D; new ProxyFactory();  </span><br><span class="line">  </span><br><span class="line">    if (this.preInterceptors !&#x3D; null) &#123;  </span><br><span class="line">        for (int i &#x3D; 0; i &lt; this.preInterceptors.length; i++) &#123;  </span><br><span class="line">            proxyFactory.addAdvisor(this.advisorAdapterRegistry.wrap(this.preInterceptors[i]));  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    &#x2F;&#x2F;这里是Spring加入通知器的地方  </span><br><span class="line">    &#x2F;&#x2F;有两种通知器可以被加入DefaultPointcutAdvisor或者TransactionAttributeSourceAdvisor  </span><br><span class="line">    &#x2F;&#x2F;这里把Spring处理声明式事务处理的AOP代码都放到ProxyFactory中去，怎样加入advisor我们可以参考ProxyFactory的父类AdvisedSupport()  </span><br><span class="line">    &#x2F;&#x2F;由它来维护一个advice的链表，通过这个链表的增删改来抽象我们对整个通知器配置的增删改操作。  </span><br><span class="line">    proxyFactory.addAdvisor(this.advisorAdapterRegistry.wrap(createMainInterceptor()));  </span><br><span class="line">  </span><br><span class="line">    if (this.postInterceptors !&#x3D; null) &#123;  </span><br><span class="line">        for (int i &#x3D; 0; i &lt; this.postInterceptors.length; i++) &#123;  </span><br><span class="line">            proxyFactory.addAdvisor(this.advisorAdapterRegistry.wrap(this.postInterceptors[i]));  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    proxyFactory.copyFrom(this);  </span><br><span class="line">     </span><br><span class="line">    &#x2F;&#x2F;这里创建AOP的目标源  </span><br><span class="line">    TargetSource targetSource &#x3D; createTargetSource(this.target);  </span><br><span class="line">    proxyFactory.setTargetSource(targetSource);  </span><br><span class="line">  </span><br><span class="line">    if (this.proxyInterfaces !&#x3D; null) &#123;  </span><br><span class="line">        proxyFactory.setInterfaces(this.proxyInterfaces);  </span><br><span class="line">    &#125;  </span><br><span class="line">    else if (!isProxyTargetClass()) &#123;  </span><br><span class="line">        proxyFactory.setInterfaces(ClassUtils.getAllInterfacesForClass(targetSource.getTargetClass()));  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    this.proxy &#x3D; getProxy(proxyFactory);  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>Spring 已经定义了一个transctionInterceptor作为拦截器或者AOP advice的实现，在IOC容器中定义的其他属性比如transactionManager和事务管理的属性都会传到已经定义好的 TransactionInterceptor那里去进行处理。以上反映了基本的Spring AOP的定义过程，其中pointcut和advice都已经定义好，同时也通过通知器配置到ProxyFactory中去了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">public class TransactionAttributeSourceAdvisor extends AbstractPointcutAdvisor &#123;  </span><br><span class="line">    &#x2F;&#x2F;和其他Advisor一样，同样需要定义AOP中的用到的Interceptor和Pointcut  </span><br><span class="line">    &#x2F;&#x2F;Interceptor使用传进来的TransactionInterceptor  </span><br><span class="line">    &#x2F;&#x2F;而对于pointcut,这里定义了一个内部类，参见下面的代码    </span><br><span class="line">    private TransactionInterceptor transactionInterceptor;  </span><br><span class="line">  </span><br><span class="line">    private final TransactionAttributeSourcePointcut pointcut &#x3D; new TransactionAttributeSourcePointcut();  </span><br><span class="line">     </span><br><span class="line">    .........  </span><br><span class="line">    &#x2F;&#x2F;定义的PointCut内部类  </span><br><span class="line">        private class TransactionAttributeSourcePointcut extends StaticMethodMatcherPointcut implements Serializable &#123;  </span><br><span class="line">       .......  </span><br><span class="line">      &#x2F;&#x2F;方法匹配的实现，使用了TransactionAttributeSource类  </span><br><span class="line">        public boolean matches(Method method, Class targetClass) &#123;  </span><br><span class="line">            TransactionAttributeSource tas &#x3D; getTransactionAttributeSource();  </span><br><span class="line">            &#x2F;&#x2F;这里使用TransactionAttributeSource来对配置属性进行处理  </span><br><span class="line">            return (tas !&#x3D; null &amp;&amp; tas.getTransactionAttribute(method, targetClass) !&#x3D; null);  </span><br><span class="line">        &#125;  </span><br><span class="line">    ........省略了equal,hashcode,tostring的代码  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86/" rel="tag"># 声明式事务底层原理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/1%E3%80%81spring/spring/IOC/1%E3%80%81bean%E7%9A%84%E6%B3%A8%E5%86%8C/" rel="prev" title="bean的注册">
+      <i class="fa fa-chevron-left"></i> bean的注册
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/JUC%E9%94%81/AQS%E4%BB%8B%E7%BB%8D/" rel="next" title="AQS介绍">
+      AQS介绍 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

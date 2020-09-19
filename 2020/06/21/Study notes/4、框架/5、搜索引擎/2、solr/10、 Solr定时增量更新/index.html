@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1  概述">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Solr定时增量更新">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/2%E3%80%81solr/10%E3%80%81%20Solr%E5%AE%9A%E6%97%B6%E5%A2%9E%E9%87%8F%E6%9B%B4%E6%96%B0/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="1  概述">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:21.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:42.285Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="Solr定时增量更新">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/2%E3%80%81solr/10%E3%80%81%20Solr%E5%AE%9A%E6%97%B6%E5%A2%9E%E9%87%8F%E6%9B%B4%E6%96%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>Solr定时增量更新 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/2%E3%80%81solr/10%E3%80%81%20Solr%E5%AE%9A%E6%97%B6%E5%A2%9E%E9%87%8F%E6%9B%B4%E6%96%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Solr定时增量更新
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:21" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:21+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:42" itemprop="dateModified" datetime="2020-09-19T08:57:42+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/solr/" itemprop="url" rel="index"><span itemprop="name">solr</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">1  概述</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1  概述"></a>1  概述</h2><p>将数据库中的数据导入到了solr中之后，如果数据库中的数据有变动，solr中还是第一次导入的旧的数据，因此需要定时检测数据库中的数据变化，并实时将变化的数据同步到solr中。</p>
+<p>备注工作：<br>下载地址：<a target="_blank" rel="noopener" href="http://download.csdn.net/detail/vtopqx/9891724">http://download.csdn.net/detail/vtopqx/9891724</a></p>
+<p>将下载的solr-dataimport-scheduler.jar拷贝到solr的lib目录下，</p>
+<h2 id="2、-数据库配置"><a href="#2、-数据库配置" class="headerlink" title="2、 数据库配置"></a>2、 数据库配置</h2><p>配置数据库字段，其中关键字段updateTime，该字段非常重要，有了这样一个字段，Solr才能判断增量导入的时候，哪些数据是新的。</p>
+<p>因为Solr在dataimport.properties文件中会存储一个默认值last_index_time，记录最后一次做full import或者是delta import(增量导入）的时间。</p>
+<p><strong>updateTime为timestamp类型 默认可为当前时间：CURRENT_TIMESTAMP</strong></p>
+<h2 id="3、-solr配置"><a href="#3、-solr配置" class="headerlink" title="3、 solr配置"></a>3、 solr配置</h2><h4 id="3-1、修改数据库连接文件配置db-data-config-xml文件，配置如下"><a href="#3-1、修改数据库连接文件配置db-data-config-xml文件，配置如下" class="headerlink" title="3.1、修改数据库连接文件配置db-data-config.xml文件，配置如下"></a>3.1、修改数据库连接文件配置db-data-config.xml文件，配置如下</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;dataConfig&gt; </span><br><span class="line">    &lt;dataSource type&#x3D;&quot;JdbcDataSource&quot;driver&#x3D;&quot;com.mysql.jdbc.Driver&quot;url&#x3D;&quot;jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;solr&quot; user&#x3D;&quot;root&quot;password&#x3D;&quot;root&quot; &#x2F;&gt;  </span><br><span class="line">    &lt;document&gt; </span><br><span class="line">        &lt;entity name&#x3D;&quot;solr_user&quot;pk&#x3D;&quot;id&quot;  </span><br><span class="line">query&#x3D;&quot;SELECT* FROM solr_user where isdelete &#x3D;0 &quot;  </span><br><span class="line">deltaImportQuery&#x3D;&quot;SELECT* FROM solr_user where id &#x3D; &#39;$&#123;dih.delta.id&#125;&#39;&quot;  </span><br><span class="line">deletedPkQuery&#x3D;&quot;SELECTid FROM solr_user where isdelete &#x3D;1 &quot;</span><br><span class="line">deltaQuery&#x3D;&quot;SELECTid FROM solr_user where updateTime &gt;&#39;$&#123;dataimporter.last_index_time&#125;&#39;&quot;&gt; </span><br><span class="line">            &lt;field column&#x3D;&quot;id&quot;name&#x3D;&quot;id&quot;&#x2F;&gt;   </span><br><span class="line">            &lt;field column&#x3D;&quot;name&quot;name&#x3D;&quot;name&quot;&#x2F;&gt;  </span><br><span class="line">            &lt;fieldcolumn&#x3D;&quot;updateTime&quot; name&#x3D;&quot;updateTime&quot;&#x2F;&gt; </span><br><span class="line">        &lt;&#x2F;entity&gt; </span><br><span class="line">    &lt;&#x2F;document&gt; </span><br><span class="line">&lt;&#x2F;dataConfig&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><strong>属性说明：</strong></p>
+<p>data-config.xml里面的数据 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- transformer 格式转化：HTMLStripTransformer 索引中忽略HTML标签   ---&gt; </span><br><span class="line"> &lt;!--  query:查询数据库表符合记录数据   ---&gt; </span><br><span class="line"> &lt;!--  deltaQuery:增量索引查询主键ID    ---&gt;    注意这个只能返回ID字段 </span><br><span class="line"> &lt;!--  deltaImportQuery:增量索引查询导入数据  ---&gt; </span><br><span class="line"> &lt;!--  deletedPkQuery:增量索引删除主键ID查询  ---&gt; 注意这个只能返回ID字段 </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><strong>配置说明：</strong></p>
+<ul>
+<li>query查询是指 查询出表里所有的符合条件的数据，因为笔者测试的有删除业务，所以 </li>
+</ul>
+<p>where  后面有一个限定条件isdelete=0，意思为查询未被删除的数据 </p>
+<p>(注意这个query查询只对第一次全量导入有作用，对增量导入不起作用) </p>
+<ul>
+<li>deltaQuery的意思是，查询出所有经过修改的记录的ID </li>
+</ul>
+<p>可能是修改操作，添加操作，删除操作产生的 </p>
+<p>(此查询只对增量导入起作用，而且只能返回ID值) </p>
+<ul>
+<li>deletedPkQuery此操作值查询那些数据库里伪删除的数据的ID（即isdelete标识为1的数据） </li>
+</ul>
+<p>solr通过它来删除索引里面对应的数据 </p>
+<p>(此查询只对增量导入起作用，而且只能返回ID值) </p>
+<ul>
+<li>deltaImportQuery此查询是获取以上两步的ID，然后把其全部数据获取，根据获取的数据 </li>
+</ul>
+<p>对索引库进行更新操作，可能是删除，添加，修改 </p>
+<p>(此查询只对增量导入起作用，可以返回多个字段的值,一般情况下，都是返回所有字段的列) </p>
+<p>==注：==</p>
+<p>==1.如果只涉及添加，与修改业务，那么数据库里只需额外有一个timpstamp字段<br>就可以了，默认值为当前系统时间，CURRENT_TIMESTAMP（笔者的数据为mysql的）<br>2.如果还涉及删除业务，那么数据里就需额外再多添加一个字段isdelete，int类型的<br>用0,1来标识，此条记录是否被删除，当然也可以用其他字段标识，ture或false都可以== </p>
+<h4 id="3-2、修改managed-schema文件，新增索引字段"><a href="#3-2、修改managed-schema文件，新增索引字段" class="headerlink" title="3.2、修改managed-schema文件，新增索引字段"></a>3.2、修改managed-schema文件，新增索引字段</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;field name&#x3D;&quot;name&quot;type&#x3D;&quot;string&quot; indexed&#x3D;&quot;true&quot; stored&#x3D;&quot;true&quot;multiValued&#x3D;&quot;false&quot;&#x2F;&gt;</span><br><span class="line">&lt;field name&#x3D;&quot;content&quot;type&#x3D;&quot;string&quot; indexed&#x3D;&quot;true&quot; stored&#x3D;&quot;true&quot;multiValued&#x3D;&quot;false&quot;&#x2F;&gt;</span><br><span class="line">&lt;field name&#x3D;&quot;updateTime&quot;type&#x3D;&quot;date&quot; indexed&#x3D;&quot;true&quot; stored&#x3D;&quot;true&quot; &#x2F;&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>由于solr5.x中已经有默认<uniqueKey>id</uniqueKey>属性配置，因此当数据库字段名称为id时可以不用配置，主键字段为其它名称时需要配置<field></p>
+<h2 id="4、定时同步配置"><a href="#4、定时同步配置" class="headerlink" title="4、定时同步配置"></a>4、定时同步配置</h2><p>进入solr_home目录 新建conf目录，并创建dataimport.properties文件，内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">#################################################</span><br><span class="line">#                                              #</span><br><span class="line">#      dataimport scheduler properties        #</span><br><span class="line">#                                              #</span><br><span class="line">#################################################</span><br><span class="line"> </span><br><span class="line">#  tosync or not to sync</span><br><span class="line">#  1- active; anything else - inactive</span><br><span class="line"># 这里的配置不用修改</span><br><span class="line">syncEnabled&#x3D;1</span><br><span class="line"> </span><br><span class="line"># which cores to schedule</span><br><span class="line">#  ina multi-core environment you can decide which cores you want syncronized</span><br><span class="line"># leave empty or comment it out if using single-core deployment</span><br><span class="line">#  修改成你所使用的core，我这里是我自定义的core：simple</span><br><span class="line">syncCores&#x3D;solr_db_scheduler</span><br><span class="line"> </span><br><span class="line"># solr server name or IP address</span><br><span class="line"># [defaults to localhost if empty]</span><br><span class="line">这个一般都是localhost不会变</span><br><span class="line">server&#x3D;localhost</span><br><span class="line"> </span><br><span class="line"># solr server port</span><br><span class="line"># [defaults to 80 if empty]</span><br><span class="line">#  安装solr的tomcat端口，如果你使用的是默认的端口，就不用改了，否则改成自己的端口就好了</span><br><span class="line">port&#x3D;8983</span><br><span class="line"> </span><br><span class="line"># application name&#x2F;context</span><br><span class="line"># [defaults to current ServletContextListener&#39;s context (app) name]</span><br><span class="line">#  这里默认不改</span><br><span class="line">webapp&#x3D;solr</span><br><span class="line"> </span><br><span class="line"># URL params [mandatory]</span><br><span class="line"># remainder of URL</span><br><span class="line">#  这里改成下面的形式，solr同步数据时请求的链接</span><br><span class="line">params&#x3D;&#x2F;dataimport?command&#x3D;delta-import&amp;clean&#x3D;false&amp;commit&#x3D;true</span><br><span class="line"> </span><br><span class="line"># schedule interval</span><br><span class="line"># number of minutes between two runs</span><br><span class="line"># [defaults to 30 if empty]</span><br><span class="line">#这里是设置定时任务的，单位是分钟，也就是多长时间你检测一次数据同步，根据项目需求修改</span><br><span class="line">#  开始测试的时候为了方便看到效果，时间可以设置短一点</span><br><span class="line">interval&#x3D;1</span><br><span class="line"> </span><br><span class="line">#  重做索引的时间间隔，单位分钟，默认7200，即5天;</span><br><span class="line">#  为空,为0,或者注释掉:表示永不重做索引</span><br><span class="line">reBuildIndexInterval&#x3D;7200</span><br><span class="line"> </span><br><span class="line">#  重做索引的参数</span><br><span class="line">reBuildIndexParams&#x3D;&#x2F;select?qt&#x3D;&#x2F;dataimport&amp;command&#x3D;full-import&amp;clean&#x3D;true&amp;commit&#x3D;true</span><br><span class="line"> </span><br><span class="line">#  重做索引时间间隔的计时开始时间，第一次真正执行的时间&#x3D;reBuildIndexBeginTime+reBuildIndexInterval*60*1000；</span><br><span class="line">#  两种格式：2012-04-11 03:10:00 或者 03:10:00，后一种会自动补全日期部分为服务启动时的日期</span><br><span class="line">reBuildIndexBeginTime&#x3D;03:10:00</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>以上配置可以简单修改红色部分即可，默认为一分钟检测一次，如果有数据变动则同步。</p>
+<h2 id="5、测试"><a href="#5、测试" class="headerlink" title="5、测试"></a>5、测试</h2><p>以上配置完成后，停止solr，并重启</p>
+<p>Solr.cmd stop –all</p>
+<p>Solr.cmd start</p>
+<p>先查solr中的文档数据，然后更新数据库数据，再观察solr中国数据是否变化</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Solr%E5%AE%9A%E6%97%B6%E5%A2%9E%E9%87%8F%E6%9B%B4%E6%96%B0/" rel="tag"># Solr定时增量更新</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/1%E3%80%81%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/mysql%E6%9E%B6%E6%9E%84/2%E3%80%81%E7%B4%A2%E5%BC%95%EF%BC%88%E4%B8%8A%EF%BC%89/" rel="prev" title="索引（上）">
+      <i class="fa fa-chevron-left"></i> 索引（上）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/4%E3%80%81%E4%B8%AD%E9%97%B4%E4%BB%B6/3%E3%80%81RocketMQ/7%E3%80%81%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/" rel="next" title="事务消息">
+      事务消息 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">1  概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81-%E6%95%B0%E6%8D%AE%E5%BA%93%E9%85%8D%E7%BD%AE"><span class="nav-number">2.</span> <span class="nav-text">2、 数据库配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81-solr%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">3、 solr配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1%E3%80%81%E4%BF%AE%E6%94%B9%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5%E6%96%87%E4%BB%B6%E9%85%8D%E7%BD%AEdb-data-config-xml%E6%96%87%E4%BB%B6%EF%BC%8C%E9%85%8D%E7%BD%AE%E5%A6%82%E4%B8%8B"><span class="nav-number">3.0.1.</span> <span class="nav-text">3.1、修改数据库连接文件配置db-data-config.xml文件，配置如下</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2%E3%80%81%E4%BF%AE%E6%94%B9managed-schema%E6%96%87%E4%BB%B6%EF%BC%8C%E6%96%B0%E5%A2%9E%E7%B4%A2%E5%BC%95%E5%AD%97%E6%AE%B5"><span class="nav-number">3.0.2.</span> <span class="nav-text">3.2、修改managed-schema文件，新增索引字段</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81%E5%AE%9A%E6%97%B6%E5%90%8C%E6%AD%A5%E9%85%8D%E7%BD%AE"><span class="nav-number">4.</span> <span class="nav-text">4、定时同步配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5%E3%80%81%E6%B5%8B%E8%AF%95"><span class="nav-number">5.</span> <span class="nav-text">5、测试</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

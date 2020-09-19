@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="https:&#x2F;&#x2F;blog.csdn.net&#x2F;lengyue309&#x2F;article&#x2F;details&#x2F;80590119">
+<meta property="og:type" content="article">
+<meta property="og:title" content="性能监控工具">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/11%E3%80%81%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="https:&#x2F;&#x2F;blog.csdn.net&#x2F;lengyue309&#x2F;article&#x2F;details&#x2F;80590119">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:12.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:39.488Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="性能监控工具">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/11%E3%80%81%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>性能监控工具 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/11%E3%80%81%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          性能监控工具
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:12" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:12+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">https://blog.csdn.net/lengyue309/article/details/80590119</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><a target="_blank" rel="noopener" href="https://blog.csdn.net/lengyue309/article/details/80590119">https://blog.csdn.net/lengyue309/article/details/80590119</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.bbsmax.com/A/kmzLXkpKzG/">https://www.bbsmax.com/A/kmzLXkpKzG/</a></p>
+<p>JDK自带VM分析工具jps，jstat，jmap，jconsole </p>
+<h2 id="1、jps-查看进程状况"><a href="#1、jps-查看进程状况" class="headerlink" title="1、jps 查看进程状况"></a>1、jps 查看进程状况</h2><p>(JavaVirtual Machine Process Status )是jdk提供的一个查看当前java进程的小工具。显示系统内所有的hotSpot虚拟机进程</p>
+<p>  命令格式：jps [options ] [ hostid ] </p>
+<p> -q：仅输出VM标识符，不包括classname,jar name,arguments in main method<br>-m：输出main method的参数<br>-l：输出完全的包名，应用主类名，jar的完全路径名<br>-v：输出jvm参数<br>-V：输出通过flag文件传递到JVM中的参数(.hotspotrc文件或-XX:Flags=所指定的文件<br>-Joption：传递参数到vm,例如:-J-Xms512m</p>
+<h2 id="2、jstat-虚拟机统计信息监控"><a href="#2、jstat-虚拟机统计信息监控" class="headerlink" title="2、jstat 虚拟机统计信息监控"></a>2、jstat 虚拟机统计信息监控</h2><p>jstat -<option> [-t] [-h<lines>] <vmid> [<interval> [<count>]]</p>
+<ul>
+<li>　Options — 选项，我们一般使用 -gcutil 查看gc情况</li>
+<li>t,h–t是显示Timestamp时间间隔列，h是显示标题,-h3每三行显示标题</li>
+<li>vmid —VM的进程号，即当前运行的java进程号</li>
+<li>interval– 间隔时间，单位为秒或者毫秒</li>
+<li>count —打印次数，如果缺省则打印无数次</li>
+</ul>
+<h4 id="Option选项："><a href="#Option选项：" class="headerlink" title="Option选项："></a>Option选项：</h4><ul>
+<li>-class    监视类的装载、卸载数量以及类的装载总空间和耗费时间等</li>
+<li>-gc    监视Java堆，包含eden、2个survivor区、old区和永久带区域的容量、已用空间、GC时间合计等信息</li>
+<li>-gccapcity    监视内容与-gc相同，但输出主要关注Java区域用到的最大和最小空间</li>
+<li>-gcutil    监视内容与-gc相同，但输出主要关注已使用空间占总空间的百分比</li>
+<li>-gccause    与-gcutil输出信息相同，额外输出导致上次GC产生的原因</li>
+<li>-gcnew    监控新生代的GC情况</li>
+<li>-gcnewcapacity    与-gcnew监控信息相同，输出主要关注使用到的最大和最小空间</li>
+<li>-gcold    监控老生代的GC情况</li>
+<li>-gcoldcapacity    与-gcold监控信息相同，输出主要关注使用到的最大和最小空间</li>
+<li>-gcpermcapacity    输出永久带用到的最大和最小空间</li>
+<li>-compiler    输出JIT编译器编译过的方法、耗时信息</li>
+<li>printcompilation    输出已经被JIT编译的方法</li>
+</ul>
+<h4 id="示例：jstat-gcutil-进程id-输出时间间隔"><a href="#示例：jstat-gcutil-进程id-输出时间间隔" class="headerlink" title="示例：jstat -gcutil 进程id 输出时间间隔"></a>示例：jstat -gcutil 进程id 输出时间间隔</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">S0 — Heap上的 Survivor space 0 区已使用空间的百分比</span><br><span class="line">S1 — Heap上的 Survivor space 1 区已使用空间的百分比</span><br><span class="line">E — Heap上的 Eden space 区已使用空间的百分比</span><br><span class="line">O — Heap上的 Old space 区已使用空间的百分比</span><br><span class="line">P — Perm space 区已使用空间的百分比</span><br><span class="line">YGC — 从应用程序启动到采样时发生 Young GC 的次数</span><br><span class="line">YGCT– 从应用程序启动到采样时 Young GC 所用的时间(单位秒)</span><br><span class="line">FGC — 从应用程序启动到采样时发生 Full GC 的次数</span><br><span class="line">FGCT– 从应用程序启动到采样时 Full GC 所用的时间(单位秒)</span><br><span class="line">GCT — 从应用程序启动到采样时用于垃圾回收的总时间(单位秒)</span><br><span class="line">GCT 是YGCT 和FGCT的时间总和。</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看类加载信息"><a href="#查看类加载信息" class="headerlink" title="查看类加载信息"></a>查看类加载信息</h3><p>　jstat -class pid
+　</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Loaded 装载的类的数量 </span><br><span class="line">Bytes 装载类所占用的字节数 </span><br><span class="line">Unloaded 卸载类的数量 </span><br><span class="line">Bytes 卸载类的字节数 </span><br><span class="line">Time 装载和卸载类所花费的时间</span><br></pre></td></tr></table></figure>
+
+<h2 id="3、jinfo"><a href="#3、jinfo" class="headerlink" title="3、jinfo"></a>3、jinfo</h2><p>jinfo: 实时地查看和调整虚拟机各项参数，==使用 jinfo 可以在不重启虚拟机的情况下，可以动态的修改 jvm 的参数==</p>
+<h2 id="4、jmap（JVM-Memory-Map-for-Java）"><a href="#4、jmap（JVM-Memory-Map-for-Java）" class="headerlink" title="4、jmap（JVM Memory Map for Java）"></a>4、jmap（JVM Memory Map for Java）</h2><p>jmap（Memory Map for Java）命令用于生成堆转储快照.</p>
+<p>如果不使用 jmap 命令，要想获取 Java 堆转储，可以使用 “-XX:+HeapDumpOnOutOfMemoryError” 参数，可以让虚拟机在 OOM 异常出现之后自动生成 dump 文件，Linux 命令下可以通过 kill -3 发送进程退出信号也能拿到 dump 文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath&#x3D;$&#123;目录&#125;。</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="5、jhat（JVM-Heap-Analysis-Tool）"><a href="#5、jhat（JVM-Heap-Analysis-Tool）" class="headerlink" title="5、jhat（JVM Heap Analysis Tool）"></a>5、jhat（JVM Heap Analysis Tool）</h2><p>jhat是用来分析dump文件的一个微型的HTTP/HTML服务器，它能将生成的dump文件生成在线的HTML文件，让我们可以通过浏览器进行查阅，然而实际中我们很少使用这个工具，因为一般服务器上设置的堆、栈内存都比较大，生成的dump也比较大，直接用jhat容易造成内存溢出，而是我们大部分会将对应的文件拷贝下来，通过其他可视化的工具进行分析    </p>
+<h2 id="6、jstack（JVM-Stack-Trace-for-java）"><a href="#6、jstack（JVM-Stack-Trace-for-java）" class="headerlink" title="6、jstack（JVM Stack Trace for java）"></a>6、jstack（JVM Stack Trace for java）</h2><p>jstack用于JVM当前时刻的线程快照，又称threaddump文件，它是JVM当前每一条线程正在执行的堆栈信息的集合。生成线程快照的主要目的是为了定位线程出现长时间停顿的原因，如线程死锁、死循环、请求外部时长过长导致线程停顿的原因。通过jstack我们就可以知道哪些进程在后台做些什么？在等待什么资源等！其运行格式如下：</p>
+<p>jstack [option] vmid    </p>
+<p>如何利用以上工具：进行线上问题排查：</p>
+<p>频繁GC问题或内存溢出问题 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">一、使用jps查看线程ID</span><br><span class="line"></span><br><span class="line">二、使用jstat -gc 3331 250 20 查看gc情况，一般比较关注PERM区的情况，查看GC的增长情况。</span><br><span class="line"></span><br><span class="line">三、使用jstat -gccause：额外输出上次GC原因</span><br><span class="line"></span><br><span class="line">四、使用jmap -dump:format&#x3D;b,file&#x3D;heapDump 3331生成堆转储文件</span><br><span class="line"></span><br><span class="line">五、使用jhat或者可视化工具（Eclipse Memory Analyzer 、IBM HeapAnalyzer）分析堆情况。</span><br><span class="line"></span><br><span class="line">六、结合代码解决内存溢出或泄露问题。</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7/" rel="tag"># 性能监控工具</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/6%E3%80%81%E6%A0%91/%E5%AD%97%E5%85%B8%E6%A0%91/" rel="prev" title="字典树">
+      <i class="fa fa-chevron-left"></i> 字典树
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/10%E3%80%81ConcurrentLinkedQueue/" rel="next" title="ConcurrentLinkedQueue">
+      ConcurrentLinkedQueue <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81jps-%E6%9F%A5%E7%9C%8B%E8%BF%9B%E7%A8%8B%E7%8A%B6%E5%86%B5"><span class="nav-number">1.</span> <span class="nav-text">1、jps 查看进程状况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81jstat-%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%BB%9F%E8%AE%A1%E4%BF%A1%E6%81%AF%E7%9B%91%E6%8E%A7"><span class="nav-number">2.</span> <span class="nav-text">2、jstat 虚拟机统计信息监控</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Option%E9%80%89%E9%A1%B9%EF%BC%9A"><span class="nav-number">2.0.1.</span> <span class="nav-text">Option选项：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9Ajstat-gcutil-%E8%BF%9B%E7%A8%8Bid-%E8%BE%93%E5%87%BA%E6%97%B6%E9%97%B4%E9%97%B4%E9%9A%94"><span class="nav-number">2.0.2.</span> <span class="nav-text">示例：jstat -gcutil 进程id 输出时间间隔</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E4%BF%A1%E6%81%AF"><span class="nav-number">2.1.</span> <span class="nav-text">查看类加载信息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81jinfo"><span class="nav-number">3.</span> <span class="nav-text">3、jinfo</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81jmap%EF%BC%88JVM-Memory-Map-for-Java%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">4、jmap（JVM Memory Map for Java）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5%E3%80%81jhat%EF%BC%88JVM-Heap-Analysis-Tool%EF%BC%89"><span class="nav-number">5.</span> <span class="nav-text">5、jhat（JVM Heap Analysis Tool）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6%E3%80%81jstack%EF%BC%88JVM-Stack-Trace-for-java%EF%BC%89"><span class="nav-number">6.</span> <span class="nav-text">6、jstack（JVM Stack Trace for java）</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

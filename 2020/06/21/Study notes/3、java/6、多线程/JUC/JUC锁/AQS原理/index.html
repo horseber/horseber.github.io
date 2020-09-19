@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Sync queue：同步队列，是一个双向链表。包括head节点和tail节点。head节点主要用作后续的调度。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AQS原理">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/JUC%E9%94%81/AQS%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="Sync queue：同步队列，是一个双向链表。包括head节点和tail节点。head节点主要用作后续的调度。">
+<meta property="og:locale">
+<meta property="og:image" content="https://img-blog.csdn.net/20170819204120318?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxNDYzNDMzOA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="https://img-blog.csdn.net/20180509095351100?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdoYW4xMjIy/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+<meta property="og:image" content="https://img-blog.csdn.net/2018083010402464?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQwMjY3ODE3/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/2615789-a80779d4736afb87.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/704/format/webp">
+<meta property="article:published_time" content="2020-06-21T01:23:35.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:39.639Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="AQS原理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20170819204120318?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxNDYzNDMzOA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/JUC%E9%94%81/AQS%E5%8E%9F%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>AQS原理 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/JUC%E9%94%81/AQS%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AQS原理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:35" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:35+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JUC%E9%94%81/" itemprop="url" rel="index"><span itemprop="name">JUC锁</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">Sync queue：同步队列，是一个双向链表。包括head节点和tail节点。head节点主要用作后续的调度。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li>Sync queue：同步队列，是一个双向链表。包括head节点和tail节点。head节点主要用作后续的调度。</li>
+<li>Condition queue：非必须，单向链表。当程序中存在cindition的时候才会存在此列表。</li>
+</ul>
+<h2 id="AQS核心思想"><a href="#AQS核心思想" class="headerlink" title="AQS核心思想"></a>AQS核心思想</h2><p>==同步组件的实现者通过使用AQS提供的模板方法实现同步组件语义，AQS则实现了对同步状态的管理，以及对阻塞线程进行排队，等待通知等等一些底层的实现处理==</p>
+<p>可重写的方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">tryAcquire(int arg)	独占获取同步状态，实现该方法需要查询当前状态，并判断同步状态是否符合预期状态，然后再进行CAS设置同步状态。</span><br><span class="line">treRelease(int arg)	独占式释放同步状态，等待获取同步状态的线程将有机会获取同步状态</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">tryAcquireShared(int arg)	共享式获取同步状态，返回大于等于0的值，表示获取成功，反之失败</span><br><span class="line">tryReleaseShared(int arg)	共享式释放同步状态</span><br><span class="line">isHeldExclusively()	当前同步器是否在独占模式下被线程占用，一般该方法表示是否被当前线程所独占</span><br></pre></td></tr></table></figure>
+
+<p>同步器提供的模板方法： </p>
+<p>（1）独占式锁方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;独占式获取同步状态，如果获取失败则插入同步队列进行等待；</span><br><span class="line">void acquire(int arg);</span><br><span class="line">&#x2F;&#x2F;与acquire方法相同，但在同步队列中进行等待的时候可以检测中断；</span><br><span class="line">void acquireInterruptibly(int arg);</span><br><span class="line">&#x2F;&#x2F;在acquireInterruptibly基础上增加了超时等待功能，在超时时间内没有获得同步状态返回false;</span><br><span class="line">boolean tryAcquireNanos(int arg, long nanosTimeout);</span><br><span class="line">&#x2F;&#x2F;释放同步状态，该方法会唤醒在同步队列中的下一个节点</span><br><span class="line">boolean release(int arg);</span><br></pre></td></tr></table></figure>
+<p>（2）共享式锁方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;：共享式获取同步状态，与独占式的区别在于同一时刻有多个线程获取同步状态；</span><br><span class="line">void acquireShared(int arg);</span><br><span class="line">&#x2F;&#x2F;：在acquireShared方法基础上增加了能响应中断的功能；</span><br><span class="line">void acquireSharedInterruptibly(int arg);</span><br><span class="line">&#x2F;&#x2F;：在acquireSharedInterruptibly基础上增加了超时等待的功能；</span><br><span class="line">boolean tryAcquireSharedNanos(int arg, long nanosTimeout)</span><br><span class="line">&#x2F;&#x2F;：共享式释放同步状态</span><br><span class="line">boolean releaseShared(int arg)</span><br></pre></td></tr></table></figure>
+<p>要想掌握AQS的底层实现，其实也就是对这些模板方法的逻辑进行学习。</p>
+<p>AQS通过持有头尾指针管理同步队列(同步队列是一个双向队列)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">private transient volatile Node head;</span><br><span class="line"></span><br><span class="line">private transient volatile Node tail;</span><br><span class="line"></span><br><span class="line">private volatile int state;</span><br></pre></td></tr></table></figure>
+<p>AQS的静态内部类Node</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">volatile int waitStatus &#x2F;&#x2F;节点状态</span><br><span class="line">volatile Node prev &#x2F;&#x2F;当前节点&#x2F;线程的前驱节点</span><br><span class="line">volatile Node next; &#x2F;&#x2F;当前节点&#x2F;线程的后继节点</span><br><span class="line">volatile Thread thread;&#x2F;&#x2F;加入同步队列的线程引用</span><br><span class="line">Node nextWaiter;&#x2F;&#x2F;等待队列中的下一个节点</span><br></pre></td></tr></table></figure>
+<p>节点的状态有以下这些：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int CANCELLED &#x3D;  1&#x2F;&#x2F;节点从同步队列中取消</span><br><span class="line">int SIGNAL    &#x3D; -1&#x2F;&#x2F;后继节点的线程处于等待状态，如果当前节点释放同步状态会通知后继节点，使得后继节点的线程能够运行；</span><br><span class="line">int CONDITION &#x3D; -2&#x2F;&#x2F;当前节点进入等待队列中</span><br><span class="line">int PROPAGATE &#x3D; -3&#x2F;&#x2F;表示下一次共享式同步状态获取将会无条件传播下去</span><br><span class="line">int INITIAL &#x3D; 0;&#x2F;&#x2F;初始状态</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="一：获取独占式锁"><a href="#一：获取独占式锁" class="headerlink" title="一：获取独占式锁"></a>一：获取独占式锁</h1><h3 id="1、开始获取独占式锁："><a href="#1、开始获取独占式锁：" class="headerlink" title="1、开始获取独占式锁："></a>1、开始获取独占式锁：</h3><p>调用lock()方法是获取独占式锁，获取失败就将当前线程加入同步队列，成功则线程执行。而lock()方法实际上会调用AQS的acquire()方法.</p>
+<p>acquire根据当前获得同步状态成功与否做了两件事情：</p>
+<ol>
+<li>成功，则方法结束返回，</li>
+<li>失败，则先调用addWaiter()将线程加入等待队列,然后在调用acquireQueued()方法:排队获取锁。</li>
+</ol>
+<p>==acquire 该方法对中断不敏感，也就是由于线程获取同步状态失败后进入同步队列中，后续对线程进行中断操作时，线程不会从同步队列中移出。==</p>
+<p>==首先调用自定义同步器实现的tryAcquire(int arg)方法，该方法<br>保证线程安全的获取同步状态，如果同步状态获取失败，则构造同步节点（独占式<br>Node.EXCLUSIVE，同一时刻只能有一个线程成功获取同步状态）并通过addWaiter(Node node)<br>方法将该节点加入到同步队列的尾部，最后调用acquireQueued(Node node,int arg)方法，使得该<br>节点以“死循环”的方式获取同步状态。如果获取不到则阻塞节点中的线程，而被阻塞线程的<br>唤醒主要依靠前驱节点的出队或阻塞线程被中断来实现。==</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public final void acquire(int arg) &#123;</span><br><span class="line">&#x2F;&#x2F;先看同步状态是否获取成功，如果成功则方法结束返回</span><br><span class="line">&#x2F;&#x2F;若失败则先调用addWaiter()方法再调用acquireQueued()方法</span><br><span class="line">    if (!tryAcquire(arg) &amp;&amp;</span><br><span class="line">        acquireQueued(addWaiter(Node.EXCLUSIVE), arg))</span><br><span class="line">        selfInterrupt();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2、获取独占式锁态失败-做入队操作"><a href="#2、获取独占式锁态失败-做入队操作" class="headerlink" title="2、获取独占式锁态失败:做入队操作"></a>2、获取独占式锁态失败:做入队操作</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">private Node addWaiter(Node mode) &#123;</span><br><span class="line">        &#x2F;&#x2F; 1. 将当前线程构建成Node类型</span><br><span class="line">        Node node &#x3D; new Node(Thread.currentThread(), mode);</span><br><span class="line">        &#x2F;&#x2F; Try the fast path of enq; backup to full enq on failure</span><br><span class="line">        &#x2F;&#x2F; 2. 当前尾节点是否为null？</span><br><span class="line">        Node pred &#x3D; tail;</span><br><span class="line">        if (pred !&#x3D; null) &#123;</span><br><span class="line">            &#x2F;&#x2F; 2.2 将当前节点尾插入的方式插入同步队列中</span><br><span class="line">            node.prev &#x3D; pred;</span><br><span class="line">            if (compareAndSetTail(pred, node)) &#123;</span><br><span class="line">                pred.next &#x3D; node;</span><br><span class="line">                return node;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F; 2.1. 当前同步队列尾节点为null，说明当前线程是第一个加入同步队列进行等待的线程</span><br><span class="line">        enq(node);</span><br><span class="line">        return node;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">private Node enq(final Node node) &#123;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;自旋的过程（for (;;)）</span><br><span class="line">    for (;;) &#123;</span><br><span class="line">        Node t &#x3D; tail;</span><br><span class="line">        if (t &#x3D;&#x3D; null) &#123; &#x2F;&#x2F; Must initialize</span><br><span class="line">            &#x2F;&#x2F;1. 构造头结点</span><br><span class="line">            if (compareAndSetHead(new Node()))</span><br><span class="line">                tail &#x3D; head;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            &#x2F;&#x2F; 2. 尾插入，CAS操作失败自旋尝试</span><br><span class="line">            node.prev &#x3D; t;</span><br><span class="line">            if (compareAndSetTail(t, node)) &#123;</span><br><span class="line">                t.next &#x3D; node;</span><br><span class="line">                return t;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>enq()方法：</p>
+<ol>
+<li>处理当前同步队列（带头双向链表）尾节点为null时进行入队操作；</li>
+<li>compareAndSetTail(t, node)方法会利用CAS操作设置尾节点，CAS操作失败后负责自旋进行尝试会在for (;;)for死循环中不断尝试，直至成功return返回为止。</li>
+</ol>
+<p><img src="https://img-blog.csdn.net/20170819204120318?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxNDYzNDMzOA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="image"></p>
+<p>在同步队列中的节点（线程）会做什么事情了来保证自己能够有机会获得独占式锁了？自旋：acquireQueued</p>
+<h3 id="入队列后，线程排队获取独占式锁的过程：acquireQueued"><a href="#入队列后，线程排队获取独占式锁的过程：acquireQueued" class="headerlink" title="入队列后，线程排队获取独占式锁的过程：acquireQueued"></a>入队列后，线程排队获取独占式锁的过程：acquireQueued</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">final boolean acquireQueued(final Node node, int arg) &#123;</span><br><span class="line">        boolean failed &#x3D; true;</span><br><span class="line">        try &#123;</span><br><span class="line">            boolean interrupted &#x3D; false;</span><br><span class="line">            for (;;) &#123;</span><br><span class="line">                &#x2F;&#x2F; 1. 获得当前节点的先驱节点</span><br><span class="line">                final Node p &#x3D; node.predecessor();</span><br><span class="line">                &#x2F;&#x2F; 2. 当前节点能否获取独占式锁                  </span><br><span class="line">                &#x2F;&#x2F; 2.1 如果当前节点的先驱节点是头结点并且成功获取同步状态，即可以获得独占式锁</span><br><span class="line">                if (p &#x3D;&#x3D; head &amp;&amp; tryAcquire(arg)) &#123;</span><br><span class="line">                    &#x2F;&#x2F;获取锁成功，出队操作</span><br><span class="line">                    &#x2F;&#x2F;队列头指针用指向当前节点</span><br><span class="line">                    setHead(node);</span><br><span class="line">                    &#x2F;&#x2F;释放前驱节点</span><br><span class="line">                    p.next &#x3D; null; &#x2F;&#x2F; help GC</span><br><span class="line">                    failed &#x3D; false;</span><br><span class="line">                    return interrupted;</span><br><span class="line">                &#125;</span><br><span class="line">                &#x2F;&#x2F; 2.2 获取锁失败，线程进入等待状态等待获取独占式锁</span><br><span class="line">                if (shouldParkAfterFailedAcquire(p, node) &amp;&amp;</span><br><span class="line">                    parkAndCheckInterrupt())</span><br><span class="line">                    interrupted &#x3D; true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (failed)</span><br><span class="line">                cancelAcquire(node);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;&#x2F;做出队操作：</span><br><span class="line">private void setHead(Node node) &#123;</span><br><span class="line">        head &#x3D; node;</span><br><span class="line">        node.thread &#x3D; null;</span><br><span class="line">        node.prev &#x3D; null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>自旋获取锁整体示意图</p>
+<p>只有前驱节点是头节点才能够尝试获取同步状态，因为</p>
+<ul>
+<li>第一，头节点是成功获取到同步状态的节点，而头节点的线程释放了同步状态之后，将会<br>唤醒其后继节点，后继节点的线程被唤醒后需要检查自己的前驱节点是否是头节点。</li>
+<li>第二，维护同步队列的FIFO原则。该方法中，节点自旋获取同步状态的行为</li>
+</ul>
+<p><img src="https://img-blog.csdn.net/20180509095351100?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdoYW4xMjIy/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="image"></p>
+<h3 id="排队获取独占式获取成功，做出队操作："><a href="#排队获取独占式获取成功，做出队操作：" class="headerlink" title="排队获取独占式获取成功，做出队操作："></a>排队获取独占式获取成功，做出队操作：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;做出队操作：</span><br><span class="line">private void setHead(Node node) &#123;</span><br><span class="line">        head &#x3D; node;</span><br><span class="line">        node.thread &#x3D; null;</span><br><span class="line">        node.prev &#x3D; null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="排队获取独占式获取失败"><a href="#排队获取独占式获取失败" class="headerlink" title="排队获取独占式获取失败"></a>排队获取独占式获取失败</h3><p>获取锁失败的时候会调用shouldParkAfterFailedAcquire()方法和parkAndCheckInterrupt()方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) &#123;</span><br><span class="line">    int ws &#x3D; pred.waitStatus;</span><br><span class="line">    if (ws &#x3D;&#x3D; Node.SIGNAL)</span><br><span class="line">        &#x2F;*</span><br><span class="line">         * This node has already set status asking a release</span><br><span class="line">         * to signal it, so it can safely park.</span><br><span class="line">         *&#x2F;</span><br><span class="line">        return true;</span><br><span class="line">    if (ws &gt; 0) &#123;</span><br><span class="line">        &#x2F;*</span><br><span class="line">         * Predecessor was cancelled. Skip over predecessors and</span><br><span class="line">         * indicate retry.</span><br><span class="line">         *&#x2F;</span><br><span class="line">        do &#123;</span><br><span class="line">            node.prev &#x3D; pred &#x3D; pred.prev;</span><br><span class="line">        &#125; while (pred.waitStatus &gt; 0);</span><br><span class="line">        pred.next &#x3D; node;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        &#x2F;*</span><br><span class="line">         * waitStatus must be 0 or PROPAGATE.  Indicate that we</span><br><span class="line">         * need a signal, but don&#39;t park yet.  Caller will need to</span><br><span class="line">         * retry to make sure it cannot acquire before parking.</span><br><span class="line">         *&#x2F;</span><br><span class="line">        compareAndSetWaitStatus(pred, ws, Node.SIGNAL);</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="二：释放独占式锁：release"><a href="#二：释放独占式锁：release" class="headerlink" title="二：释放独占式锁：release()"></a>二：释放独占式锁：release()</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">public final boolean release(int arg) &#123;</span><br><span class="line">        if (tryRelease(arg)) &#123;</span><br><span class="line">            Node h &#x3D; head;</span><br><span class="line">            if (h !&#x3D; null &amp;&amp; h.waitStatus !&#x3D; 0)</span><br><span class="line">                unparkSuccessor(h);</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void unparkSuccessor(Node node) &#123;</span><br><span class="line"></span><br><span class="line">    int ws &#x3D; node.waitStatus;</span><br><span class="line">    if (ws &lt; 0)</span><br><span class="line">        compareAndSetWaitStatus(node, ws, 0);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;头节点的后继节点</span><br><span class="line">    Node s &#x3D; node.next;</span><br><span class="line">    if (s &#x3D;&#x3D; null || s.waitStatus &gt; 0) &#123;</span><br><span class="line">        s &#x3D; null;</span><br><span class="line">        for (Node t &#x3D; tail; t !&#x3D; null &amp;&amp; t !&#x3D; node; t &#x3D; t.prev)</span><br><span class="line">            if (t.waitStatus &lt;&#x3D; 0)</span><br><span class="line">                s &#x3D; t;</span><br><span class="line">    &#125;</span><br><span class="line">    if (s !&#x3D; null)</span><br><span class="line">        &#x2F;&#x2F;后继节点不为null时唤醒该线程</span><br><span class="line">        LockSupport.unpark(s.thread);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果同步状态释放成功（tryRelease返回true）则会执行if块中的代码，当head指向的头结点不为null，并且该节点的状态值不为0的话才会执行unparkSuccessor()方法。==每一次锁释放后就会唤醒队列中该节点的后继节点所引用的线程，从而进一步可以佐证获得锁的过程是一个FIFO（先进先出）的过程。==</p>
+<h1 id="三：独占式锁的获取和释放总结-很重要-："><a href="#三：独占式锁的获取和释放总结-很重要-：" class="headerlink" title="三：独占式锁的获取和释放总结(很重要)："></a>三：独占式锁的获取和释放总结(很重要)：</h1><p>==在获取同步状态时，AQS维护一个同步队列，获取同步状态失败的线程会加入到队列中进行自旋；移除队列（或停止自旋）的条件是前驱节点是头结点并且成功获得了同步状态。在释放同步状态时，同步器会调用unparkSuccessor()方法唤醒后继节点。==</p>
+<p><img src="https://img-blog.csdn.net/2018083010402464?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQwMjY3ODE3/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="image"></p>
+<h1 id="四：共享锁的获取"><a href="#四：共享锁的获取" class="headerlink" title="四：共享锁的获取"></a>四：共享锁的获取</h1><p>共享式获取与独占式获取最主要的区别在于同一时刻能否有多个线程同时获取到同步状<br>态。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public final void acquireShared(int arg) &#123;</span><br><span class="line">    if (tryAcquireShared(arg) &lt; 0)</span><br><span class="line">        doAcquireShared(arg);</span><br><span class="line">&#125;</span><br><span class="line">private void doAcquireShared(int arg) &#123;</span><br><span class="line">    final Node node &#x3D; addWaiter(Node.SHARED);</span><br><span class="line">    boolean failed &#x3D; true;</span><br><span class="line">    try &#123;</span><br><span class="line">        boolean interrupted &#x3D; false;</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            final Node p &#x3D; node.predecessor();</span><br><span class="line">            if (p &#x3D;&#x3D; head) &#123;</span><br><span class="line">                int r &#x3D; tryAcquireShared(arg);</span><br><span class="line">                if (r &gt;&#x3D; 0) &#123;</span><br><span class="line">                    &#x2F;&#x2F; 当该节点的前驱节点是头结点且成功获取同步状态</span><br><span class="line">                    setHeadAndPropagate(node, r);</span><br><span class="line">                    p.next &#x3D; null; &#x2F;&#x2F; help GC</span><br><span class="line">                    if (interrupted)</span><br><span class="line">                        selfInterrupt();</span><br><span class="line">                    failed &#x3D; false;</span><br><span class="line">                    return;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            if (shouldParkAfterFailedAcquire(p, node) &amp;&amp;</span><br><span class="line">                parkAndCheckInterrupt())</span><br><span class="line">                interrupted &#x3D; true;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        if (failed)</span><br><span class="line">            cancelAcquire(node);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在共享式获取的自旋过程中，成功获取到同步状态并退出自旋的条件就是<br>tryAcquireShared(int arg)方法返回值大于等于0。可以看到，在doAcquireShared(int arg)方法的自<br>旋过程中，如果当前节点的前驱为头节点时，尝试获取同步状态，如果返回值大于等于0，表示<br>该次获取同步状态成功并从自旋过程中退出。</p>
+<h3 id="共享锁的释放（releaseShared-方法）"><a href="#共享锁的释放（releaseShared-方法）" class="headerlink" title="共享锁的释放（releaseShared()方法）"></a>共享锁的释放（releaseShared()方法）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public final boolean releaseShared(int arg) &#123;</span><br><span class="line">    if (tryReleaseShared(arg)) &#123;</span><br><span class="line">        doReleaseShared();</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>释放同步状态之后，将会唤醒后续处于等待状态的节点。对于能够支持多个线<br>程同时访问的并发组件（比如Semaphore），它和独占式主要区别在于tryReleaseShared(int arg)<br>方法必须确保同步状态（或者资源数）线程安全释放，一般是通过循环和CAS来保证的，因为<br>释放同步状态的操作会同时来自多个线程。</p>
+<h1 id="五：获取超时等待式锁：tryAcquireNanos"><a href="#五：获取超时等待式锁：tryAcquireNanos" class="headerlink" title="五：获取超时等待式锁：tryAcquireNanos()"></a>五：获取超时等待式锁：tryAcquireNanos()</h1><p>lock.tryLock(timeout,TimeUnit)，该方法会调用AQS的方法tryAcquireNanos(),方式达到超时等待获取锁的效果，该方法会在三种情况下才会返回：</p>
+<ul>
+<li>在超时时间内，当前线程成功获取了锁；</li>
+<li>当前线程在超时时间内被中断；</li>
+<li>超时时间结束，仍未获得锁返回false。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">public final boolean tryAcquireNanos(int arg, long nanosTimeout)</span><br><span class="line">        throws InterruptedException &#123;</span><br><span class="line">    if (Thread.interrupted())</span><br><span class="line">        throw new InterruptedException();</span><br><span class="line">    return tryAcquire(arg) ||</span><br><span class="line">        &#x2F;&#x2F;实现超时等待的效果</span><br><span class="line">        doAcquireNanos(arg, nanosTimeout);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private boolean doAcquireNanos(int arg, long nanosTimeout)</span><br><span class="line">        throws InterruptedException &#123;</span><br><span class="line">    if (nanosTimeout &lt;&#x3D; 0L)</span><br><span class="line">        return false;</span><br><span class="line">    &#x2F;&#x2F;1. 根据超时时间和当前时间计算出截止时间</span><br><span class="line">    final long deadline &#x3D; System.nanoTime() + nanosTimeout;</span><br><span class="line">    final Node node &#x3D; addWaiter(Node.EXCLUSIVE);</span><br><span class="line">    boolean failed &#x3D; true;</span><br><span class="line">    try &#123;</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            final Node p &#x3D; node.predecessor();</span><br><span class="line">            &#x2F;&#x2F;2. 当前线程获得锁出队列</span><br><span class="line">            if (p &#x3D;&#x3D; head &amp;&amp; tryAcquire(arg)) &#123;</span><br><span class="line">                setHead(node);</span><br><span class="line">                p.next &#x3D; null; &#x2F;&#x2F; help GC</span><br><span class="line">                failed &#x3D; false;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">            &#x2F;&#x2F; 3.1 重新计算超时时间</span><br><span class="line">            nanosTimeout &#x3D; deadline - System.nanoTime();</span><br><span class="line">            &#x2F;&#x2F; 3.2 已经超时返回false</span><br><span class="line">            if (nanosTimeout &lt;&#x3D; 0L)</span><br><span class="line">                return false;</span><br><span class="line">            &#x2F;&#x2F; 3.3 线程阻塞等待 </span><br><span class="line">            if (shouldParkAfterFailedAcquire(p, node) &amp;&amp;</span><br><span class="line">                nanosTimeout &gt; spinForTimeoutThreshold)</span><br><span class="line">                LockSupport.parkNanos(this, nanosTimeout);</span><br><span class="line">            &#x2F;&#x2F; 3.4 线程被中断抛出被中断异常</span><br><span class="line">            if (Thread.interrupted())</span><br><span class="line">                throw new InterruptedException();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        if (failed)</span><br><span class="line">            cancelAcquire(node);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="https://upload-images.jianshu.io/upload_images/2615789-a80779d4736afb87.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/704/format/webp" alt="image"></li>
+</ul>
+<p>程序逻辑同独占锁可响应中断式获取基本一致，唯一的不同在于获取锁失败后，对超时时间的处理上，在第1步会先计算出按照现在时间和超时时间计算出理论上的截止时间，比如当前时间是8h10min,超时时间是10min，那么根据deadline = System.nanoTime() + nanosTimeout计算出刚好达到超时时间时的系统时间就是8h 10min+10min = 8h 20min。然后根据deadline - System.nanoTime()就可以判断是否已经超时了，比如，当前系统时间是8h 30min很明显已经超过了理论上的系统时间8h 20min，deadline - System.nanoTime()计算出来就是一个负数，自然而然会在3.2步中的If判断之间返回false。如果还没有超时即3.2步中的if判断为true时就会继续执行3.3步通过LockSupport.parkNanos使得当前线程阻塞，同时在3.4步增加了对中断的检测，若检测出被中断直接抛出被中断异常</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AQS%E5%8E%9F%E7%90%86/" rel="tag"># AQS原理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/JUC/2%E3%80%81CopyOnWriteArrayList/" rel="prev" title="CopyOnWriteArrayList">
+      <i class="fa fa-chevron-left"></i> CopyOnWriteArrayList
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/2%E3%80%81redis%E5%AE%89%E8%A3%85/" rel="next" title="redis安装">
+      redis安装 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#AQS%E6%A0%B8%E5%BF%83%E6%80%9D%E6%83%B3"><span class="nav-number">1.</span> <span class="nav-text">AQS核心思想</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%EF%BC%9A%E8%8E%B7%E5%8F%96%E7%8B%AC%E5%8D%A0%E5%BC%8F%E9%94%81"><span class="nav-number"></span> <span class="nav-text">一：获取独占式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E5%BC%80%E5%A7%8B%E8%8E%B7%E5%8F%96%E7%8B%AC%E5%8D%A0%E5%BC%8F%E9%94%81%EF%BC%9A"><span class="nav-number">0.1.</span> <span class="nav-text">1、开始获取独占式锁：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E8%8E%B7%E5%8F%96%E7%8B%AC%E5%8D%A0%E5%BC%8F%E9%94%81%E6%80%81%E5%A4%B1%E8%B4%A5-%E5%81%9A%E5%85%A5%E9%98%9F%E6%93%8D%E4%BD%9C"><span class="nav-number">0.2.</span> <span class="nav-text">2、获取独占式锁态失败:做入队操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%A5%E9%98%9F%E5%88%97%E5%90%8E%EF%BC%8C%E7%BA%BF%E7%A8%8B%E6%8E%92%E9%98%9F%E8%8E%B7%E5%8F%96%E7%8B%AC%E5%8D%A0%E5%BC%8F%E9%94%81%E7%9A%84%E8%BF%87%E7%A8%8B%EF%BC%9AacquireQueued"><span class="nav-number">0.3.</span> <span class="nav-text">入队列后，线程排队获取独占式锁的过程：acquireQueued</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%92%E9%98%9F%E8%8E%B7%E5%8F%96%E7%8B%AC%E5%8D%A0%E5%BC%8F%E8%8E%B7%E5%8F%96%E6%88%90%E5%8A%9F%EF%BC%8C%E5%81%9A%E5%87%BA%E9%98%9F%E6%93%8D%E4%BD%9C%EF%BC%9A"><span class="nav-number">0.4.</span> <span class="nav-text">排队获取独占式获取成功，做出队操作：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%92%E9%98%9F%E8%8E%B7%E5%8F%96%E7%8B%AC%E5%8D%A0%E5%BC%8F%E8%8E%B7%E5%8F%96%E5%A4%B1%E8%B4%A5"><span class="nav-number">0.5.</span> <span class="nav-text">排队获取独占式获取失败</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%EF%BC%9A%E9%87%8A%E6%94%BE%E7%8B%AC%E5%8D%A0%E5%BC%8F%E9%94%81%EF%BC%9Arelease"><span class="nav-number"></span> <span class="nav-text">二：释放独占式锁：release()</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%EF%BC%9A%E7%8B%AC%E5%8D%A0%E5%BC%8F%E9%94%81%E7%9A%84%E8%8E%B7%E5%8F%96%E5%92%8C%E9%87%8A%E6%94%BE%E6%80%BB%E7%BB%93-%E5%BE%88%E9%87%8D%E8%A6%81-%EF%BC%9A"><span class="nav-number"></span> <span class="nav-text">三：独占式锁的获取和释放总结(很重要)：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%EF%BC%9A%E5%85%B1%E4%BA%AB%E9%94%81%E7%9A%84%E8%8E%B7%E5%8F%96"><span class="nav-number"></span> <span class="nav-text">四：共享锁的获取</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B1%E4%BA%AB%E9%94%81%E7%9A%84%E9%87%8A%E6%94%BE%EF%BC%88releaseShared-%E6%96%B9%E6%B3%95%EF%BC%89"><span class="nav-number">0.1.</span> <span class="nav-text">共享锁的释放（releaseShared()方法）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%94%EF%BC%9A%E8%8E%B7%E5%8F%96%E8%B6%85%E6%97%B6%E7%AD%89%E5%BE%85%E5%BC%8F%E9%94%81%EF%BC%9AtryAcquireNanos"><span class="nav-number"></span> <span class="nav-text">五：获取超时等待式锁：tryAcquireNanos()</span></a></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

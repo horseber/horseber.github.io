@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="稀疏数组：Android提供的一个工具类。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="稀疏数组 SparseArray">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/1%E3%80%81%E6%95%B0%E7%BB%84/2%E3%80%81%E7%A8%80%E7%96%8F%E6%95%B0%E7%BB%84%20SparseArray/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="稀疏数组：Android提供的一个工具类。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:26.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:38.683Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="稀疏数组 SparseArray">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/1%E3%80%81%E6%95%B0%E7%BB%84/2%E3%80%81%E7%A8%80%E7%96%8F%E6%95%B0%E7%BB%84%20SparseArray/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>稀疏数组 SparseArray | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/1%E3%80%81%E6%95%B0%E7%BB%84/2%E3%80%81%E7%A8%80%E7%96%8F%E6%95%B0%E7%BB%84%20SparseArray/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          稀疏数组 SparseArray
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:26" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:26+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:38" itemprop="dateModified" datetime="2020-09-19T08:57:38+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E7%BB%84/" itemprop="url" rel="index"><span itemprop="name">数组</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">稀疏数组：Android提供的一个工具类。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>稀疏数组：Android提供的一个工具类。</p>
+<p> Android 开发中，我们可以使用 SparseArray 来实现更高效的实现 Map</p>
+<p>SparseArray指的是稀疏数组，是Android中对HashMap的性能优化。所谓稀疏数组就是数组中的大部分的内容值都未被使用或者都为0，在数组中仅有少部分的空间使用。因此造成了内存空间的浪费，为了节省内存空间，并且不影响数组中原有的内容值，我们可以采用一种压缩的方式来表示稀疏数组的内容。</p>
+<p>稀疏数组如何记录数据：</p>
+<ul>
+<li>记录数组一共有几行几列，有多少个不同的值</li>
+<li>把具有不同值的元素的行列及值记录在一个小规模的数组(稀疏数组)中，从而缩小程序的规模</li>
+</ul>
+<p>如图将二维数组 转为稀疏数组（见笔记4）</p>
+<p>源码实现：</p>
+<h4 id="一、成员变量"><a href="#一、成员变量" class="headerlink" title="一、成员变量"></a>一、成员变量</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * 删除操作时替换对应位置 value 的默认值</span><br><span class="line"> *&#x2F;</span><br><span class="line">private static final Object DELETED &#x3D; new Object();</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 是否需要回收</span><br><span class="line"> *&#x2F;</span><br><span class="line">private boolean mGarbage &#x3D; false;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 存储 key 的数组</span><br><span class="line"> *&#x2F;</span><br><span class="line">private int[] mKeys;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 存储 value 的数组</span><br><span class="line"> *&#x2F;</span><br><span class="line">private Object[] mValues;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 当前存储的键值对数量</span><br><span class="line"> *&#x2F;</span><br><span class="line">private int mSize;</span><br></pre></td></tr></table></figure>
+
+<h4 id="二、构造函数"><a href="#二、构造函数" class="headerlink" title="二、构造函数"></a>二、构造函数</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * 创建一个空 map 初始容量为 10</span><br><span class="line"> *&#x2F;</span><br><span class="line">public SparseArray() &#123; this(10); &#125;</span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * 根据指定初始容量创建键值对为空的稀疏数组，并且不会申请额外内存；指定初始容量为 0 时会创建一个轻量级的不需要任何内存分配的稀疏数组</span><br><span class="line"> * capacity 容量</span><br><span class="line"> *&#x2F;</span><br><span class="line">public SparseArray(int initialCapacity) &#123;</span><br><span class="line">    if (initialCapacity &#x3D;&#x3D; 0) &#123;</span><br><span class="line">        mKeys &#x3D; EmptyArray.INT; &#x2F;&#x2F; 长度为 0 的 int 类型数组</span><br><span class="line">        mValues &#x3D; EmptyArray.OBJECT; &#x2F;&#x2F; 长度为 0 的 Object 类型数组</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        mValues &#x3D; ArrayUtils.newUnpaddedObjectArray(initialCapacity);</span><br><span class="line">        mKeys &#x3D; new int[mValues.length];</span><br><span class="line">    &#125;</span><br><span class="line">    mSize &#x3D; 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="三、添加-修改-操作"><a href="#三、添加-修改-操作" class="headerlink" title="三、添加/修改 操作"></a>三、添加/修改 操作</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line">public void put(int key, E value) &#123;</span><br><span class="line">    int i &#x3D; ContainerHelpers.binarySearch(mKeys, mSize, key); &#x2F;&#x2F; 使用二分法查找对应的 key 在数组中的下标</span><br><span class="line"></span><br><span class="line">    if (i &gt;&#x3D; 0) &#123; &#x2F;&#x2F; 索引大于等于 0 说明原数组中有对应 key</span><br><span class="line">        mValues[i] &#x3D; value; &#x2F;&#x2F; 则直接 Value 数组中的 value 值为最新的 value</span><br><span class="line">    &#125; else &#123; &#x2F;&#x2F; 索引小于 0 说明原数组中不存在对应的 key</span><br><span class="line">        i &#x3D; ~i; &#x2F;&#x2F; 取反后得到当前 key 应该在的位置</span><br><span class="line"></span><br><span class="line">        if (i &lt; mSize &amp;&amp; mValues[i] &#x3D;&#x3D; DELETED) &#123; &#x2F;&#x2F; 如果数组长度够，并且当前位置已被回收则直接对该位置赋值</span><br><span class="line">            mKeys[i] &#x3D; key;</span><br><span class="line">            mValues[i] &#x3D; value;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (mGarbage &amp;&amp; mSize &gt;&#x3D; mKeys.length) &#123; &#x2F;&#x2F; 回收状态为 true 并且内容长度大于等于 key 数组长度</span><br><span class="line">            gc(); &#x2F;&#x2F; 回收，整理数组</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; Search again because indices may have changed.</span><br><span class="line">            i &#x3D; ~ContainerHelpers.binarySearch(mKeys, mSize, key); &#x2F;&#x2F; 再次使用二分法查找位置</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        mKeys &#x3D; GrowingArrayUtils.insert(mKeys, mSize, i, key); &#x2F;&#x2F; 执行 key 插入到 key 数组对应位置</span><br><span class="line">        mValues &#x3D; GrowingArrayUtils.insert(mValues, mSize, i, value); &#x2F;&#x2F; 执行 value 插入到 value 数组对应位置</span><br><span class="line">        mSize++; &#x2F;&#x2F; 键值对数量加 1</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; ContainerHelpers </span><br><span class="line">static int binarySearch(int[] array, int size, int value) &#123;</span><br><span class="line">        int lo &#x3D; 0;</span><br><span class="line">        int hi &#x3D; size - 1;</span><br><span class="line"></span><br><span class="line">        while (lo &lt;&#x3D; hi) &#123;</span><br><span class="line">            final int mid &#x3D; (lo + hi) &gt;&gt;&gt; 1; &#x2F;&#x2F; 带符号右移，也就是做除以 2，这里是找到中间位置索引的操作</span><br><span class="line">            final int midVal &#x3D; array[mid]; </span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 下面是正常的二分法操作</span><br><span class="line">            if (midVal &lt; value) &#123;</span><br><span class="line">                lo &#x3D; mid + 1;</span><br><span class="line">            &#125; else if (midVal &gt; value) &#123;</span><br><span class="line">                hi &#x3D; mid - 1;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                return mid;  &#x2F;&#x2F; value found</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return ~lo;  &#x2F;&#x2F; 当数组中不存在对应 value 的时候，这里是将如果数组中存在 value 时应该在的位置取反后返回</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; </span><br><span class="line">private void gc() &#123;</span><br><span class="line">    int n &#x3D; mSize; &#x2F;&#x2F; 键值对数量</span><br><span class="line">    int o &#x3D; 0;</span><br><span class="line">    int[] keys &#x3D; mKeys;</span><br><span class="line">    Object[] values &#x3D; mValues;</span><br><span class="line"></span><br><span class="line">    for (int i &#x3D; 0; i &lt; n; i++) &#123; &#x2F;&#x2F; 通过循环将 value 数组中的 DELETED 值移除，并且 DELETED 以后的键跟值都往前补</span><br><span class="line">        Object val &#x3D; values[i];</span><br><span class="line"></span><br><span class="line">        if (val !&#x3D; DELETED) &#123;</span><br><span class="line">            if (i !&#x3D; o) &#123; &#x2F;&#x2F; 循环第一次执行时 i 和 o 都是 0 ，这种情况不需要处理</span><br><span class="line">                keys[o] &#x3D; keys[i];</span><br><span class="line">                values[o] &#x3D; val;</span><br><span class="line">                values[i] &#x3D; null; &#x2F;&#x2F; 原位置置空</span><br><span class="line">            &#125;</span><br><span class="line">            o++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mGarbage &#x3D; false; &#x2F;&#x2F; 回收状态置为 false</span><br><span class="line">    mSize &#x3D; o; &#x2F;&#x2F; 将键值对的值更新为实际的键值对数量</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * GrowingArrayUtils 中定义了 泛型&#x2F;int&#x2F;long&#x2F;boolean 等类型数组在指定位置插入数据的方法</span><br><span class="line"> *&#x2F;</span><br><span class="line">public static int[] insert(int[] array, int currentSize, int index, int element) &#123;</span><br><span class="line">    assert currentSize &lt;&#x3D; array.length;</span><br><span class="line"></span><br><span class="line">    if (currentSize + 1 &lt;&#x3D; array.length) &#123; &#x2F;&#x2F; 不需要扩容</span><br><span class="line">        System.arraycopy(array, index, array, index + 1, currentSize - index); &#x2F;&#x2F; 将对应位置后的内容右移</span><br><span class="line">        array[index] &#x3D; element;</span><br><span class="line">        return array;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 需要扩容，</span><br><span class="line">    int[] newArray &#x3D; new int[growSize(currentSize)];</span><br><span class="line">    System.arraycopy(array, 0, newArray, 0, index); &#x2F;&#x2F; 将对应位置前的内容插入</span><br><span class="line">    newArray[index] &#x3D; element; &#x2F;&#x2F; 将对应位置内容插入</span><br><span class="line">    System.arraycopy(array, index, newArray, index + 1, array.length - index); &#x2F;&#x2F; 将对应位置后的内容插入</span><br><span class="line">    return newArray;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * GrowingArrayUtils 中定义了 泛型&#x2F;int&#x2F;long&#x2F;boolean 等类型数组在指定位置插入数据的方法，这个方法的作用为，在位置超出数组大小时，计算扩容后数组的新长度</span><br><span class="line"> * 旧数组长度小于 4 则设置为 8，否则都是在当前长度基础上扩容一被</span><br><span class="line"> *&#x2F;</span><br><span class="line">public static int growSize(int currentSize) &#123;</span><br><span class="line">    return currentSize &lt;&#x3D; 4 ? 8 : currentSize * 2;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="查找方法-get-int-key"><a href="#查找方法-get-int-key" class="headerlink" title="查找方法 get(int key)"></a>查找方法 get(int key)</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public E get(int key) &#123;</span><br><span class="line">    return get(key, null);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * 根据 key 查找 value ，如果 key 不存在则返回指定的默认值</span><br><span class="line"> *&#x2F;</span><br><span class="line">public E get(int key, E valueIfKeyNotFound) &#123;</span><br><span class="line">    int i &#x3D; ContainerHelpers.binarySearch(mKeys, mSize, key);</span><br><span class="line"></span><br><span class="line">    if (i &lt; 0 || mValues[i] &#x3D;&#x3D; DELETED) &#123;</span><br><span class="line">        return valueIfKeyNotFound;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return (E) mValues[i];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="五、删除方法-delete-int-key"><a href="#五、删除方法-delete-int-key" class="headerlink" title="五、删除方法 delete(int key)"></a>五、删除方法 delete(int key)</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * 删除操作</span><br><span class="line"> *&#x2F;</span><br><span class="line">public void delete(int key) &#123;</span><br><span class="line">    int i &#x3D; ContainerHelpers.binarySearch(mKeys, mSize, key);</span><br><span class="line"></span><br><span class="line">    if (i &gt;&#x3D; 0) &#123;</span><br><span class="line">        if (mValues[i] !&#x3D; DELETED) &#123;</span><br><span class="line">            mValues[i] &#x3D; DELETED;</span><br><span class="line">            mGarbage &#x3D; true;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public E removeReturnOld(int key) &#123;</span><br><span class="line">    int i &#x3D; ContainerHelpers.binarySearch(mKeys, mSize, key);</span><br><span class="line"></span><br><span class="line">    if (i &gt;&#x3D; 0) &#123;</span><br><span class="line">        if (mValues[i] !&#x3D; DELETED) &#123;</span><br><span class="line">            final E old &#x3D; (E) mValues[i];</span><br><span class="line">            mValues[i] &#x3D; DELETED;</span><br><span class="line">            mGarbage &#x3D; true;</span><br><span class="line">            return old;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * 删除指定位置的值</span><br><span class="line"> *&#x2F;</span><br><span class="line">public void removeAt(int index) &#123;</span><br><span class="line">    if (mValues[index] !&#x3D; DELETED) &#123;</span><br><span class="line">        mValues[index] &#x3D; DELETED;</span><br><span class="line">        mGarbage &#x3D; true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * 以 index 开始，删除之后 size 个值，包含 index 位置，不包含 index + size</span><br><span class="line"> *&#x2F;</span><br><span class="line">public void removeAtRange(int index, int size) &#123;</span><br><span class="line">    final int end &#x3D; Math.min(mSize, index + size);</span><br><span class="line">    for (int i &#x3D; index; i &lt; end; i++) &#123;</span><br><span class="line">        removeAt(i);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其他方法略</p>
+<p>总结：</p>
+<p>SparseArray 的代码非常少，只有 450 行左右，并且特别易于理解。但 SparseArray 要比 HashMap 更加高效，在 Android 手机中，如果 key 为 int 类型的 Map 数据，最好使用 SparseArray 来实现。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%A8%80%E7%96%8F%E6%95%B0%E7%BB%84-SparseArray/" rel="tag"># 稀疏数组 SparseArray</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/5%E3%80%81JVM/4%E3%80%81JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B(JDK7)/" rel="prev" title="JVM内存模型(JDK7)">
+      <i class="fa fa-chevron-left"></i> JVM内存模型(JDK7)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/9%E3%80%81HashSet/" rel="next" title="HashSet">
+      HashSet <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F"><span class="nav-number">1.</span> <span class="nav-text">一、成员变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="nav-number">2.</span> <span class="nav-text">二、构造函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%B7%BB%E5%8A%A0-%E4%BF%AE%E6%94%B9-%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、添加&#x2F;修改 操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E6%89%BE%E6%96%B9%E6%B3%95-get-int-key"><span class="nav-number">4.</span> <span class="nav-text">查找方法 get(int key)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%88%A0%E9%99%A4%E6%96%B9%E6%B3%95-delete-int-key"><span class="nav-number">5.</span> <span class="nav-text">五、删除方法 delete(int key)</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

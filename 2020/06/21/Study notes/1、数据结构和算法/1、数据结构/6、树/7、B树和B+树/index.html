@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="MySQL中MyISM和Innodb使用B+树作为索引数据结构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="B树和B+树">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/6%E3%80%81%E6%A0%91/7%E3%80%81B%E6%A0%91%E5%92%8CB+%E6%A0%91/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="MySQL中MyISM和Innodb使用B+树作为索引数据结构">
+<meta property="og:locale">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/25/f4/25700c1dc28ce094eed3ffac394531f4.jpg">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/69/59/69d4c48c1257dcb7dd6077d961b86259.jpg">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/76/cc/769687f57190a826a8f6f82793491ccc.jpg">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/ea/30/ea4472fd7bb7fa948532c8c8ba334430.jpg">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/18/e0/1800bc80e1e05b32a042ff6873e6c2e0.jpg">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/17/18/1730e34450dad29f062e76536622c918.jpg">
+<meta property="article:published_time" content="2020-06-21T01:23:21.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:38.822Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="B树和B+树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://static001.geekbang.org/resource/image/25/f4/25700c1dc28ce094eed3ffac394531f4.jpg">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/6%E3%80%81%E6%A0%91/7%E3%80%81B%E6%A0%91%E5%92%8CB+%E6%A0%91/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>B树和B+树 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/6%E3%80%81%E6%A0%91/7%E3%80%81B%E6%A0%91%E5%92%8CB+%E6%A0%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          B树和B+树
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:21" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:21+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:38" itemprop="dateModified" datetime="2020-09-19T08:57:38+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A0%91/" itemprop="url" rel="index"><span itemprop="name">树</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">MySQL中MyISM和Innodb使用B+树作为索引数据结构</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>MySQL中MyISM和Innodb使用B+树作为索引数据结构</p>
+<p>让二叉查找树支持按照区间来查找数据，我们可以对它进行这样的改造：==树中的节点并不存储数据本身，而是只是作为索引。除此之外，我们把每个叶子节点串在一条链表上，链表中的数据是从小到大有序的==。类似跳表<br><img src="https://static001.geekbang.org/resource/image/25/f4/25700c1dc28ce094eed3ffac394531f4.jpg" alt="image"></p>
+<p>我们给一亿个数据构建二叉查找树索引，那索引中会包含大约 1 亿个节点，每个节点假设占用 16 个字节，那就需要大约 1GB 的内存空间。给一张表建立索引，我们需要 1GB 的内存空间。如果我们要给 10 张表建立索引，那对内存的需求是无法满足的。如何解决这个索引占用太多内存的问题呢？</p>
+<p>借助时间换空间的思路，==把索引存储在硬盘中==<br>那么每个节点的读取（或者访问），都对应一次磁盘 IO 操作。==树的高度就等于每次查询数据时磁盘 IO 操作的次数。==</p>
+<p>如何降低树的高度,减少IO次数？==将二叉树转为m叉树==</p>
+<ul>
+<li><p>给 16 个数据构建二叉树索引，树的高度是 4，查找一个数据，就需要 4 个磁盘 IO 操作（如果根节点存储在内存中，其他结点存储在磁盘中）</p>
+</li>
+<li><p>构建五叉树索引，那高度只有 2，查找一个数据，对应只需要 2 次磁盘操作。</p>
+</li>
+<li><p>如果 m 叉树中的 m 是 100，那对一亿个数据构建索引，树的高度也只是 3，最多只要 3 次磁盘 IO 就能获取到数据。磁盘 IO 变少了，查找数据的效率也就提高了。<br><img src="https://static001.geekbang.org/resource/image/69/59/69d4c48c1257dcb7dd6077d961b86259.jpg" alt="image"><br><img src="https://static001.geekbang.org/resource/image/76/cc/769687f57190a826a8f6f82793491ccc.jpg" alt="image"></p>
+</li>
+</ul>
+<p>那 m 叉树中的 m 是不是越大越好呢？到底多大才最合适呢？</p>
+<p>==不管是内存中的数据，还是磁盘中的数据，操作系统都是按页（一页大小通常是 4KB，这个值可以通过 getconfig PAGE_SIZE 命令查看）来读取的，一次会读一页的数据。如果要读取的数据量超过一页的大小，就会触发多次 IO 操作。所以，我们在选择 m 大小的时候，要尽量让每个节点的大小等于一个页的大小。读取一个节点，只需要一次磁盘 IO 操作。==</p>
+<p>m 值是根据页的大小事先计算好的，也就是说，每个节点最多只能有 m 个子节点。在往数据库中写入数据的过程中，这样就有可能使索引中某些节点的子节点个数超过 m，这个节点的大小超过了一个页的大小，读取这样一个节点，就会导致多次磁盘 IO 操作。我们该如何解决这个问题呢？</p>
+<p><img src="https://static001.geekbang.org/resource/image/ea/30/ea4472fd7bb7fa948532c8c8ba334430.jpg" alt="image"></p>
+<p>插入索引数据：==分裂节点的方式==我们只需要将这个节点分裂成两个节点。但是，节点分裂之后，其上层父节点的子节点个数就有可能超过 m 个。不过这也没关系，我们可以用同样的方法，将父节点也分裂成两个节点。这种级联反应会从下往上，一直影响到根节点。这个分裂过程，你可以结合着下面这个图一块看，会更容易理解（图中的 B+ 树是一个三叉树。我们限定叶子节点中，数据的个数超过 2 个就分裂节点；非叶子节点中，子节点的个数超过 3 个就分裂节点）。<br><img src="https://static001.geekbang.org/resource/image/18/e0/1800bc80e1e05b32a042ff6873e6c2e0.jpg" alt="image"></p>
+<p>删除索引数据：合并节点的方式，在 B+ 树中，这个阈值等于 m/2。如果某个节点的子节点个数小于 m/2，我们就将它跟相邻的兄弟节点合并。不过，合并之后结点的子节点个数有可能会超过 m。针对这种情况，我们可以借助插入数据时候的处理方法，再分裂节点。</p>
+<p>图中的 B+ 树是一个五叉树。我们限定叶子节点中，数据的个数少于 2 个就合并节点；非叶子节点中，子节点的个数少于 3 个就合并节点。<br><img src="https://static001.geekbang.org/resource/image/17/18/1730e34450dad29f062e76536622c918.jpg" alt="image"></p>
+<h3 id="B-树的特点："><a href="#B-树的特点：" class="headerlink" title="B+树的特点："></a>B+树的特点：</h3><ul>
+<li>每个节点中子节点的个数不能超过 m，也不能小于 m/2；</li>
+<li>==根节点的子节点个数可以不超过 m/2，这是一个例外==；</li>
+<li>m 叉树只存储索引，并不真正存储数据，这个有点儿类似跳表；</li>
+<li>通过链表将叶子节点串联在一起，这样可以方便按区间查找；</li>
+<li>一般情况，根节点会被存储在内存中，其他节点存储在磁盘中。</li>
+</ul>
+<h2 id="B树与B-树的区别-：也是mysql为什么不采用B树"><a href="#B树与B-树的区别-：也是mysql为什么不采用B树" class="headerlink" title="==B树与B+树的区别==：也是mysql为什么不采用B树"></a>==B树与B+树的区别==：也是mysql为什么不采用B树</h2><ul>
+<li>B+ 树中的节点不存储数据，只是索引，而 B 树中的节点存储数据；所以节点要讲数据存储完，势必树的高度相对会比B+树高，平均的I/O效率会比较低。</li>
+<li>B 树中的叶子节点并不需要链表来串联。所以无法支持区间查询。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * 这是 B+ 树非叶子节点的定义。</span><br><span class="line"> *</span><br><span class="line"> * 假设 keywords&#x3D;[3, 5, 8, 10]</span><br><span class="line"> * 4 个键值将数据分为 5 个区间：(-INF,3), [3,5), [5,8), [8,10), [10,INF)</span><br><span class="line"> * 5 个区间分别对应：children[0]...children[4]</span><br><span class="line"> *</span><br><span class="line"> * m 值是事先计算得到的，计算的依据是让所有信息的大小正好等于页的大小：</span><br><span class="line"> * PAGE_SIZE &#x3D; (m-1)*4[keywordss 大小]+m*8[children 大小]</span><br><span class="line"> *&#x2F;</span><br><span class="line">public class BPlusTreeNode &#123;</span><br><span class="line">  public static int m &#x3D; 5; &#x2F;&#x2F; 5 叉树</span><br><span class="line">  public int[] keywords &#x3D; new int[m-1]; &#x2F;&#x2F; 键值，用来划分数据区间</span><br><span class="line">  public BPlusTreeNode[] children &#x3D; new BPlusTreeNode[m];&#x2F;&#x2F; 保存子节点指针</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * 这是 B+ 树中叶子节点的定义。</span><br><span class="line"> *</span><br><span class="line"> * B+ 树中的叶子节点跟内部结点是不一样的,</span><br><span class="line"> * 叶子节点存储的是值，而非区间。</span><br><span class="line"> * 这个定义里，每个叶子节点存储 3 个数据行的键值及地址信息。</span><br><span class="line"> *</span><br><span class="line"> * k 值是事先计算得到的，计算的依据是让所有信息的大小正好等于页的大小：</span><br><span class="line"> * PAGE_SIZE &#x3D; k*4[keyw.. 大小]+k*8[dataAd.. 大小]+8[prev 大小]+8[next 大小]</span><br><span class="line"> *&#x2F;</span><br><span class="line">public class BPlusTreeLeafNode &#123;</span><br><span class="line">  public static int k &#x3D; 3;</span><br><span class="line">  public int[] keywords &#x3D; new int[k]; &#x2F;&#x2F; 数据的键值</span><br><span class="line">  public long[] dataAddress &#x3D; new long[k]; &#x2F;&#x2F; 数据地址</span><br><span class="line"></span><br><span class="line">  public BPlusTreeLeafNode prev; &#x2F;&#x2F; 这个结点在链表中的前驱结点</span><br><span class="line">  public BPlusTreeLeafNode next; &#x2F;&#x2F; 这个结点在链表中的后继结点</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/B%E6%A0%91%E5%92%8CB-%E6%A0%91/" rel="tag"># B树和B+树</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/4%E3%80%81%E4%B8%AD%E9%97%B4%E4%BB%B6/3%E3%80%81RocketMQ/7%E3%80%81%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/" rel="prev" title="事务消息">
+      <i class="fa fa-chevron-left"></i> 事务消息
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/8%E3%80%81%E5%B7%A5%E5%85%B7%E7%AF%87/6%E3%80%81Swagger/1%E3%80%81Swagger%E4%BD%BF%E7%94%A8/" rel="next" title="Swagger使用">
+      Swagger使用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#B-%E6%A0%91%E7%9A%84%E7%89%B9%E7%82%B9%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">B+树的特点：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#B%E6%A0%91%E4%B8%8EB-%E6%A0%91%E7%9A%84%E5%8C%BA%E5%88%AB-%EF%BC%9A%E4%B9%9F%E6%98%AFmysql%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E9%87%87%E7%94%A8B%E6%A0%91"><span class="nav-number"></span> <span class="nav-text">&#x3D;&#x3D;B树与B+树的区别&#x3D;&#x3D;：也是mysql为什么不采用B树</span></a></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

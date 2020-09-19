@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1、引入相关依赖">
+<meta property="og:type" content="article">
+<meta property="og:title" content="solrj api的操作">
+<meta property="og:url" content="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/2%E3%80%81solr/6%E3%80%81solrj%20api%E7%9A%84%E6%93%8D%E4%BD%9C/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="1、引入相关依赖">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-21T01:23:33.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:42.312Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="solrj api的操作">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/2%E3%80%81solr/6%E3%80%81solrj%20api%E7%9A%84%E6%93%8D%E4%BD%9C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>solrj api的操作 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/06/21/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/5%E3%80%81%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E/2%E3%80%81solr/6%E3%80%81solrj%20api%E7%9A%84%E6%93%8D%E4%BD%9C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          solrj api的操作
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-21 09:23:33" itemprop="dateCreated datePublished" datetime="2020-06-21T09:23:33+08:00">2020-06-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:42" itemprop="dateModified" datetime="2020-09-19T08:57:42+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/solr/" itemprop="url" rel="index"><span itemprop="name">solr</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">1、引入相关依赖</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>1、引入相关依赖</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependencies&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.apache.solr&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;solr-solrj&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;version&gt;5.3.1&lt;&#x2F;version&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;junit&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;junit&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;version&gt;4.11&lt;&#x2F;version&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.slf4j&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;slf4j-log4j12&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;version&gt;1.7.7&lt;&#x2F;version&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;commons-logging&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;commons-logging&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;version&gt;1.1.3&lt;&#x2F;version&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line">    &lt;&#x2F;dependencies&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="1、HttpSolrClient"><a href="#1、HttpSolrClient" class="headerlink" title="1、HttpSolrClient"></a>1、HttpSolrClient</h2><p>创建与 schema.xml文件相对应的javabean，这里命名为Notice。并添加@Field注解，生成getter和setter方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public class Notice &#123;</span><br><span class="line">  @Field(&quot;id&quot;)</span><br><span class="line">  private String id;</span><br><span class="line">  @Field</span><br><span class="line">  private String title;</span><br><span class="line">  @Field</span><br><span class="line">  private String subject;</span><br><span class="line">  @Field</span><br><span class="line">  private String description;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br></pre></td><td class="code"><pre><span class="line">public class SolrjTest &#123;</span><br><span class="line"></span><br><span class="line">  private HttpSolrClient httpSolrClient;</span><br><span class="line">  </span><br><span class="line">  &#x2F;**</span><br><span class="line">  *solrj6.5之前的初始化SolrClient方式</span><br><span class="line">  *&#x2F;</span><br><span class="line">  @Before</span><br><span class="line">  public void initConnect() throws Exception &#123;</span><br><span class="line">    &#x2F;&#x2F; 在url中指定core名称：notice</span><br><span class="line">    String url &#x3D; &quot;http:&#x2F;&#x2F;localhost:777&#x2F;solr&#x2F;notice&#x2F;&quot;;</span><br><span class="line">    HttpSolrClient httpSolrClient &#x3D; new HttpSolrClient(url);</span><br><span class="line">    httpSolrClient.setParser(new XMLResponseParser()); &#x2F;&#x2F; 设置响应解析器</span><br><span class="line">    httpSolrClient.setConnectionTimeout(500); &#x2F;&#x2F; 建立连接的最长时间</span><br><span class="line">    this.httpSolrClient &#x3D; httpSolrClient;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">    &#x2F;**</span><br><span class="line">     * 获取SolrClient</span><br><span class="line">     * solrj 6.5及以后版本获取方式</span><br><span class="line">     * @return</span><br><span class="line">     *&#x2F;</span><br><span class="line">    public static HttpSolrClient getSolrClient()&#123;</span><br><span class="line">    &#x2F;&#x2F; solr url</span><br><span class="line">    private final static String BASE_URL &#x3D; &quot;http:&#x2F;&#x2F;localhost:8081&#x2F;solr&quot;;</span><br><span class="line">        &#x2F;*</span><br><span class="line">         * 设置超时时间</span><br><span class="line">         * .withConnectionTimeout(10000)</span><br><span class="line">         * .withSocketTimeout(60000)</span><br><span class="line">         *&#x2F;</span><br><span class="line">        return new HttpSolrClient.Builder(BASE_URL)</span><br><span class="line">                .withConnectionTimeout(10000)</span><br><span class="line">                .withSocketTimeout(60000)</span><br><span class="line">                .build();</span><br><span class="line"></span><br><span class="line">  </span><br><span class="line">   &#x2F;*</span><br><span class="line">     * 测试向索引库中添加文档</span><br><span class="line">     *&#x2F;</span><br><span class="line">    @Test</span><br><span class="line">  public void testAdd() throws IOException, SolrServerException &#123;</span><br><span class="line">    Notice notice &#x3D; new Notice();</span><br><span class="line">    String desc &#x3D; &quot;该应用场景为AdMaster DMP缓存存储需求，DMP需要管理非常多的第三方id数据，其中包括各媒体cookie与自身cookie（以下统称admckid）的mapping关系，还包括了admckid的人口标签、移动端id（主要是idfa和imei）的人口标签，以及一些黑名单id、ip等数据。&quot;;</span><br><span class="line">    notice.setId(UUID.randomUUID().toString());</span><br><span class="line">    notice.setTitle(&quot;Redis百亿级Key存储方案&quot;);</span><br><span class="line">    notice.setSubject(&quot;该应用场景为AdMaster DMP缓存存储需求&quot;);</span><br><span class="line">    notice.setDescription(desc);</span><br><span class="line">    this.httpSolrClient.addBean(notice);</span><br><span class="line">    this.httpSolrClient.commit();</span><br><span class="line">  &#125;</span><br><span class="line">  &#x2F;*</span><br><span class="line">     * 测试查询文档</span><br><span class="line">     *&#x2F;</span><br><span class="line">  @Test</span><br><span class="line">  public void testQuery() throws SolrServerException, IOException&#123;</span><br><span class="line">    String keywords &#x3D; &quot;应用&quot;;</span><br><span class="line">    int page &#x3D; 1;</span><br><span class="line">    int rows &#x3D; 10;</span><br><span class="line">    </span><br><span class="line">    SolrQuery solrQuery &#x3D; new SolrQuery(); &#x2F;&#x2F; 构造搜索条件</span><br><span class="line">    solrQuery.setQuery(&quot;text:&quot; + keywords); &#x2F;&#x2F; 搜索关键词</span><br><span class="line">    &#x2F;&#x2F; 设置分页 </span><br><span class="line">    solrQuery.setStart((Math.max(page, 1) - 1) * rows);</span><br><span class="line">    solrQuery.setRows(rows);</span><br><span class="line">    </span><br><span class="line">    QueryResponse queryResponse &#x3D; this.httpSolrClient.query(solrQuery);</span><br><span class="line">    List&lt;Notice&gt; notices &#x3D; queryResponse.getBeans(Notice.class);</span><br><span class="line">    for (Notice notice : notices) &#123;</span><br><span class="line">      System.out.println(notice.toString());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">    &#x2F;*</span><br><span class="line">     * 测试删除文档</span><br><span class="line">     *&#x2F;</span><br><span class="line">  @Test</span><br><span class="line">  public void testDelete() throws SolrServerException, IOException&#123;</span><br><span class="line">    String id &#x3D; &quot;30a6d598-9762-455a-94f7-21fa011640d1&quot;;</span><br><span class="line">    this.httpSolrClient.deleteById(id);</span><br><span class="line">    this.httpSolrClient.commit();</span><br><span class="line">  &#125;</span><br><span class="line">     &#x2F;*</span><br><span class="line">     * 测试高亮显示关键字</span><br><span class="line">     *&#x2F;</span><br><span class="line">  @Test</span><br><span class="line">  public void testHighlighting() throws SolrServerException, IOException&#123;</span><br><span class="line">    String keywords &#x3D; &quot;应用&quot;;</span><br><span class="line">    int page &#x3D; 1;</span><br><span class="line">    int rows &#x3D; 10;</span><br><span class="line">    </span><br><span class="line">    SolrQuery solrQuery &#x3D; new SolrQuery(); &#x2F;&#x2F; 构造搜索条件</span><br><span class="line">    solrQuery.setQuery(&quot;text:&quot; + keywords); &#x2F;&#x2F; 搜索关键词</span><br><span class="line">    &#x2F;&#x2F; 设置分页 </span><br><span class="line">    solrQuery.setStart((Math.max(page, 1) - 1) * rows);</span><br><span class="line">    solrQuery.setRows(rows);</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; 是否需要高亮</span><br><span class="line">    boolean isHighlighting &#x3D; !StringUtils.equals(&quot;*&quot;, keywords) &amp;&amp; StringUtils.isNotEmpty(keywords);</span><br><span class="line">    if (isHighlighting) &#123;</span><br><span class="line">      &#x2F;&#x2F; 设置高亮</span><br><span class="line">      solrQuery.setHighlight(true); &#x2F;&#x2F; 开启高亮组件</span><br><span class="line">      solrQuery.addHighlightField(&quot;title&quot;);&#x2F;&#x2F; 高亮字段</span><br><span class="line">      solrQuery.addHighlightField(&quot;subject&quot;);</span><br><span class="line">      solrQuery.setHighlightSimplePre(&quot;&lt;span style&#x3D;&#39;color:red;&#39;&gt;&quot;);&#x2F;&#x2F; 标记，高亮关键字前缀</span><br><span class="line">      solrQuery.setHighlightSimplePost(&quot;&lt;&#x2F;span&gt;&quot;);&#x2F;&#x2F; 后缀</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    QueryResponse queryResponse &#x3D; this.httpSolrClient.query(solrQuery);</span><br><span class="line">    List&lt;Notice&gt; notices &#x3D; queryResponse.getBeans(Notice.class);</span><br><span class="line">    </span><br><span class="line">    if (isHighlighting) &#123;</span><br><span class="line">      &#x2F;&#x2F; 将高亮的标题数据写回到数据对象中</span><br><span class="line">      Map&lt;String, Map&lt;String, List&lt;String&gt;&gt;&gt; map &#x3D; queryResponse.getHighlighting();</span><br><span class="line">      for (Map.Entry&lt;String, Map&lt;String, List&lt;String&gt;&gt;&gt; highlighting : map.entrySet()) &#123;</span><br><span class="line">        for (Notice notice : notices) &#123;</span><br><span class="line">          if (!highlighting.getKey().equals(notice.getId().toString())) &#123;</span><br><span class="line">            continue;</span><br><span class="line">          &#125;</span><br><span class="line">          if(highlighting.getValue().get(&quot;title&quot;) !&#x3D; null)&#123;</span><br><span class="line">            notice.setTitle(StringUtils.join(highlighting.getValue().get(&quot;title&quot;), &quot;&quot;));</span><br><span class="line">          &#125;</span><br><span class="line">          if(highlighting.getValue().get(&quot;subject&quot;) !&#x3D; null)&#123;</span><br><span class="line">            notice.setSubject(StringUtils.join(highlighting.getValue().get(&quot;subject&quot;),&quot;&quot;));</span><br><span class="line">          &#125;</span><br><span class="line">          break;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    for (Notice notice : notices) &#123;</span><br><span class="line">      System.out.println(notice.toString());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2、solrServer"><a href="#2、solrServer" class="headerlink" title="2、solrServer"></a>2、solrServer</h2><p>可以直接配置到spring或者直接在代码中创建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;beans xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;beans&quot;</span><br><span class="line">	xmlns:context&#x3D;&quot;http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;context&quot; xmlns:p&#x3D;&quot;http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;p&quot;</span><br><span class="line">	xmlns:aop&#x3D;&quot;http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;aop&quot; xmlns:tx&#x3D;&quot;http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;tx&quot;</span><br><span class="line">	xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot;</span><br><span class="line">	xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;beans http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;beans&#x2F;spring-beans-4.0.xsd</span><br><span class="line">	http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;context http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;context&#x2F;spring-context-4.0.xsd</span><br><span class="line">	http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;aop http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;aop&#x2F;spring-aop-4.0.xsd http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;tx http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;tx&#x2F;spring-tx-4.0.xsd</span><br><span class="line">	http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;util http:&#x2F;&#x2F;www.springframework.org&#x2F;schema&#x2F;util&#x2F;spring-util-4.0.xsd&quot;&gt;</span><br><span class="line"> </span><br><span class="line">	&lt;!-- 配置SolrServer对象 --&gt;</span><br><span class="line">	&lt;!-- 单机版 --&gt;</span><br><span class="line">	 &lt;bean id&#x3D;&quot;httpSolrServer&quot; class&#x3D;&quot;org.apache.solr.client.solrj.impl.HttpSolrServer&quot;&gt;</span><br><span class="line">		&lt;constructor-arg name&#x3D;&quot;baseURL&quot; value&#x3D;&quot;$&#123;SOLR.SERVER.URL&#125;&quot;&gt;&lt;&#x2F;constructor-arg&gt;</span><br><span class="line">	&lt;&#x2F;bean&gt; </span><br><span class="line">	&lt;!-- 集群版 --&gt;</span><br><span class="line">	&lt;!--&lt;bean id&#x3D;&quot;cloudSolrServer&quot; class&#x3D;&quot;org.apache.solr.client.solrj.impl.CloudSolrServer&quot;&gt;</span><br><span class="line">		&lt;constructor-arg name&#x3D;&quot;zkHost&quot; value&#x3D;&quot;192.168.25.154:2181,192.168.25.154:2182,192.168.25.154:2183&quot;&gt;&lt;&#x2F;constructor-arg&gt;</span><br><span class="line">		&lt;property name&#x3D;&quot;defaultCollection&quot; value&#x3D;&quot;collection2&quot;&gt;&lt;&#x2F;property&gt;</span><br><span class="line">	&lt;&#x2F;bean&gt;--&gt;</span><br><span class="line">&lt;&#x2F;beans&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>测试类</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br></pre></td><td class="code"><pre><span class="line">package com.april.lucene.solr;</span><br><span class="line"> </span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.net.MalformedURLException;</span><br><span class="line">import java.util.List;</span><br><span class="line">import org.apache.solr.client.solrj.SolrQuery;</span><br><span class="line">import org.apache.solr.client.solrj.SolrQuery.ORDER;</span><br><span class="line">import org.apache.solr.client.solrj.SolrServerException;</span><br><span class="line">import org.apache.solr.client.solrj.impl.HttpSolrServer;</span><br><span class="line">import org.apache.solr.client.solrj.response.QueryResponse;</span><br><span class="line">import org.apache.solr.client.solrj.response.UpdateResponse;</span><br><span class="line">import org.apache.solr.common.SolrDocument;</span><br><span class="line">import org.apache.solr.common.SolrDocumentList;</span><br><span class="line">import org.apache.solr.common.SolrInputDocument;</span><br><span class="line">import org.junit.After;</span><br><span class="line">import org.junit.Before;</span><br><span class="line">import org.junit.Test;</span><br><span class="line">import com.april.lucene.model.JavaBean;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * @Author: April</span><br><span class="line"> * @version Solr 4.10.0</span><br><span class="line"> * @Date: 2014年10月14日</span><br><span class="line"> * @参考：http:&#x2F;&#x2F;blog.csdn.net&#x2F;liuweitoo&#x2F;article&#x2F;details&#x2F;8137023</span><br><span class="line"> *&#x2F;</span><br><span class="line">public class ServerTest &#123;</span><br><span class="line">	private HttpSolrServer server &#x3D; null;</span><br><span class="line">	&#x2F;**</span><br><span class="line">  	 * 注：URL这里 !</span><br><span class="line">  	 * 这是错误的：URL &#x3D; &quot;http:&#x2F;&#x2F;localhost:8080&#x2F;solr&#x2F;home&#x2F;april&quot;;</span><br><span class="line">  	 * 在安装solr配置solr.home环境变量整合tomcat时，已经配置了solr&#x2F;home</span><br><span class="line">  	 * 所以URL直接到&#x2F;solr&#x2F;code~ 就可以了，当时被个问题纠结了半天</span><br><span class="line">  	 *&#x2F;</span><br><span class="line"> 	private static final String URL &#x3D; &quot;http:&#x2F;&#x2F;localhost:8080&#x2F;solr&#x2F;april&quot;; &#x2F;&#x2F;april索引库URL</span><br><span class="line">	@Before</span><br><span class="line">	public void init() &#123;</span><br><span class="line">		server &#x3D; new HttpSolrServer(URL);</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 *@Function: 添加索引 Document文档</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@Test</span><br><span class="line">	public void addDoc() &#123;</span><br><span class="line">		&#x2F;&#x2F;创建doc文档</span><br><span class="line">		SolrInputDocument doc &#x3D; new SolrInputDocument();</span><br><span class="line">		doc.addField(&quot;id&quot;, 1);</span><br><span class="line">		doc.addField(&quot;name&quot;, &quot;Add Solr Index&quot;);&#x2F;&#x2F;schema.xml中首先应该配置了名称为name的field</span><br><span class="line">		doc.addField(&quot;manu&quot;, &quot;Solr test file&quot;);</span><br><span class="line">		try &#123;</span><br><span class="line">			UpdateResponse response &#x3D; server.add(doc);&#x2F;&#x2F;可以添加一个doc文档</span><br><span class="line">			&#x2F;&#x2F;server.add(Collection&lt;SolrInputDocument&gt; docs);&#x2F;&#x2F;也可以直接添加一个文档集合</span><br><span class="line">			server.commit();&#x2F;&#x2F;commit后才保存到索引库</span><br><span class="line">			System.out.println(response);</span><br><span class="line">			System.out.println(&quot;query time：&quot; + response.getQTime());</span><br><span class="line">			System.out.println(&quot;Elapsed Time：&quot; + response.getElapsedTime());</span><br><span class="line">			System.out.println(&quot;status：&quot; + response.getStatus());</span><br><span class="line">		&#125; catch (SolrServerException e) &#123;</span><br><span class="line">			e.printStackTrace();</span><br><span class="line">		&#125; catch (IOException e) &#123;</span><br><span class="line">			e.printStackTrace();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 *@Function: 直接添加JavaBean</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@Test</span><br><span class="line">	public void addBean() throws IOException, SolrServerException &#123;</span><br><span class="line">		&#x2F;&#x2F;Bean需要添加Annotation注解，以便告诉solr哪些属性参与到index中</span><br><span class="line">		JavaBean bean &#x3D; new JavaBean();</span><br><span class="line">		bean.setId(&quot;2&quot;);</span><br><span class="line">		bean.setName(&quot;Add bean index&quot;);</span><br><span class="line">		bean.setMenu(&quot;index bean menu&quot;);</span><br><span class="line">		server.addBean(bean);&#x2F;&#x2F;添加Bean到索引库</span><br><span class="line">		&#x2F;&#x2F;server.addBeans(Collection&lt;?&gt; beans);&#x2F;&#x2F;同样有addBeans方法</span><br><span class="line">		server.commit();</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 * @Function: 删除索引</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@Test</span><br><span class="line">	public void remove() throws SolrServerException, IOException &#123;</span><br><span class="line">		server.deleteById(&quot;1&quot;);&#x2F;&#x2F;删除id为1的索引</span><br><span class="line">		server.commit();</span><br><span class="line">		&#x2F;&#x2F;server.deleteById(List&lt;String&gt; ids);&#x2F;&#x2F;删除id集合</span><br><span class="line">		server.commit(true, true);</span><br><span class="line">		&#x2F;&#x2F;删除查询到的索引信息</span><br><span class="line">		server.deleteByQuery(&quot;id:4 id:6&quot;);</span><br><span class="line">		server.commit(true, true);</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 *@Function: 查询索引</span><br><span class="line">	 *@Date: 2014年10月28日</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@Test</span><br><span class="line">	public void search() throws SolrServerException &#123;</span><br><span class="line">		SolrQuery query &#x3D; new SolrQuery();</span><br><span class="line">		query.set(&quot;name&quot;, &quot;Solr&quot;);	&#x2F;&#x2F;</span><br><span class="line">		query.setStart(0);  		&#x2F;&#x2F;分页： 从零开始  </span><br><span class="line">		query.setRows(10);			&#x2F;&#x2F;分页：返回10条记录，第二页start:10开始</span><br><span class="line">		query.setSort(&quot;name&quot;, ORDER.desc);&#x2F;&#x2F;排序：名称倒序</span><br><span class="line">		&#x2F;&#x2F;查询</span><br><span class="line">		QueryResponse resp &#x3D; server.query(query);</span><br><span class="line">		SolrDocumentList sdl &#x3D; resp.getResults();	&#x2F;&#x2F;查询结果</span><br><span class="line">		System.out.println(&quot;总数：&quot;+sdl.getNumFound());		&#x2F;&#x2F;查询总数</span><br><span class="line">		for(SolrDocument sd:sdl) &#123;</span><br><span class="line">			System.out.println(sd.getFieldValue(&quot;id&quot;));             </span><br><span class="line">			System.out.println(sd.getFieldValue(&quot;name&quot;));</span><br><span class="line">			System.out.println(sd.getFieldValue(&quot;manu&quot;));</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 * @Function: 直接使用bean查询</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@Test  </span><br><span class="line">	public void search2() throws MalformedURLException, SolrServerException&#123;  </span><br><span class="line">		SolrQuery query &#x3D; new SolrQuery();  </span><br><span class="line">		query.set(&quot;name&quot;, &quot;Solr&quot;);</span><br><span class="line">		query.setStart(0).setRows(10).setSort(&quot;name&quot;, ORDER.desc);</span><br><span class="line">		QueryResponse res &#x3D; server.query(query);  </span><br><span class="line">		&#x2F;&#x2F;可以直接查询相应的bean对象，但是不是很常用 .且这种方式无法获取总数量  </span><br><span class="line">		List&lt;JavaBean&gt; list &#x3D; res.getBeans(JavaBean.class);  </span><br><span class="line">		System.out.println(&quot;当前总数：&quot;+list.size());  </span><br><span class="line">		for(JavaBean bean : list)&#123;  </span><br><span class="line">			System.out.println(bean.toString());</span><br><span class="line">		&#125;  </span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 * @Function: 高亮 </span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@Test  </span><br><span class="line">	public void test6() throws SolrServerException, MalformedURLException&#123;  </span><br><span class="line">		SolrQuery query &#x3D; new SolrQuery(&quot;*&quot;);  &#x2F;&#x2F;*:*代表所有属性、所有值</span><br><span class="line">		query.setHighlight(true).setHighlightSimplePre(&quot;&lt;span class&#x3D;&#39;red&#39;&gt;&quot;).setHighlightSimplePost(&quot;&lt;&#x2F;span&gt;&quot;).setStart(0).setRows(10);  </span><br><span class="line">		&#x2F;&#x2F;hl.fl表示高亮的field，也就是高亮的区域  </span><br><span class="line">		query.setParam(&quot;hl.fl&quot;, &quot;name,menu&quot;);  </span><br><span class="line">		QueryResponse res &#x3D; server.query(query);  </span><br><span class="line"> </span><br><span class="line">		SolrDocumentList sdl &#x3D; res.getResults();  </span><br><span class="line">		for(SolrDocument sd : sdl)&#123;  </span><br><span class="line">			System.out.println(sd.get(&quot;id&quot;)+&quot;#&quot;+sd.get(&quot;quesRemark&quot;)+&quot;#&quot;+sd.get(&quot;createEmpName&quot;));  </span><br><span class="line">			String id &#x3D; (String) sd.get(&quot;id&quot;);  </span><br><span class="line">			&#x2F;&#x2F;在solr这里对需要加高亮的字段必须要在索引中store&#x3D;true</span><br><span class="line">			System.out.println(id+&quot;#&quot;+res.getHighlighting().get(id).get(&quot;quesRemark&quot;));;  </span><br><span class="line"> </span><br><span class="line">		&#125;  </span><br><span class="line">	&#125;  </span><br><span class="line">	&#x2F;**</span><br><span class="line">	 * gc在大部分状况下会将没有任何指向的引用的内存释放掉,除非在特殊情况下,最好不要干涉gc!</span><br><span class="line">	 * runFinalization()方法在调用时它会尽量去调用这个对象的finalize方法!</span><br><span class="line">	 * 都是强制gc去回收内存,其它大部分相似</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@After</span><br><span class="line">	public void destory() &#123;</span><br><span class="line">		server &#x3D; null;</span><br><span class="line">		System.runFinalization();</span><br><span class="line">		System.gc();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>Solr 索引分片(Sharding Index)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * @Author: April</span><br><span class="line"> * @version Solr 4.10.0</span><br><span class="line"> * @Date: 2014年11月7日</span><br><span class="line"> *&#x2F;</span><br><span class="line">public class ServerTest2 &#123;</span><br><span class="line">	private HttpSolrServer server &#x3D; new HttpSolrServer(URL);</span><br><span class="line">	private static final String URL &#x3D; &quot;http:&#x2F;&#x2F;localhost:8080&#x2F;solr&#x2F;core0&quot;;</span><br><span class="line">	@Before</span><br><span class="line">	public void init() &#123;</span><br><span class="line">		server &#x3D; new HttpSolrServer(URL);</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;**</span><br><span class="line">	 * @Function: Solr多核索引分片(Sharding index)查询(代码基于实际项目，这里未做测试)</span><br><span class="line">	 *  参数“shards”能够使请求被分发到shards所指定的小索引上。 </span><br><span class="line">	 *  shards 的格式  ：host:port&#x2F;base_url[,host:port&#x2F;base_url]* </span><br><span class="line">	 *  @description: 	多核(例如core1、core2..)中添加索引field :coreFlag</span><br><span class="line">	 *  				用于标识shards指定的小索引</span><br><span class="line">	 *&#x2F;</span><br><span class="line">	@Test</span><br><span class="line">	public void search3 () throws SolrServerException&#123;</span><br><span class="line">		String SHARDS_URL &#x3D; &quot;http:&#x2F;&#x2F;localhost:8080&#x2F;solr&#x2F;core0,http:&#x2F;&#x2F;localhost:8080&#x2F;solr&#x2F;core2&quot;;</span><br><span class="line">		String queryValue &#x3D; &quot;((coreFlag:0 AND ..core1上的其他条件) OR (coreFlag:1 AND  ..core2 上的条件)) AND 其他条件 &quot;;</span><br><span class="line">		SolrQuery query &#x3D; new SolrQuery(queryValue);</span><br><span class="line">		query.setStart(0).setRows(10).setSort(&quot;name&quot;, ORDER.desc);</span><br><span class="line">		if(StringUtils.isNotBlank(SHARDS_URL))&#123;</span><br><span class="line">			query.set(&quot;shards&quot;,SHARDS_URL);</span><br><span class="line">		&#125;</span><br><span class="line">		QueryResponse resp &#x3D; server.query(query);</span><br><span class="line">		SolrDocumentList sdList &#x3D; resp.getResults();</span><br><span class="line">		List&lt;JavaBean&gt; searchList &#x3D; server.getBinder().getBeans(JavaBean.class,sdList); </span><br><span class="line">		Long totalRecord &#x3D; new Long(sdList.getNumFound());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/solrj-api%E7%9A%84%E6%93%8D%E4%BD%9C/" rel="tag"># solrj api的操作</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/4%E3%80%81java%E5%AE%B9%E5%99%A8/2%E3%80%81ArrayList%E7%9A%84%E5%8E%9F%E7%90%86/" rel="prev" title="ArrayList的原理">
+      <i class="fa fa-chevron-left"></i> ArrayList的原理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/21/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95/10%E3%80%81ThreadLocal/" rel="next" title="ThreadLocal">
+      ThreadLocal <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81HttpSolrClient"><span class="nav-number">1.</span> <span class="nav-text">1、HttpSolrClient</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81solrServer"><span class="nav-number">2.</span> <span class="nav-text">2、solrServer</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

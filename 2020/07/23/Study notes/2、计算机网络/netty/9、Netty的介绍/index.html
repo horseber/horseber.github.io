@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="传统NIO编程的缺点：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netty的介绍">
+<meta property="og:url" content="http://example.com/2020/07/23/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/9%E3%80%81Netty%E7%9A%84%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="传统NIO编程的缺点：">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-07-23T13:23:27.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:39.026Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="Netty的介绍">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/07/23/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/9%E3%80%81Netty%E7%9A%84%E4%BB%8B%E7%BB%8D/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>Netty的介绍 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/07/23/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/9%E3%80%81Netty%E7%9A%84%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Netty的介绍
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-23 21:23:27" itemprop="dateCreated datePublished" datetime="2020-07-23T21:23:27+08:00">2020-07-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:39" itemprop="dateModified" datetime="2020-09-19T08:57:39+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/netty/" itemprop="url" rel="index"><span itemprop="name">netty</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">传统NIO编程的缺点：</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h5 id="传统NIO编程的缺点："><a href="#传统NIO编程的缺点：" class="headerlink" title="传统NIO编程的缺点："></a>传统NIO编程的缺点：</h5><ul>
+<li>NIO 的类库和 API 繁杂，使用麻烦：需要熟练掌握 Selector、ServerSocketChannel、SocketChannel、ByteBuffer 等。</li>
+<li>开发工作量和难度都非常大：例如客户端面临断连重连、网络闪断、半包读写、失败缓存、网络拥塞和异常流的处理等等。</li>
+<li>JDK NIO 的 Bug：例如臭名昭著的 Epoll Bug<br>空轮询：<br>在NIO中通过Selector的轮询当前是否有IO事件，根据JDK NIO api描述，Selector的select方法会一直阻塞，直到IO事件达到或超时，但是在Linux平台上这里有时会出现问题，在某些场景下select方法会直接返回，即使没有超时并且也没有IO事件到达，它会导致线程陷入死循环，会让CPU飙到100%，极大地影响系统的可靠性，到目前为止，JDK都没有完全解决这个问题。</li>
+</ul>
+<h5 id="Netty"><a href="#Netty" class="headerlink" title="Netty"></a>Netty</h5><p>Netty 是由 JBOSS 提供的一个Java开源框架，是一个==异步的、基于事件驱动的网络应用框架==，用以快速开发高性能、高可靠性的网络 IO 程序。（netty在github上的star数2w+，排名前25的）</p>
+<ul>
+<li>支持常用应用层协议</li>
+<li>解决传输问题：粘包、半包问题</li>
+<li>支持流量整形。流量控制，黑白名单等功能</li>
+<li>完善的断连、ldle等异常</li>
+<li>API功能更强大</li>
+<li>屏蔽JDK的实现细节。如使用NIO切换到AIO需要修改很多代码，使用netty可以做到轻易切换</li>
+<li>解决NIO的已知bug 如：</li>
+</ul>
+<p>空轮询BUG：</p>
+<p>Netty的处理空轮询的方式：检测问题的存在，然后处理</p>
+<p>记录select空转的次数，定义一个阀值，这个阀值默认是512，可以在应用层通过设置系统属性io.netty.selectorAutoRebuildThreshold传入，当空转的次数超过了这个阀值，重新构建新Selector，将老Selector上注册的Channel转移到新建的Selector上，关闭老Selector，用新的Selector代替老Selector，详细实现可以查看NioEventLoop中的selector和rebuildSelector方法：</p>
+<p>Option not found异常：</p>
+<p>IP_TOS参数使用时抛出Option not found异常：<br>。解决方式：规避这个问题。从根本上就不支持设置该参数</p>
+<h5 id="同类型框架："><a href="#同类型框架：" class="headerlink" title="同类型框架："></a>同类型框架：</h5><ul>
+<li>Apache Mina 同一作者开发。本人回答：nima是作者与另一人协同开发。netty是nima的增强版，使用比mima更简单。netty的自由性更高因为nima是属于apache下管理。</li>
+<li>Sun Grizzly 用的很少、文档较少</li>
+<li>Apple Swift NIO 、ACE .非java语言</li>
+<li>Cindy 淘汰产品</li>
+<li>tomcat jetty 底层通信框架并未独立出来，都只是为了更好的服务于Servlet容器。不具有通用型。</li>
+</ul>
+<h5 id="netty应用场景"><a href="#netty应用场景" class="headerlink" title="netty应用场景"></a>netty应用场景</h5><ul>
+<li>数据库：阿里云的NoSql:cassandra</li>
+<li>大数据：Hadoop、Spark</li>
+<li>MQ: RocketMQ</li>
+<li>检索：elasticsearch</li>
+<li>RPC框架：gRPC、Dubbo、Spring5（springboot2为webflux选择的默认部署就是netty，而不再是tomcat和jetty）、zookeeper、分布式计算框架 Storm</li>
+<li>Netty 基本是 Java 语言处理网络 IO 的首选框架，性能和稳定性都有保障，社区比较活跃，基于 Netty 进行二次定制服务成本小。</li>
+</ul>
+<h5 id="server端"><a href="#server端" class="headerlink" title="server端"></a>server端</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">public class NettyServer &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;1. 创建一个线程组：接收客户端连接</span><br><span class="line">        EventLoopGroup bossGroup &#x3D; new NioEventLoopGroup();</span><br><span class="line">        &#x2F;&#x2F;2. 创建一个线程组：处理网络操作</span><br><span class="line">        EventLoopGroup workerGroup &#x3D; new NioEventLoopGroup();</span><br><span class="line">        &#x2F;&#x2F;3. 创建服务器端启动助手来配置参数【辅助启动类，降低服务端的开发复杂度】</span><br><span class="line">        ServerBootstrap b &#x3D; new ServerBootstrap();</span><br><span class="line">        b.group(bossGroup, workerGroup) &#x2F;&#x2F;4.设置两个线程组</span><br><span class="line">                &#x2F;**</span><br><span class="line">                 * FileChannel:用于文件的数据读写</span><br><span class="line">                 * DatagramChannel:用于 UDP 的数据读写</span><br><span class="line">                 * ServerSocketChannel 和 SocketChannel:用于 TCP 的数据读写</span><br><span class="line">                 *&#x2F;</span><br><span class="line">                .channel(NioServerSocketChannel.class) &#x2F;&#x2F;5.使用NioServerSocketChannel作为服务器端通道的实现</span><br><span class="line">                .option(ChannelOption.SO_BACKLOG, 128) &#x2F;&#x2F;6.设置线程队列中等待连接的个数</span><br><span class="line">                .childOption(ChannelOption.SO_KEEPALIVE, true) &#x2F;&#x2F;7.保持活动连接状态</span><br><span class="line">                .childHandler(new ChannelInitializer&lt;SocketChannel&gt;() &#123;  &#x2F;&#x2F;8. 创建一个通道初始化对象</span><br><span class="line">                    public void initChannel(SocketChannel sc) &#123;   &#x2F;&#x2F;9. 往Pipeline链中添加自定义的handler类</span><br><span class="line">                        sc.pipeline().addLast(new NettyServerHandler());</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">        System.out.println(&quot;......Server is ready......&quot;);</span><br><span class="line">        ChannelFuture cf &#x3D; b.bind(6668).sync();  &#x2F;&#x2F;10. 绑定端口 bind方法是异步的  sync方法是同步阻塞的</span><br><span class="line">        System.out.println(&quot;......Server is starting......&quot;);</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;11. 关闭通道，关闭线程组</span><br><span class="line">        cf.channel().closeFuture().sync(); &#x2F;&#x2F;异步</span><br><span class="line">        bossGroup.shutdownGracefully();</span><br><span class="line">        workerGroup.shutdownGracefully();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;服务器端的业务处理类</span><br><span class="line">public class NettyServerHandler extends ChannelInboundHandlerAdapter &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;读取数据事件</span><br><span class="line">    public void channelRead(ChannelHandlerContext ctx, Object msg) &#123;</span><br><span class="line">        System.out.println(&quot;Server:&quot; + ctx);</span><br><span class="line">        ByteBuf buf &#x3D; (ByteBuf) msg;</span><br><span class="line">        System.out.println(&quot;客户端发来的消息：&quot; + buf.toString(CharsetUtil.UTF_8));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;数据读取完毕事件</span><br><span class="line">    public void channelReadComplete(ChannelHandlerContext ctx) &#123;</span><br><span class="line">        ctx.writeAndFlush(Unpooled.copiedBuffer(&quot;hello client(&gt;^ω^&lt;)喵&quot;, CharsetUtil.UTF_8));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;异常发生事件</span><br><span class="line">    public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) &#123;</span><br><span class="line">        ctx.close();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="client端"><a href="#client端" class="headerlink" title="client端"></a>client端</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">public class NettyClient &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;1. 创建一个线程组</span><br><span class="line">        EventLoopGroup group &#x3D; new NioEventLoopGroup();</span><br><span class="line">        &#x2F;&#x2F;2. 创建客户端的启动助手，完成相关配置</span><br><span class="line">        Bootstrap b &#x3D; new Bootstrap();</span><br><span class="line">        b.group(group)  &#x2F;&#x2F;3. 设置线程组</span><br><span class="line">                &#x2F;**</span><br><span class="line">                 * FileChannel:用于文件的数据读写</span><br><span class="line">                 * DatagramChannel:用于 UDP 的数据读写</span><br><span class="line">                 * ServerSocketChannel 和 SocketChannel:用于 TCP 的数据读写</span><br><span class="line">                 *&#x2F;</span><br><span class="line">                .channel(NioSocketChannel.class)  &#x2F;&#x2F;4. 设置客户端通道的实现类</span><br><span class="line">                .handler(new ChannelInitializer&lt;SocketChannel&gt;() &#123;  &#x2F;&#x2F;5. 创建一个通道初始化对象</span><br><span class="line">                    @Override</span><br><span class="line">                    protected void initChannel(SocketChannel socketChannel) throws Exception &#123;</span><br><span class="line">                        socketChannel.pipeline().addLast(new NettyClientHandler()); &#x2F;&#x2F;6.往Pipeline链中添加自定义的handler</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">        System.out.println(&quot;......Client is  ready......&quot;);</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;7.启动客户端去连接服务器端  connect方法是异步的   sync方法是同步阻塞的</span><br><span class="line">        ChannelFuture cf &#x3D; b.connect(&quot;127.0.0.1&quot;, 6668).sync();</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;8.关闭连接(异步非阻塞)</span><br><span class="line">        cf.channel().closeFuture().sync();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;客户端业务处理类</span><br><span class="line">public class NettyClientHandler extends ChannelInboundHandlerAdapter &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;通道就绪事件</span><br><span class="line">    public void channelActive(ChannelHandlerContext ctx) &#123;</span><br><span class="line">        System.out.println(&quot;Client:&quot; + ctx);</span><br><span class="line">        ctx.writeAndFlush(Unpooled.copiedBuffer(&quot;hello, server ^(*￣(oo)￣)^&quot;, CharsetUtil.UTF_8));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;读取数据事件</span><br><span class="line">    public void channelRead(ChannelHandlerContext ctx, Object msg) &#123;</span><br><span class="line">        ByteBuf buf &#x3D; (ByteBuf) msg;</span><br><span class="line">        System.out.println(&quot;服务器端发来的消息：&quot; + buf.toString(CharsetUtil.UTF_8));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<ul>
+<li>生命周期管理，所引入的 Bootstrapping 机制。我们通常要做的创建 Channel、绑定端口、注册 Handler 等，都可以通过这个统一的入口，以 Fluent API 等形式完成，相对简化了 API 使用。与之相对应， Bootstrap则是 Client 端的通常入口。</li>
+<li>Channel，作为一个基于 NIO 的扩展框架，Channel 和 Selector 等概念仍然是 Netty 的基础组件，但是针对应用开发具体需求，提供了相对易用的抽象。</li>
+<li>EventLoop，这是 Netty 处理事件的核心机制。例子中使用了 EventLoopGroup。我们在 NIO 中通常要做的几件事情，如注册感兴趣的事件、调度相应的 Handler 等，都是 EventLoop 负责。</li>
+<li>ChannelFuture，这是 Netty 实现异步 IO 的基础之一，保证了同一个 Channel 操作的调用顺序。Netty 扩展了 Java 标准的 Future，提供了针对自己场景的特有Future定义。</li>
+<li>ChannelHandler，这是应用开发者放置业务逻辑的主要地方，也是我上面提到的“Separation Of Concerns”原则的体现。</li>
+<li>ChannelPipeline，它是 ChannelHandler 链条的容器，每个 Channel 在创建后，自动被分配一个 ChannelPipeline。在上面的示例中，我们通过 ServerBootstrap 注册了 ChannelInitializer，并且实现了 initChannel 方法，而在该方法中则承担了向 ChannelPipleline 安装其他 Handler 的任务。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Netty%E7%9A%84%E4%BB%8B%E7%BB%8D/" rel="tag"># Netty的介绍</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/22/Study%20notes/2%E3%80%81%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/netty/8%E3%80%81Reactor%E6%A8%A1%E5%BC%8F/" rel="prev" title="Reactor模式">
+      <i class="fa fa-chevron-left"></i> Reactor模式
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/01/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/11%E3%80%81%E9%AB%98%E9%A2%91%E7%82%B9%E9%97%AE%E9%A2%98/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/7%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4/" rel="next" title="分布式事务-两阶段提交">
+      分布式事务-两阶段提交 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9FNIO%E7%BC%96%E7%A8%8B%E7%9A%84%E7%BC%BA%E7%82%B9%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">传统NIO编程的缺点：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Netty"><span class="nav-number">2.</span> <span class="nav-text">Netty</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%90%8C%E7%B1%BB%E5%9E%8B%E6%A1%86%E6%9E%B6%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">同类型框架：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#netty%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">4.</span> <span class="nav-text">netty应用场景</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#server%E7%AB%AF"><span class="nav-number">5.</span> <span class="nav-text">server端</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#client%E7%AB%AF"><span class="nav-number">6.</span> <span class="nav-text">client端</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="超时订单自动取消 用户未点击确认收货，超时订单自动完成">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redis延时队列">
+<meta property="og:url" content="http://example.com/2020/08/24/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/12%E3%80%81redis%E5%BB%B6%E6%97%B6%E9%98%9F%E5%88%97/index.html">
+<meta property="og:site_name" content="horseber">
+<meta property="og:description" content="超时订单自动取消 用户未点击确认收货，超时订单自动完成">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-08-24T11:47:35.000Z">
+<meta property="article:modified_time" content="2020-09-19T00:57:42.576Z">
+<meta property="article:author" content="horseber">
+<meta property="article:tag" content="redis延时队列">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2020/08/24/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/12%E3%80%81redis%E5%BB%B6%E6%97%B6%E9%98%9F%E5%88%97/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>redis延时队列 | horseber</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d8b675c742251ef77e2518fd74ce6b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="horseber" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">horseber</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/08/24/Study%20notes/5%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93/2%E3%80%81%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93NoSql/1%E3%80%81redis/12%E3%80%81redis%E5%BB%B6%E6%97%B6%E9%98%9F%E5%88%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="horseber">
+      <meta itemprop="description" content="奥秘全在细微处">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="horseber">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          redis延时队列
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-24 19:47:35" itemprop="dateCreated datePublished" datetime="2020-08-24T19:47:35+08:00">2020-08-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-09-19 08:57:42" itemprop="dateModified" datetime="2020-09-19T08:57:42+08:00">2020-09-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">超时订单自动取消 用户未点击确认收货，超时订单自动完成</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li>超时订单自动取消</li>
+<li>用户未点击确认收货，超时订单自动完成</li>
+</ul>
+<p>定时任务扫表处理的缺点：</p>
+<ul>
+<li>数据量大的情况下延时较高，若在规定时间处理不完，影响业务</li>
+<li>维护多个定时任务，重复扫描业务表</li>
+</ul>
+<h5 id="JDK的DelayQueue延时队列"><a href="#JDK的DelayQueue延时队列" class="headerlink" title="JDK的DelayQueue延时队列"></a>JDK的DelayQueue延时队列</h5><h5 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h5><p>实现原理</p>
+<p>利用 Redis 的 sorted set 结构，使用 timeStamp 作为 score，比如你的任务是要延迟5分钟，那么就在当前时间上加5分钟作为 score ，客户端做轮询处理，且轮询任务每秒只轮询 score 大于当前时间的 key即可</p>
+<p>优点：简单易用</p>
+<p>缺点</p>
+<ul>
+<li>单个 zset 支持不了太大的数据量，百万级的延迟任务需求，则处理不过来</li>
+<li>定时器轮询方案可能会有异常终止的情况需要自己处理，同时消息处理失败的回滚方案，您也要自己处理。</li>
+</ul>
+<h5 id="RabbitMQ-延时队列（常用的落地方式）"><a href="#RabbitMQ-延时队列（常用的落地方式）" class="headerlink" title="RabbitMQ 延时队列（常用的落地方式）"></a>RabbitMQ 延时队列（常用的落地方式）</h5><p>利用RabbitMQ 有两个特性，一个是 Time-To-Live Extensions，另一个是 Dead Letter Exchanges。</p>
+<p>TTL：消息的存活时间，单位为微秒。</p>
+<p>DLX：死信交换机。绑定在死信交换机上的即死信队列。RabbitMQ的Queue（队列）可以配置两个参数x-dead-letter-exchange和x-dead-letter-routing-key（可选），一旦队列内出现了Dead Letter（死信），则按照这两个参数可以将消息重新路由到另一个Exchange（交换机），让消息重新被消费</p>
+<p>我们将订单消息A0001发送到延迟队列order.delay.queue，并设置x-message-tt消息存活时间为30分钟，当到达30分钟后订单消息A0001成为了Dead Letter（死信），延迟队列检测到有死信，通过配置x-dead-letter-exchange，将死信重新转发到能正常消费的关单队列，直接监听关单队列处理关单逻辑即可。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">public void send(String delayTimes) &#123;</span><br><span class="line">    amqpTemplate.convertAndSend(&quot;order.pay.exchange&quot;, &quot;order.pay.queue&quot;,&quot;大家好我是延迟数据&quot;, message -&gt; &#123;</span><br><span class="line">        &#x2F;&#x2F; 设置延迟毫秒值</span><br><span class="line">        message.getMessageProperties().setExpiration(String.valueOf(delayTimes));</span><br><span class="line">        return message;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@Bean(name &#x3D; &quot;order.delay.queue&quot;)</span><br><span class="line">public Queue getMessageQueue() &#123;</span><br><span class="line">    return QueueBuilder</span><br><span class="line">            .durable(RabbitConstant.DEAD_LETTER_QUEUE)</span><br><span class="line">            &#x2F;&#x2F; 配置到期后转发的交换</span><br><span class="line">            .withArgument(&quot;x-dead-letter-exchange&quot;, &quot;order.close.exchange&quot;)</span><br><span class="line">            &#x2F;&#x2F; 配置到期后转发的路由键</span><br><span class="line">            .withArgument(&quot;x-dead-letter-routing-key&quot;, &quot;order.close.queue&quot;)</span><br><span class="line">            .build();</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+
+<p>优点：</p>
+<p>如果面临大数据量需求可以很容易的横向扩展，同时消息支持持久化，有问题可回滚。</p>
+<p>缺点：</p>
+<p>配置麻烦，额外增加一个死信交换机和一个死信队列的配置；</p>
+<p>RabbitMQ的定位是消息中间件，TTL 和 DLX 特性去实现一个功能。若需要替换其他MQ，则不满足</p>
+<p>需要考虑不同延迟的消息要放到不同的队列：消息队列具有先进先出的特点，如果第一个进入队列的消息 A 的延迟是10分钟，第二个进入队列的消息B 的延迟是5分钟，期望的是谁先到 TTL谁先出，但是事实是B已经到期了，而还要等到 A 的延迟10分钟结束A先出之后，B 才能出</p>
+<p>当用户发送一个消息请求给服务器后台的时候，服务器会检测这条消息是否需要进行延时处理，如果需要就放入到延时队列中，由延时任务检测器进行检测和处理，对于不需要进行延时处理的任务，服务器会立马对消息进行处理，并把处理后的结果返会给用户。</p>
+<h5 id="Netty-HashedWheelTimer"><a href="#Netty-HashedWheelTimer" class="headerlink" title="Netty#HashedWheelTimer"></a>Netty#HashedWheelTimer</h5><p>HashedWheelTimer 是 Netty 中 的一个基础工具类，主要用来高效处理大量定时任务，且任务对时间精度要求相对不高， 在Netty 中的应用场景就是连接超时或者任务处理超时，一般都是操作比较快速的任务，缺点是内存占用相对较高</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/redis%E5%BB%B6%E6%97%B6%E9%98%9F%E5%88%97/" rel="tag"># redis延时队列</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/16/Study%20notes/4%E3%80%81%E6%A1%86%E6%9E%B6/9%E3%80%81%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/" rel="prev" title="日志系统">
+      <i class="fa fa-chevron-left"></i> 日志系统
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/25/Study%20notes/3%E3%80%81java/6%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E7%BA%BF%E7%A8%8B%E6%B1%A0/2%E3%80%81%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%9C%A8%E4%B8%9A%E5%8A%A1%E4%B8%AD%E7%9A%84%E5%AE%9E%E8%B7%B5/" rel="next" title="线程池在业务中的实践">
+      线程池在业务中的实践 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#JDK%E7%9A%84DelayQueue%E5%BB%B6%E6%97%B6%E9%98%9F%E5%88%97"><span class="nav-number">1.</span> <span class="nav-text">JDK的DelayQueue延时队列</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Redis"><span class="nav-number">2.</span> <span class="nav-text">Redis</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#RabbitMQ-%E5%BB%B6%E6%97%B6%E9%98%9F%E5%88%97%EF%BC%88%E5%B8%B8%E7%94%A8%E7%9A%84%E8%90%BD%E5%9C%B0%E6%96%B9%E5%BC%8F%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">RabbitMQ 延时队列（常用的落地方式）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Netty-HashedWheelTimer"><span class="nav-number">4.</span> <span class="nav-text">Netty#HashedWheelTimer</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="horseber"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">horseber</p>
+  <div class="site-description" itemprop="description">奥秘全在细微处</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">325</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">316</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/horseber" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;horseber" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/baidu_30130783" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;baidu_30130783" rel="noopener" target="_blank"><i class="book fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">horseber</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
